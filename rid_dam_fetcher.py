@@ -72,8 +72,8 @@ class RIDDataFetcher:
                         all_records.append({
                             "date":            current_date.strftime("%Y-%m-%d"),
                             "region":          region.get("region",          "Unknown"),
-                            "dam_id":          dam.get("id",                 "Unknown"),
-                            "dam_name":        dam.get("name",               "Unknown"),
+                            "id":          dam.get("id",                 "Unknown"),
+                            "name":        dam.get("name",               "Unknown"),
                             "owner":           dam.get("owner",              "Unknown"),
                             "capacity":        dam.get("capacity",           0),
                             "storage":         dam.get("storage",            0),
@@ -163,9 +163,9 @@ class DataProcessor:
         แปลง 0 → NaN เฉพาะคอลัมน์ที่กำหนด แล้ว ffill ตาม dam_id
         แถวที่ยังเป็น NaN หลัง ffill (เขื่อนที่ไม่มีข้อมูลเลยในช่วงดึง) → 0
         """
-        out = df.sort_values(["dam_id", "date"]).copy()
+        out = df.sort_values(["id", "date"]).copy()
         out[cls._FILL_ZERO_AS_NAN] = out[cls._FILL_ZERO_AS_NAN].replace(0, pd.NA)
-        out[cls._ALL_NUMERIC] = out.groupby("dam_id")[cls._ALL_NUMERIC].ffill()
+        out[cls._ALL_NUMERIC] = out.groupby("id")[cls._ALL_NUMERIC].ffill()
         out[cls._ALL_NUMERIC] = out[cls._ALL_NUMERIC].fillna(0)
         return out
 
@@ -205,9 +205,9 @@ class DataProcessor:
         future_col = f"future_pct_{shift_days}d"
         target_col = f"risk_class_{shift_days}d"
 
-        df = df.sort_values(["dam_id", "date"])
+        df = df.sort_values(["id", "date"])
         df[future_col] = (
-            df.groupby("dam_id")["percent_storage"].shift(-shift_days)
+            df.groupby("id")["percent_storage"].shift(-shift_days)
         )
         df[target_col] = df[future_col].apply(RiskClassifier.classify)
 
@@ -245,7 +245,7 @@ class ARFFExporter:
         "volume", "percent_storage", "inflow", "outflow", "month",
     ]
     # dam_id (id) และ dam_name (name) อยู่ก่อน region/owner ตามลำดับใน API doc
-    CATEGORICAL_COLS = ["dam_id", "dam_name", "region", "owner", "season"]
+    CATEGORICAL_COLS = ["id", "name", "region", "owner", "season"]
 
     @classmethod
     def export(
