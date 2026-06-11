@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 import requests
+import datetime
+import mysql.connector
+import plotly.express as px
 import jpype
 import weka.core.jvm as jvm
 import weka.core.serialization as serialization
@@ -9,188 +12,230 @@ from weka.core.dataset import Instance
 from weka.core.converters import Loader
 
 # ==========================================
-# 1. INITIALIZE JVM (ใช้ st.cache_resource บังคับรันครั้งเดียวชัวร์ๆ)
+# ⚙️ CONFIG & INITIALIZATION
 # ==========================================
+st.set_page_config(page_title="Dam Forecast", layout="wide", initial_sidebar_state="expanded")
+
+# ตั้งค่าการเชื่อมต่อฐานข้อมูล XAMPP MySQL
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '', # ใส่รหัสผ่านถ้าคุณตั้งไว้ใน XAMPP
+    'database': 'dam_forecast_db'
+}
+
 @st.cache_resource
 def init_jvm_safe():
     try:
         jvm.start(packages=True)
         return True
-    except Exception as e:
-        # ในกรณีที่ JVM อาจจะเคยเปิดไปแล้วจาก process อื่น
+    except:
         return False
 
-# เรียกใช้งานฟังก์ชัน (Streamlit จะจำไว้ และรันแค่รอบแรกสุดรอบเดียว)
 init_jvm_safe()
 
-# ==========================================
-# 2. CACHE MODELS & HEADERS (โหลดครั้งเดียวเก็บใน Memory)
-# ==========================================
 @st.cache_resource
 def load_resources():
-    # 📅 โหลด Model & Header สำหรับ 7 วัน (ครอบด้วย Classifier เพื่อแปลงเป็นวัตถุฝั่ง Python)
+    # โหลดโมเดล 7 วัน
     raw_j48_7d = serialization.read("model7d.model")  
-    model_7d = Classifier(jobject=raw_j48_7d)          # 💡 ห่อหุ้มโครงสร้างไว้ที่นี่
-    
+    model_7d = Classifier(jobject=raw_j48_7d)
     loader_7d = Loader("weka.core.converters.ArffLoader")
     header_7d = loader_7d.load_file("dam_risk_forecast_7days.arff")
     header_7d.class_is_last()
 
-    # 📅 โหลด Model & Header สำหรับ 30 วัน (ทำเหมือนกัน)
+    # โหลดโมเดล 30 วัน (เปลี่ยนชื่อไฟล์ให้ตรงกับของคุณ)
     raw_j48_30d = serialization.read("model30d.model") 
-    model_30d = Classifier(jobject=raw_j48_30d)        # 💡 ห่อหุ้มโครงสร้างไว้ที่นี่
-    
+    model_30d = Classifier(jobject=raw_j48_30d)
     loader_30d = Loader("weka.core.converters.ArffLoader")
     header_30d = loader_30d.load_file("dam_risk_forecast_30days.arff")
     header_30d.class_is_last()
 
-    return {
-        "7_day": {"model": model_7d, "header": header_7d},
-        "30_day": {"model": model_30d, "header": header_30d}
-    }
+    return {"7_day": {"model": model_7d, "header": header_7d}, "30_day": {"model": model_30d, "header": header_30d}}
 
 models_dict = load_resources()
 
 # ==========================================
-# 3. FETCH DATA FROM RID API
+# 🔄 DATABASE & API FUNCTIONS
 # ==========================================
-RID_API_URL = "https://app.rid.go.th/reservoir/api/dam/public"
-
-@st.cache_data(ttl=300)  # Cache ข้อมูลไว้ 5 นาที ลดภาระฝั่ง API
-def fetch_rid_data():
+def save_to_database(df):
+    """ฟังก์ชันบันทึกข้อมูลวันนี้ลงฐานข้อมูลโดยอัตโนมัติ"""
     try:
-        response = requests.get(RID_API_URL, timeout=10)
-        response.raise_for_status()
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        today = datetime.date.today()
+        
+        # วนลูปบันทึกทีละเขื่อน
+        for _, row in df.iterrows():
+            sql = """
+                INSERT IGNORE INTO dam_records 
+                (dam_id, dam_name, record_date, percent_storage, inflow, outflow) 
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            val = (
+                row.get('id'), row.get('name'), today, 
+                row.get('percent_storage', 0), row.get('inflow', 0), row.get('outflow', 0)
+            )
+            cursor.execute(sql, val)
+        
+        conn.commit()
+    except Exception as e:
+        st.sidebar.error(f"DB Save Error: {e}")
+    finally:
+        if 'conn' in locals() and conn.is_connected():
+            cursor.close()
+            conn.close()
+
+def get_historical_data(dam_id):
+    """ดึงข้อมูลประวัติย้อนหลังจาก MySQL"""
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        # ดึงย้อนหลัง 30 วันเพื่อมาวาดกราฟ
+        query = f"SELECT record_date, percent_storage FROM dam_records WHERE dam_id = '{dam_id}' ORDER BY record_date ASC LIMIT 30"
+        df_hist = pd.read_sql(query, conn)
+        return df_hist
+    except Exception as e:
+        return pd.DataFrame()
+    finally:
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+@st.cache_data(ttl=3600) # Cache 1 ชั่วโมง
+def fetch_and_save_data():
+    try:
+        response = requests.get("https://app.rid.go.th/reservoir/api/dam/public", timeout=10)
         res_data = response.json()
+        records = res_data.get("data", res_data)
         
-        # ตรวจสอบโครงสร้าง JSON ของ RID
-        if isinstance(res_data, dict) and "data" in res_data:
-            records = res_data["data"]
-        else:
-            records = res_data
-            
-        # 💡 [แก้ไข] คลี่ข้อมูลจากคีย์ 'dam' ออกมาเป็นรายแถว และดึง 'region' ติดมาด้วย
         df = pd.json_normalize(records, record_path=['dam'], meta=['region'])
+        mapping = {"dam_id": "id", "dam_name": "name"}
+        df = df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
         
-        # คราวนี้คอลัมน์ด้านในเขื่อน เช่น id, name, storage, inflow จะถูกดึงมาเป็นคอลัมน์หลักทันทีครับ
+        # บันทึกลงฐานข้อมูลทันทีเมื่อโหลดสำเร็จ
+        save_to_database(df)
         return df
     except Exception as e:
-        st.error(f"❌ ไม่สามารถดึงข้อมูลจาก RID API ได้: {e}")
+        st.error("ไม่สามารถเชื่อมต่อ API ได้")
         return pd.DataFrame()
-    
+
 # ==========================================
-# 4. PREPROCESSING & PREDICTION FUNCTION
+# 🧠 WEKA PREDICTION
 # ==========================================
-def preprocess_and_predict(df, model_config):
+def predict_single_dam(row_series, model_config):
+    """ปรับแต่งให้พยากรณ์แค่แถวเดียว (Single Row)"""
     model = model_config["model"]
     header = model_config["header"]
-    predictions = []
-
-    for _, row in df.iterrows():
-        try:
-            # 1. สร้าง Instance จำลองด้วยเลข 0.0 ให้ครบทุกคอลัมน์
-            inst = Instance.create_instance([0.0] * header.num_attributes)
-            inst.dataset = header  # ผูกโครงสร้าง ARFF
-            
-            # 2. ไล่หยอดค่าจริงทีละ Attribute โดยเปลี่ยนมาใช้ Index (int) เพื่อเลี่ยงบั๊ก JPype Overload
-            for attr in header.attributes():
-                if attr.name == header.class_attribute.name:
-                    continue  # ข้าม Class คอลัมน์ผลลัพธ์
+    
+    inst = Instance.create_instance([0.0] * header.num_attributes)
+    inst.dataset = header  
+    
+    for attr in header.attributes():
+        if attr.name == header.class_attribute.name:
+            continue
+        
+        val = row_series.get(attr.name, None)
+        
+        if val is None or pd.isna(val) or val == "None":
+            inst.set_missing(attr.index)
+            continue
+        
+        if attr.is_numeric:
+            try:
+                inst.set_value(attr.index, float(val))
+            except:
+                inst.set_value(attr.index, 0.0)
+        elif attr.is_nominal or attr.is_string:
+            try:
+                inst.set_value(attr.index, str(val))
+            except:
+                inst.set_missing(attr.index)
                 
-                val = row.get(attr.name, None)
-                
-                # จัดการกรณีเจอค่าว่าง หรือคำว่า "None"
-                if val is None or pd.isna(val) or val == "None":
-                    inst.set_missing(attr.index)  # 👈 ใช้ attr.index แทนอ็อบเจกต์ attr
-                    continue
-                
-                # 3. เซ็ตค่าลงตารางโดยส่งค่าผ่าน ดัชนีคอลัมน์ (attr.index) 
-                if attr.is_numeric:
-                    try:
-                        # 💡 เมื่อใช้ attr.index แล้ว สามารถส่ง Python float มาตรฐานไปได้เลยครับ ชัวร์แน่นอน
-                        inst.set_value(attr.index, float(val))
-                    except (ValueError, TypeError):
-                        inst.set_value(attr.index, 0.0)
-                elif attr.is_nominal or attr.is_string:
-                    try:
-                        inst.set_value(attr.index, str(val))
-                    except Exception:
-                        inst.set_missing(attr.index)
-            
-            # 4. สั่งพยากรณ์ผลลัพธ์
-            pred_index = model.classify_instance(inst)
-            
-            if header.class_attribute.is_nominal:
-                res = header.class_attribute.value(int(pred_index))
-            else:
-                res = pred_index
-            predictions.append(res)
-            
-        except Exception as e:
-            predictions.append(f"Error: {str(e)}")
-            
-    return predictions
+    pred_index = model.classify_instance(inst)
+    if header.class_attribute.is_nominal:
+        return header.class_attribute.value(int(pred_index))
+    return pred_index
 
 # ==========================================
-# 5. STREAMLIT UI DISPLAY
+# 🎨 STREAMLIT UI LAYOUT
 # ==========================================
-st.set_page_config(page_title="Reservoir Risk Prediction", layout="wide")
-
-st.title("🔮 แดชบอร์ดพยากรณ์ข้อมูลอ่างเก็บน้ำ (RID API x Weka)")
-st.caption("ระบบดึงข้อมูล Real-time จากกรมชลประทานและประมวลผลด้วย Weka Model")
-
-# ดึงข้อมูลมาแสดงผลก่อน
-with st.spinner("กำลังโหลดข้อมูลจาก RID API..."):
-    raw_df = fetch_rid_data()
+raw_df = fetch_and_save_data()
 
 if not raw_df.empty:
-    st.subheader("📊 ข้อมูลปัจจุบันจาก RID API")
-    st.dataframe(raw_df, use_container_width=True)
+    # --- Sidebar ---
+    with st.sidebar:
+        st.title("Dam Forecast")
+        dam_list = raw_df['name'].tolist()
+        selected_dam_name = st.selectbox("เลือกอ่างเก็บน้ำ:", dam_list)
+    
+    # กรองข้อมูลเอาเฉพาะเขื่อนที่เลือก (แถวเดียว)
+    dam_data = raw_df[raw_df['name'] == selected_dam_name].iloc[0]
+    
+    # ทำนายผล
+    pred_7d = predict_single_dam(dam_data, models_dict["7_day"])
+    pred_30d = predict_single_dam(dam_data, models_dict["30_day"])
+    
+    # --- Main Content ---
+    st.header(f"ข้อมูลของ: {selected_dam_name}")
+    
+    # 1. KPI Cards (ปรับเป็น 5 คอลัมน์ เพื่อโชว์ 7 วัน และ 30 วัน)
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.metric(label="ความเสี่ยง (7 วัน)", value=pred_7d)
+    with col2:
+        st.metric(label="ความเสี่ยง (30 วัน)", value=pred_30d)
+    with col3:
+        st.metric(label="ร้อยละความจุ", value=f"{dam_data.get('percent_storage', 0)}%")
+    with col4:
+        st.metric(label="Inflow (ลบ.ม./วัน)", value=f"{dam_data.get('inflow', 0)}")
+    with col5:
+        st.metric(label="Outflow (ลบ.ม./วัน)", value=f"{dam_data.get('outflow', 0)}")
 
-    st.markdown("---")
-    st.subheader("🚀 ส่วนการประมวลผลโมเดล")
+    # 2. Historical Chart
+    st.subheader("📈 กราฟแนวโน้มร้อยละความจุย้อนหลัง")
+    hist_df = get_historical_data(dam_data['id'])
+    
+    if not hist_df.empty and len(hist_df) > 1:
+        # สร้างกราฟเส้นด้วย Plotly
+        fig = px.line(hist_df, x='record_date', y='percent_storage', markers=True)
+        fig.update_layout(yaxis_range=[0, 100], xaxis_title="", yaxis_title="ร้อยละความจุ (%)")
+        # เพิ่มเส้นเกณฑ์น้ำล้น (80%) และเกณฑ์น้ำแล้ง (30%)
+        fig.add_hline(y=80, line_dash="dash", line_color="red", annotation_text="เกณฑ์น้ำล้น (80%)")
+        fig.add_hline(y=30, line_dash="dash", line_color="orange", annotation_text="เกณฑ์น้ำแล้ง (30%)")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("กำลังสะสมข้อมูลประวัติ... (ระบบเพิ่งเริ่มบันทึกข้อมูลของเขื่อนนี้ลงในฐานข้อมูล หรือมีข้อมูลเพียง 1 วัน จึงยังไม่สามารถพล็อตกราฟเส้นได้)")
+        # แสดงข้อมูลปัจจุบันเดี่ยวๆ แทนกราฟ
+        st.progress(int(float(dam_data.get('percent_storage', 0))))
 
-    # แยกระบบพยากรณ์ออกเป็น 2 แท็บ เพื่อความสะอาดตาและเปรียบเทียบง่าย
-    tab1, tab2 = st.tabs(["📅 พยากรณ์ล่วงหน้า 7 วัน", "📅 พยากรณ์ล่วงหน้า 30 วัน"])
+    # 3. Summary Alert Box (อัปเดตจับคลาส flood, normal, drought โดยเฉพาะ)
+    st.markdown("### สรุปแผนการจัดการน้ำ")
+    
+    # ฟังก์ชันช่วยแปลคำศัพท์ให้เป็นมิตรกับผู้ใช้งาน (UX)
+    def translate_status(status_text):
+        status_lower = str(status_text).lower()
+        if "flood" in status_lower:
+            return "น้ำล้น (Flood)"
+        elif "drought" in status_lower:
+            return "น้ำแล้ง (Drought)"
+        else:
+            return "ปกติ (Normal)"
 
-    with tab1:
-        st.write("ใช้โมเดลระยะสั้นเพื่อดูแนวโน้มความเสี่ยงภายใน 1 สัปดาห์")
-        if st.button("Run 7-Day Prediction", key="btn_7d"):
-            with st.spinner("กำลังคำนวณ..."):
-                processed_df = raw_df.copy()
-                
-                preds = preprocess_and_predict(processed_df, models_dict["7_day"])
-                processed_df["ผลพยากรณ์ (7 วัน)"] = preds
-                
-                st.success("ประมวลผลสำเร็จ!")
-                
-                # 🛡️ ระบบจัดเรียงคอลัมน์แบบปลอดภัย (Bulletproof จาก KeyError)
-                front_cols = [c for c in ["id", "name", "ผลพยากรณ์ (7 วัน)"] if c in processed_df.columns]
-                remaining_cols = [c for c in processed_df.columns if c not in front_cols]
-                
-                st.dataframe(processed_df[front_cols + remaining_cols], width="stretch")
-                
-                if "ผลพยากรณ์ (7 วัน)" in processed_df.columns:
-                    st.bar_chart(processed_df["ผลพยากรณ์ (7 วัน)"].value_counts())
+    # แปลงค่าที่ได้จาก Weka
+    status_7d_th = translate_status(pred_7d)
+    status_30d_th = translate_status(pred_30d)
 
-    with tab2:
-        st.write("ใช้โมเดลระยะกลางเพื่อวางแผนบริหารจัดการน้ำใน 1 เดือน")
-        if st.button("Run 30-Day Prediction", key="btn_30d"):
-            with st.spinner("กำลังคำนวณ..."):
-                processed_df = raw_df.copy()
-                
-                preds = preprocess_and_predict(processed_df, models_dict["30_day"])
-                processed_df["ผลพยากรณ์ (30 วัน)"] = preds
-                
-                st.success("ประมวลผลสำเร็จ!")
-                
-                # 🛡️ ระบบจัดเรียงคอลัมน์แบบปลอดภัยสำหรับ 30 วัน
-                front_cols = [c for c in ["id", "name", "ผลพยากรณ์ (30 วัน)"] if c in processed_df.columns]
-                remaining_cols = [c for c in processed_df.columns if c not in front_cols]
-                
-                st.dataframe(processed_df[front_cols + remaining_cols], width="stretch")
-                
-                if "ผลพยากรณ์ (30 วัน)" in processed_df.columns:
-                    st.bar_chart(processed_df["ผลพยากรณ์ (30 วัน)"].value_counts())
+    # เช็คว่ามีความเสี่ยงหรือไม่ (ถ้าไม่ใช่ normal ถือว่าเสี่ยง)
+    is_risk_7d = "normal" not in str(pred_7d).lower()
+    is_risk_30d = "normal" not in str(pred_30d).lower()
+
+    # แสดงผลตามเงื่อนไข
+    if is_risk_7d and is_risk_30d:
+        st.error(f"🚨 **ประกาศฉุกเฉิน:** เฝ้าระวังสูงสุด! พยากรณ์ 7 วันอยู่ในเกณฑ์ **{status_7d_th}** และ 30 วันมีแนวโน้ม **{status_30d_th}** จำเป็นต้องพิจารณาแผนรับมือด่วน")
+    elif is_risk_7d:
+        st.warning(f"⚠️ **ประกาศเตือนระยะสั้น:** พยากรณ์ 7 วันอยู่ในเกณฑ์ **{status_7d_th}** (ส่วน 30 วัน: ปกติ) ควรติดตามสถานการณ์ใกล้ชิดในสัปดาห์นี้")
+    elif is_risk_30d:
+        st.warning(f"⚠️ **ประกาศเตือนระยะกลาง:** สถานการณ์ 7 วันนี้ยังปกติ แต่ใน 30 วันมีแนวโน้ม **{status_30d_th}** ควรวางแผนการบริหารจัดการน้ำล่วงหน้า")
+    else:
+        st.success(f"✅ **ประกาศ:** สถานการณ์น้ำปกติ ทั้งการพยากรณ์ 7 วันและ 30 วันยังอยู่ในระดับ **{status_7d_th}** ไม่มีความจำเป็นต้องปรับแผนฉุกเฉิน")
+
 else:
-    st.warning("⚠️ ไม่มีข้อมูลสำหรับการพยากรณ์")
+    st.error("ไม่พบข้อมูลจากระบบ โปรดตรวจสอบการเชื่อมต่อ API ของกรมชลประทาน")

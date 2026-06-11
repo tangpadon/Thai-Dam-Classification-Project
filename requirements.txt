@@ -2,3 +2,5 @@ python-weka-wrapper3
 streamlit
 requests
 pandas
+mysql-connector-python
+plotly
