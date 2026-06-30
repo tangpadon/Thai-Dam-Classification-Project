@@ -1,8 +1,8 @@
-# views/user_view.py
+# views/admin_view.py
 import streamlit as st
 import plotly.express as px
-from db import get_historical_data
-from weka_model import predict_single_dam
+from core.db import get_historical_data
+from core.weka_model import predict_single_dam
 
 def translate_status(status_text):
     status_lower = str(status_text).lower()
@@ -10,15 +10,27 @@ def translate_status(status_text):
     elif "drought" in status_lower: return "น้ำแล้ง (Drought)"
     else: return "ปกติ (Normal)"
 
-def render(raw_df, models_dict):
+def render(raw_df, models_dict, data_date=None, recorded_at=None):
     st.title("🌊 Dam Forecast Dashboard")
+    if recorded_at:
+        time_str = recorded_at.strftime("%d/%m/%Y %H:%M น.")
+    elif data_date:
+        time_str = str(data_date)
+    else:
+        time_str = ""
+    if time_str:
+        st.caption(f"📅 ข้อมูลวันที่ {time_str}")
     
     with st.sidebar:
         st.subheader("ตัวกรองข้อมูล")
         dam_list = raw_df['name'].tolist()
         selected_dam_name = st.selectbox("เลือกอ่างเก็บน้ำ:", dam_list)
     
-    dam_data = raw_df[raw_df['name'] == selected_dam_name].iloc[0]
+    dam_matches = raw_df[raw_df['name'] == selected_dam_name]
+    if dam_matches.empty:
+        st.error("ไม่พบข้อมูลเขื่อนที่เลือก")
+        return
+    dam_data = dam_matches.iloc[0]
     
     pred_7d = predict_single_dam(dam_data, models_dict["7_day"])
     pred_30d = predict_single_dam(dam_data, models_dict["30_day"])

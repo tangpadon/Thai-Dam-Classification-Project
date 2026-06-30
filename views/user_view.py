@@ -1,7 +1,8 @@
 # views/user_view.py
+import html
 import streamlit as st
 import datetime
-from weka_model import predict_single_dam
+from core.weka_model import predict_single_dam
 
 # ฟังก์ชันแปลผลจากภาษาอังกฤษของ Weka เป็นภาษาไทย
 def translate_status(status_text):
@@ -22,7 +23,7 @@ def get_color_theme(status):
     else:
         return {"bg": "#28a745", "text": "white", "border": "#28a745", "box_text": "#28a745"}
 
-def render(raw_df, models_dict):
+def render(raw_df, models_dict, data_date=None, recorded_at=None):
     # ==========================
     # 1. Sidebar & Data Selection
     # ==========================
@@ -32,7 +33,11 @@ def render(raw_df, models_dict):
         selected_dam_name = st.selectbox("", dam_list, label_visibility="collapsed")
     
     # ดึงข้อมูลแถวของเขื่อนที่ถูกเลือก
-    dam_data = raw_df[raw_df['name'] == selected_dam_name].iloc[0].copy()
+    dam_matches = raw_df[raw_df['name'] == selected_dam_name]
+    if dam_matches.empty:
+        st.error("ไม่พบข้อมูลเขื่อนที่เลือก")
+        return
+    dam_data = dam_matches.iloc[0].copy()
     
     # 💡 [จุดเชื่อมลอจิก] หากโมเดลต้องการฟีเจอร์ที่ไม่มีใน API (เช่น ฤดูกาล) ให้ทำ Custom Mapping ข้อมูลตรงนี้ก่อนส่งเข้า predict ได้เลย
 
@@ -60,17 +65,25 @@ def render(raw_df, models_dict):
     theme_7d = get_color_theme(pred_7d)
     theme_30d = get_color_theme(pred_30d)
     
-    current_date_str = datetime.datetime.now().strftime("%d/%m/%Y")
+    if recorded_at:
+        current_date_str = recorded_at.strftime("%d/%m/%Y %H:%M น.")
+    else:
+        current_date_str = (data_date or datetime.date.today()).strftime("%d/%m/%Y")
 
     # ==========================
     # 3. วาด UI ด้วย HTML/CSS
     # ==========================
-    st.markdown(f"### สถานการณ์น้ำปัจจุบัน: {selected_dam_name}")
+    safe_dam_name = html.escape(selected_dam_name)
+    st.markdown(f"### สถานการณ์น้ำปัจจุบัน: {safe_dam_name}")
     
     # กล่องสถานะปัจจุบัน (พื้นหลังทึบ สีเปลี่ยนตามสถานการณ์)
+    safe_current_status = html.escape(current_status)
+    safe_pred_7d = html.escape(pred_7d)
+    safe_pred_30d = html.escape(pred_30d)
+
     current_status_html = f"""
     <div style="background-color: {curr_theme['bg']}; padding: 50px 20px; border-radius: 12px; text-align: center; color: {curr_theme['text']}; margin-bottom: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <h1 style="font-size: 4rem; margin: 0 0 15px 0; color: {curr_theme['text']};">{current_status}</h1>
+        <h1 style="font-size: 4rem; margin: 0 0 15px 0; color: {curr_theme['text']};">{safe_current_status}</h1>
         <p style="font-size: 1.2rem; margin: 0; opacity: 0.9;">สถานะ ณ วันที่ {current_date_str}</p>
     </div>
     """
@@ -80,22 +93,20 @@ def render(raw_df, models_dict):
     
     col1, col2 = st.columns(2)
     
-    # กล่องพยากรณ์ 7 วัน (พื้นฐานโปร่งขาว เส้นขอบและข้อความสีเปลี่ยนตามสถานการณ์)
     with col1:
         box_7d_html = f"""
         <div style="border: 3px solid {theme_7d['border']}; border-radius: 12px; padding: 40px 20px; text-align: center; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
             <p style="font-size: 1.1rem; color: #555; margin: 0 0 15px 0; font-weight: bold;">พยากรณ์ล่วงหน้า 7 วัน</p>
-            <h2 style="font-size: 2.5rem; color: {theme_7d['box_text']}; margin: 0;">{pred_7d}</h2>
+            <h2 style="font-size: 2.5rem; color: {theme_7d['box_text']}; margin: 0;">{safe_pred_7d}</h2>
         </div>
         """
         st.markdown(box_7d_html, unsafe_allow_html=True)
         
-    # กล่องพยากรณ์ 30 วัน
     with col2:
         box_30d_html = f"""
         <div style="border: 3px solid {theme_30d['border']}; border-radius: 12px; padding: 40px 20px; text-align: center; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
             <p style="font-size: 1.1rem; color: #555; margin: 0 0 15px 0; font-weight: bold;">พยากรณ์ล่วงหน้า 30 วัน</p>
-            <h2 style="font-size: 2.5rem; color: {theme_30d['box_text']}; margin: 0;">{pred_30d}</h2>
+            <h2 style="font-size: 2.5rem; color: {theme_30d['box_text']}; margin: 0;">{safe_pred_30d}</h2>
         </div>
         """
         st.markdown(box_30d_html, unsafe_allow_html=True)

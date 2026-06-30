@@ -3,16 +3,7 @@ import pandas as pd
 import datetime
 import time
 import mysql.connector
-
-# ==========================================
-# ⚙️ CONFIGURATION
-# ==========================================
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '',  # ใส่รหัสผ่านหากตั้งไว้ใน XAMPP
-    'database': 'dam_forecast_db'
-}
+from config import DB_CONFIG
 
 BASE_API_URL = "https://app.rid.go.th/reservoir/api/dam/public/"
 DAYS_BACKWARD = 31
@@ -52,27 +43,26 @@ def fetch_real_historical_data():
                 mapping = {"dam_id": "id", "dam_name": "name"}
                 df = df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
                 
-                inserted_today = 0
-                for _, row in df.iterrows():
-                    sql = """
-                        INSERT IGNORE INTO dam_records 
-                        (dam_id, dam_name, record_date, percent_storage, inflow, outflow) 
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """
-                    val = (
-                        row.get('id'), 
-                        row.get('name'), 
-                        target_date, 
-                        float(row.get('percent_storage', 0) if pd.notna(row.get('percent_storage')) else 0), 
-                        float(row.get('inflow', 0) if pd.notna(row.get('inflow')) else 0), 
+                sql = """
+                    INSERT IGNORE INTO dam_records 
+                    (dam_id, dam_name, record_date, percent_storage, inflow, outflow) 
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """
+                data = [
+                    (
+                        row.get('id'),
+                        row.get('name'),
+                        target_date,
+                        float(row.get('percent_storage', 0) if pd.notna(row.get('percent_storage')) else 0),
+                        float(row.get('inflow', 0) if pd.notna(row.get('inflow')) else 0),
                         float(row.get('outflow', 0) if pd.notna(row.get('outflow')) else 0)
                     )
-                    cursor.execute(sql, val)
-                    if cursor.rowcount > 0:
-                        inserted_today += 1
-                        total_inserted += 1
-                
+                    for _, row in df.iterrows()
+                ]
+                cursor.executemany(sql, data)
                 conn.commit()
+                inserted_today = len(data)
+                total_inserted += inserted_today
                 print(f"บันทึกสำเร็จ {inserted_today} แถว")
                 
                 # หน่วงเวลา 1 วินาทีเพื่อไม่ให้ API ของกรมชลประทานทำงานหนักเกินไป (ป้องกันการโดนบล็อก IP)
