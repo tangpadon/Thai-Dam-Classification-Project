@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.env/
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+
+# Weka models & datasets (large/binary files)
+models/trained/*.model
+models/datasets/*.arff
+
+# Excel outputs
+scripts/*.xlsx
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Logs
+*.log

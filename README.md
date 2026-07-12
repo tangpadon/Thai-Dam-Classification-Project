@@ -11,6 +11,7 @@
 ├── dashboard.py            # Standalone dashboard
 ├── config.py               # DB_CONFIG, RID_API_URL
 ├── requirements.txt
+├── .gitignore
 │
 ├── core/
 │   ├── db.py               # Database operations (save, query, backfill)
@@ -22,10 +23,15 @@
 │   └── user_view.py        # Public view (dam status cards)
 │
 ├── models/
-│   ├── model7d.model       # RandomForest 100 trees (98.64%)
-│   ├── model30d.model      # RandomForest 100 trees (98.54%)
-│   ├── dam_risk_forecast_7days.arff   # Header metadata
-│   └── dam_risk_forecast_30days.arff  # Header metadata
+│   ├── trained/            # Trained Weka models
+│   │   ├── model7d.model   # RandomForest 100 trees (98.64%)
+│   │   └── model30d.model  # RandomForest 100 trees (98.54%)
+│   ├── datasets/           # ARFF training datasets
+│   │   ├── dam_risk_forecast_7days.arff
+│   │   └── dam_risk_forecast_30days.arff
+│   └── results/            # Weka evaluation results
+│       ├── Weka result 7days.txt
+│       └── Weka result 30days.txt
 │
 ├── training/
 │   ├── rid_dam_fetcher.py  # Training data pipeline + ARFF export
@@ -33,11 +39,15 @@
 │
 ├── scripts/
 │   ├── generate_report.py  # Model evaluation Excel report
-│   ├── infogain.py         # InfoGain feature ranking
-│   └── model_evaluation_summary.xlsx
+│   └── infogain.py         # InfoGain feature ranking
 │
-└── data/
-    └── dam_forecast_db.sql # DB schema + seed data
+├── data/
+│   └── dam_forecast_db.sql # DB schema + seed data
+│
+└── docs/                   # เอกสารประกอบ
+    ├── SESSION.md
+    ├── feature_selection_summary.md
+    └── *.docx, *.pdf       # รายงานโครงงาน
 ```
 
 ### ฟีเจอร์ปัจจุบัน
@@ -94,7 +104,7 @@ streamlit run dashboard.py
 - [ ] **Dockerize** — docker-compose (MySQL + app)
 - [ ] **CI/CD** — GitHub Actions deploy
 - [ ] **Environment variables** — ย้าย secrets ออกจาก `config.py` ไป `.env`
-- [ ] `.gitignore` — exclude `.model`, `.arff`, `__pycache__`, `.xlsx`, `.env`
+- [ ] `.gitignore` — ✅ ทำแล้ว (exclude `.model`, `.arff`, `__pycache__`, `.xlsx`, `.env`)
 
 ### 2. Model & Training
 - [ ] **Auto-retrain** — retrain model ทุก 3-6 เดือนเมื่อมีข้อมูลใหม่

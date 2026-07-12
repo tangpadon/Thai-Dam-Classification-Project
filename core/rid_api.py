@@ -27,7 +27,10 @@ def _load_from_db(target_date):
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
-            "SELECT dam_id, dam_name, percent_storage, inflow, outflow FROM dam_records WHERE record_date = %s",
+            """SELECT dam_id, dam_name, owner, region,
+                      capacity, storage, active_storage, dead_storage, volume,
+                      percent_storage, inflow, outflow
+               FROM dam_records WHERE record_date = %s""",
             (target_date,)
         )
         rows = cursor.fetchall()
@@ -115,7 +118,7 @@ def backfill_historical_data(lookback_days=30):
 
             if records:
                 if isinstance(records, list) and len(records) > 0 and isinstance(records[0], dict) and 'dam' in records[0]:
-                    df_hist = pd.json_normalize(records, record_path=['dam'])
+                    df_hist = pd.json_normalize(records, record_path=['dam'], meta=['region'])
                 elif isinstance(records, list):
                     df_hist = pd.json_normalize(records)
                 else:

@@ -4,6 +4,17 @@ import datetime
 import streamlit as st
 from config import DB_CONFIG
 
+def _safe_float(val):
+    if val is None:
+        return None
+    try:
+        import math
+        if math.isnan(val):
+            return None
+    except (TypeError, ValueError):
+        pass
+    return float(val)
+
 def save_to_database(df, record_date=None):
     if record_date is None:
         record_date = datetime.date.today()
@@ -14,13 +25,27 @@ def save_to_database(df, record_date=None):
 
         sql = """
             INSERT IGNORE INTO dam_records
-            (dam_id, dam_name, record_date, recorded_at, percent_storage, inflow, outflow)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            (dam_id, dam_name, owner, region, record_date, recorded_at,
+             capacity, storage, active_storage, dead_storage, volume,
+             percent_storage, inflow, outflow)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         data = [
             (
-                row.get('id'), row.get('name'), record_date, now,
-                row.get('percent_storage', 0), row.get('inflow', 0), row.get('outflow', 0)
+                row.get('id'),
+                row.get('name'),
+                row.get('owner'),
+                row.get('region'),
+                record_date,
+                now,
+                _safe_float(row.get('capacity')),
+                _safe_float(row.get('storage')),
+                _safe_float(row.get('active_storage')),
+                _safe_float(row.get('dead_storage')),
+                _safe_float(row.get('volume')),
+                _safe_float(row.get('percent_storage')),
+                _safe_float(row.get('inflow')),
+                _safe_float(row.get('outflow')),
             )
             for _, row in df.iterrows()
         ]
@@ -50,8 +75,16 @@ def get_recorded_time(target_date):
 def get_historical_data(dam_id):
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
-        query = "SELECT record_date, percent_storage FROM dam_records WHERE dam_id = %s ORDER BY record_date ASC LIMIT 30"
+        query = """
+            SELECT record_date, percent_storage
+            FROM dam_records
+            WHERE dam_id = %s
+            ORDER BY record_date DESC
+            LIMIT 30
+        """
         df_hist = pd.read_sql(query, conn, params=(int(dam_id),))
+        if not df_hist.empty:
+            df_hist = df_hist.sort_values('record_date', ascending=True).reset_index(drop=True)
         return df_hist
     except Exception as e:
         return pd.DataFrame()

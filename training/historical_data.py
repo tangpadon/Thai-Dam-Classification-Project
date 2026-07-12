@@ -45,14 +45,23 @@ def fetch_real_historical_data():
                 
                 sql = """
                     INSERT IGNORE INTO dam_records 
-                    (dam_id, dam_name, record_date, percent_storage, inflow, outflow) 
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    (dam_id, dam_name, owner, region, record_date,
+                     capacity, storage, active_storage, dead_storage, volume,
+                     percent_storage, inflow, outflow) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 data = [
                     (
                         row.get('id'),
                         row.get('name'),
+                        row.get('owner'),
+                        row.get('region'),
                         target_date,
+                        float(row.get('capacity', 0) if pd.notna(row.get('capacity')) else 0),
+                        float(row.get('storage', 0) if pd.notna(row.get('storage')) else 0),
+                        float(row.get('active_storage', 0) if pd.notna(row.get('active_storage')) else 0),
+                        float(row.get('dead_storage', 0) if pd.notna(row.get('dead_storage')) else 0),
+                        float(row.get('volume', 0) if pd.notna(row.get('volume')) else 0),
                         float(row.get('percent_storage', 0) if pd.notna(row.get('percent_storage')) else 0),
                         float(row.get('inflow', 0) if pd.notna(row.get('inflow')) else 0),
                         float(row.get('outflow', 0) if pd.notna(row.get('outflow')) else 0)
