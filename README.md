@@ -86,6 +86,7 @@
 ```bash
 # หน้าหลัก
 streamlit run app.py
+python -m streamlit run app.py
 
 # หรือ dashboard standalone
 streamlit run dashboard.py

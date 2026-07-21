@@ -1,6 +1,7 @@
 # views/admin_view.py
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 from core.db import get_historical_data
 from core.weka_model import predict_single_dam
 
@@ -44,14 +45,40 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     with col4: st.metric("Inflow (M)", dam_data.get('inflow', 0))
     with col5: st.metric("Outflow (M)", dam_data.get('outflow', 0))
 
-    st.subheader("📈 กราฟแนวโน้มร้อยละความจุย้อนหลัง")
+    st.subheader("📈 กราฟแนวโน้มย้อนหลัง (Percent Storage / Inflow / Outflow)")
     hist_df = get_historical_data(dam_data['id'])
     
     if not hist_df.empty and len(hist_df) > 1:
-        fig = px.line(hist_df, x='record_date', y='percent_storage', markers=True)
-        fig.update_layout(yaxis_range=[0, 100], xaxis_title="", yaxis_title="ร้อยละความจุ (%)")
-        fig.add_hline(y=80, line_dash="dash", line_color="red", annotation_text="เกณฑ์น้ำล้น (80%)")
-        fig.add_hline(y=30, line_dash="dash", line_color="orange", annotation_text="เกณฑ์น้ำแล้ง (30%)")
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=hist_df['record_date'], y=hist_df['percent_storage'],
+            name='% Storage', mode='lines+markers',
+            line=dict(color='#1f77b4', width=2), marker=dict(size=6), yaxis='y1'
+        ))
+        fig.add_trace(go.Scatter(
+            x=hist_df['record_date'], y=hist_df['inflow'],
+            name='Inflow', mode='lines+markers',
+            line=dict(color='#2ca02c', width=2, dash='dash'), marker=dict(size=6), yaxis='y2'
+        ))
+        fig.add_trace(go.Scatter(
+            x=hist_df['record_date'], y=hist_df['outflow'],
+            name='Outflow', mode='lines+markers',
+            line=dict(color='#d62728', width=2, dash='dash'), marker=dict(size=6), yaxis='y2'
+        ))
+
+        io_vals = hist_df[['inflow', 'outflow']].dropna().values.flatten()
+        io_min, io_max = max(0, io_vals.min() - 5), io_vals.max() + 5
+
+        fig.add_hline(y=80, line_dash="dot", line_color="red", annotation_text="น้ำล้น (80%)", yref='y1')
+        fig.add_hline(y=30, line_dash="dot", line_color="orange", annotation_text="น้ำแล้ง (30%)", yref='y1')
+        fig.update_layout(
+            yaxis=dict(title="ร้อยละความจุ (%)", range=[0, 100]),
+            yaxis2=dict(title="Inflow / Outflow (ล้านลบ.ม./วัน)", overlaying='y', side='right',
+                        range=[io_min, io_max]),
+            xaxis_title="",
+            legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+            height=450
+        )
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("กำลังสะสมข้อมูลประวัติ...")

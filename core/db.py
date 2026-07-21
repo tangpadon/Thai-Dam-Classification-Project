@@ -76,7 +76,7 @@ def get_historical_data(dam_id):
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         query = """
-            SELECT record_date, percent_storage
+            SELECT record_date, percent_storage, inflow, outflow
             FROM dam_records
             WHERE dam_id = %s
             ORDER BY record_date DESC
