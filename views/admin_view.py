@@ -74,7 +74,7 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
             legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
             height=450
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'scrollZoom': False, 'displayModeBar': False})
     else:
         st.info("กำลังสะสมข้อมูลประวัติ...")
         st.progress(int(float(dam_data.get('percent_storage', 0))))
