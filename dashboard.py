@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from core.db import get_historical_data
 from core.rid_api import fetch_and_save_data, backfill_historical_data
 from core.weka_model import init_jvm_safe, load_resources, predict_single_dam
+from core.utils import translate_status
 
 st.set_page_config(page_title="Dam Forecast", layout="wide", initial_sidebar_state="expanded")
 
@@ -12,12 +13,6 @@ init_jvm_safe()
 models_dict = load_resources()
 raw_df, data_date, recorded_at = fetch_and_save_data()
 backfill_historical_data(lookback_days=30)
-
-def translate_status(status_text):
-    status_lower = str(status_text).lower()
-    if "flood" in status_lower: return "น้ำล้น (Flood)"
-    elif "drought" in status_lower: return "น้ำแล้ง (Drought)"
-    else: return "ปกติ (Normal)"
 
 if not raw_df.empty:
     with st.sidebar:

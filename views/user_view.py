@@ -3,16 +3,7 @@ import html
 import streamlit as st
 import datetime
 from core.weka_model import predict_single_dam
-
-# ฟังก์ชันแปลผลจากภาษาอังกฤษของ Weka เป็นภาษาไทย
-def translate_status(status_text):
-    status_lower = str(status_text).lower()
-    if "flood" in status_lower: 
-        return "น้ำล้น (Flood)"
-    elif "drought" in status_lower: 
-        return "น้ำแล้ง (Drought)"
-    else: 
-        return "ปกติ (Normal)"
+from core.utils import translate_status
 
 # ฟังก์ชันดึงชุดสีให้สอดคล้องกับสถานะความเสี่ยง
 def get_color_theme(status):

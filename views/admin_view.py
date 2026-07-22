@@ -4,12 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from core.db import get_historical_data
 from core.weka_model import predict_single_dam
-
-def translate_status(status_text):
-    status_lower = str(status_text).lower()
-    if "flood" in status_lower: return "น้ำล้น (Flood)"
-    elif "drought" in status_lower: return "น้ำแล้ง (Drought)"
-    else: return "ปกติ (Normal)"
+from core.utils import translate_status
 
 def render(raw_df, models_dict, data_date=None, recorded_at=None):
     st.title("🌊 Dam Forecast Dashboard")
