@@ -1,0 +1,85 @@
+=== Run information ===
+
+Scheme:       weka.classifiers.misc.InputMappedClassifier -I -trim -W weka.classifiers.functions.Logistic -- -R 1.0E-8 -M -1 -num-decimal-places 4
+Relation:     dam_risk_forecast_30days-weka.filters.unsupervised.attribute.Remove-R1-4,10-13
+Instances:    20475
+Attributes:   6
+              volume
+              percent_storage
+              inflow
+              outflow
+              month
+              risk_class_30d
+Test mode:    user supplied test set:  size unknown (reading incrementally)
+
+=== Classifier model (full training set) ===
+
+InputMappedClassifier:
+
+Logistic Regression with ridge parameter of 1.0E-8
+Coefficients...
+                     Class
+Variable           drought   normal
+===================================
+volume             -0.0025   0.0001
+percent_storage    -0.3474  -0.1271
+inflow             -0.1617  -0.0328
+outflow              0.346  -0.0233
+month              -0.5752  -0.2007
+Intercept          20.5485  12.3041
+
+
+Odds Ratios...
+                     Class
+Variable           drought   normal
+===================================
+volume              0.9975   1.0001
+percent_storage     0.7065   0.8806
+inflow              0.8507   0.9678
+outflow             1.4134    0.977
+month               0.5626   0.8181
+
+Attribute mappings:
+
+Model attributes           	    Incoming attributes
+---------------------------	    ----------------
+(numeric) volume           	--> 5 (numeric) volume
+(numeric) percent_storage  	--> 6 (numeric) percent_storage
+(numeric) inflow           	--> 7 (numeric) inflow
+(numeric) outflow          	--> 8 (numeric) outflow
+(numeric) month            	--> 9 (numeric) month
+(nominal) risk_class_30d   	--> 14 (nominal) risk_class_30d
+
+
+Time taken to build model: 0.14 seconds
+
+=== Evaluation on test set ===
+
+Time taken to test model on supplied test set: 0.77 seconds
+
+=== Summary ===
+
+Correctly Classified Instances        3308               81.4778 %
+Incorrectly Classified Instances       752               18.5222 %
+Kappa statistic                          0.651 
+Mean absolute error                      0.1679
+Root mean squared error                  0.3104
+Relative absolute error                 39.0464 %
+Root relative squared error             57.1166 %
+Total Number of Instances             4060     
+
+=== Detailed Accuracy By Class ===
+
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.729    0.009    0.626      0.729    0.674      0.668    0.991     0.564     drought
+                 0.963    0.270    0.671      0.963    0.791      0.668    0.917     0.810     normal
+                 0.730    0.011    0.991      0.730    0.840      0.703    0.942     0.969     flood
+Weighted Avg.    0.815    0.105    0.867      0.815    0.819      0.689    0.934     0.903     
+
+=== Confusion Matrix ===
+
+    a    b    c   <-- classified as
+   62   23    0 |    a = drought
+   37 1425   17 |    b = normal
+    0  675 1821 |    c = flood
+

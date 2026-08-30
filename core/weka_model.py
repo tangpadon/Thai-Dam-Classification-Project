@@ -7,7 +7,7 @@ from weka.classifiers import Classifier
 from weka.core.dataset import Instance, Instances
 from weka.core.converters import Loader
 
-FEATURES = ["percent_storage", "inflow", "outflow", "month", "id"]
+FEATURES = ["volume", "percent_storage", "inflow", "outflow", "month"]
 
 @st.cache_resource
 def init_jvm_safe():
@@ -47,13 +47,13 @@ def _extract_header(arff_path, class_attr_name):
 def load_resources():
     base = os.path.join(os.path.dirname(__file__), "..", "models")
 
-    raw_7d = serialization.read(os.path.join(base, "trained", "model7d.model"))
+    raw_7d = serialization.read(os.path.join(base, "trained", "Logistic_7days.model"))
     model_7d = Classifier(jobject=raw_7d)
-    header_7d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_7days.arff"), "risk_class_7d")
+    header_7d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_7days_train.arff"), "risk_class_7d")
 
-    raw_30d = serialization.read(os.path.join(base, "trained", "model30d.model"))
+    raw_30d = serialization.read(os.path.join(base, "trained", "RF_30days.model"))
     model_30d = Classifier(jobject=raw_30d)
-    header_30d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_30days.arff"), "risk_class_30d")
+    header_30d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_30days_train.arff"), "risk_class_30d")
 
     return {"7_day": {"model": model_7d, "header": header_7d}, "30_day": {"model": model_30d, "header": header_30d}}
 

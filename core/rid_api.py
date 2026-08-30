@@ -13,7 +13,7 @@ def _count_records_for_date(target_date):
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM dam_records WHERE record_date = %s", (target_date,))
+        cursor.execute("SELECT COUNT(*) FROM dam_daily WHERE record_date = %s", (target_date,))
         return cursor.fetchone()[0]
     except Exception:
         return 0
@@ -27,10 +27,12 @@ def _load_from_db(target_date):
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
-            """SELECT dam_id, dam_name, owner, region,
-                      capacity, storage, active_storage, dead_storage, volume,
-                      percent_storage, inflow, outflow
-               FROM dam_records WHERE record_date = %s""",
+            """SELECT dc.dam_id, dc.dam_name, dc.owner, dc.region,
+                      dc.capacity, dc.storage, dc.active_storage, dc.dead_storage,
+                      dr.volume, dr.percent_storage, dr.inflow, dr.outflow
+               FROM dam_daily dr
+               JOIN dam_info dc ON dr.dam_id = dc.dam_id
+               WHERE dr.record_date = %s""",
             (target_date,)
         )
         rows = cursor.fetchall()
@@ -46,48 +48,79 @@ def _load_from_db(target_date):
     except Exception:
         return None, None
 
+NOON = datetime.time(12, 0)
+
+def _has_measurements(records):
+    """ตรวจว่า API คืนค่าที่ยังว่าง (None) หรือมีค่าจริงของวันนั้นแล้ว"""
+    for rec in (records or []):
+        if not isinstance(rec, dict):
+            continue
+        for d in (rec.get("dam", []) or []):
+            if d.get("volume") is not None or d.get("percent_storage") is not None:
+                return True
+    return False
+
+def _normalize_records(records):
+    df = pd.json_normalize(records, record_path=['dam'], meta=['region'])
+    mapping = {"dam_id": "id", "dam_name": "name"}
+    return df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
+
+def _fetch_from_api(date_str=None):
+    url = f"{DATA_API_URL}{date_str}" if date_str else RID_API_URL
+    response = requests.get(url, timeout=10)
+    res_data = response.json()
+    return res_data.get("data", res_data)
+
 def fetch_and_save_data():
-    today = datetime.date.today()
+    """ดึงข้อมูลน้ำตามเงื่อนไขเวลา 12:00:
+    - ยังไม่เที่ยง & ข้อมูลวันนี้ยังว่าง  -> ไม่บันทึกวันนี้ ใช้ข้อมูลวาน
+    - ยังไม่เที่ยง & ข้อมูลวันนี้อัปเดตแล้ว -> บันทึกวันนี้ ใช้เลย
+    - เที่ยงแล้ว & ข้อมูลวันนี้ยังว่าง   -> เติมข้อมูลวันนี้ด้วยข้อมูลวาน
+    - เที่ยงแล้ว & ข้อมูลวันนี้อัปเดตแล้ว -> บันทึกวันนี้ ใช้เลย
+    """
+    now = datetime.datetime.now()
+    today = now.date()
     yesterday = today - datetime.timedelta(days=1)
 
+    # 1) มีข้อมูลวันนี้ใน DB แล้ว -> ใช้เลย
     df, recorded_at = _load_from_db(today)
     if df is not None:
         return df, today, recorded_at
 
+    df_y, recorded_at_y = _load_from_db(yesterday)
+
+    # 2) ดึงข้อมูลวันนี้จาก API (จุด endpoint ตามวัน เพื่อดูว่าอัปเดตหรือยัง)
     try:
-        response = requests.get(RID_API_URL, timeout=10)
-        res_data = response.json()
-        records = res_data.get("data", res_data)
-
-        if not records:
-            df_y, _ = _load_from_db(yesterday)
-            if df_y is not None:
-                return df_y, yesterday, None
-            return pd.DataFrame(), yesterday, None
-
-        df = pd.json_normalize(records, record_path=['dam'], meta=['region'])
-        mapping = {"dam_id": "id", "dam_name": "name"}
-        df = df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
-
-        save_to_database(df, record_date=today)
-        count_after = _count_records_for_date(today)
-
-        if count_after > 0:
-            effective_date = today
-            recorded_at = get_recorded_time(today)
-        else:
-            effective_date = yesterday
-            recorded_at = None
-
-        df['month'] = effective_date.month
-        return df, effective_date, recorded_at
-
+        records = _fetch_from_api(today.strftime("%Y-%m-%d"))
+        data_available = _has_measurements(records)
     except Exception as e:
         st.error(f"ไม่สามารถเชื่อมต่อ API ได้: {e}")
-        df_y, _ = _load_from_db(yesterday)
         if df_y is not None:
-            return df_y, yesterday, None
+            return df_y, yesterday, recorded_at_y
         return pd.DataFrame(), None, None
+
+    # 3) บันทึก/เลือกข้อมูลตามเวลา
+    if data_available:
+        df_new = _normalize_records(records)
+        if 'month' not in df_new.columns:
+            df_new['month'] = today.month
+        save_to_database(df_new, record_date=today)
+        if _count_records_for_date(today) > 0:
+            return df_new, today, get_recorded_time(today)
+        return df_new, today, None
+
+    # ข้อมูลวันนี้ยังว่าง
+    if now.time() < NOON:
+        # ยังไม่เที่ยง -> ไม่บันทึกวันนี้ ใช้ข้อมูลวาน
+        if df_y is not None:
+            return df_y, yesterday, recorded_at_y
+        return pd.DataFrame(), yesterday, None
+    else:
+        # เที่ยงแล้ว -> เติมข้อมูลวันนี้ด้วยข้อมูลวาน
+        if df_y is not None:
+            save_to_database(df_y, record_date=today)
+            return df_y, today, get_recorded_time(today)
+        return pd.DataFrame(), today, None
 
 def backfill_historical_data(lookback_days=30):
     today = datetime.date.today()

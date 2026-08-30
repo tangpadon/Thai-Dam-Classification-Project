@@ -8,7 +8,6 @@
 
 ```
 ├── app.py                  # Entry point (Streamlit)
-├── dashboard.py            # Standalone dashboard
 ├── config.py               # DB_CONFIG, RID_API_URL
 ├── requirements.txt
 ├── .gitignore
@@ -19,8 +18,7 @@
 │   └── weka_model.py       # JVM init + model load + prediction
 │
 ├── views/
-│   ├── admin_view.py       # Admin dashboard (graph + alerts)
-│   └── user_view.py        # Public view (dam status cards)
+│   └── user_view.py        # Main dashboard (single page, 6 sections)
 │
 ├── models/
 │   ├── trained/            # Trained Weka models
@@ -41,13 +39,9 @@
 │   ├── generate_report.py  # Model evaluation Excel report
 │   └── infogain.py         # InfoGain feature ranking
 │
-├── data/
-│   └── dam_forecast_db.sql # DB schema + seed data
-│
-└── docs/                   # เอกสารประกอบ
-    ├── SESSION.md
-    ├── feature_selection_summary.md
-    └── *.docx, *.pdf       # รายงานโครงงาน
+└── data/
+    ├── dam_forecast_db.sql # DB schema + seed data
+    └── dam_forecast_db_v2.sql
 ```
 
 ### ฟีเจอร์ปัจจุบัน
@@ -60,7 +54,7 @@
 | **Historical graph** | กราฟแนวโน้มร้อยละความจุย้อนหลัง (30 วัน) |
 | **Alert system** | แจ้งเตือนตามระดับความเสี่ยง (🚨/⚠️/✅) |
 | **Backfill** | ดึงข้อมูลย้อนหลัง 31 วันในรอบเดียว |
-| **User/Admin views** | แยกหน้าสำหรับประชาชนและผู้บริหาร |
+| **Single-page dashboard** | รวมผู้ใช้งาน/ผู้บริหารในหน้าเดียว (6 sections) |
 | **InfoGain ranking** | จัดอันดับความสำคัญของ features |
 | **Model evaluation** | Export สรุปผลไป Excel |
 
@@ -87,9 +81,6 @@
 # หน้าหลัก
 streamlit run app.py
 python -m streamlit run app.py
-
-# หรือ dashboard standalone
-streamlit run dashboard.py
 ```
 
 ### ฐานข้อมูล
