@@ -218,8 +218,6 @@ streamlit run app.py
 
 <div align="center">
 
-<img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
-
 <sub>ระบบพยากรณ์ความเสี่ยงน้ำ - จัดทำเพื่อการศึกษา</sub>
 
 </div>
