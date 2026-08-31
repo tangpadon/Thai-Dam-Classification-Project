@@ -7,7 +7,7 @@ import mysql.connector
 from config import RID_API_URL, DB_CONFIG
 from core.db import save_to_database, get_recorded_time
 
-DATA_API_URL = "https://app.rid.go.th/reservoir/api/dam/public/"
+DATA_API_URL = RID_API_URL
 
 def _count_records_for_date(target_date):
     try:
@@ -51,7 +51,6 @@ def _load_from_db(target_date):
 NOON = datetime.time(12, 0)
 
 def _has_measurements(records):
-    """ตรวจว่า API คืนค่าที่ยังว่าง (None) หรือมีค่าจริงของวันนั้นแล้ว"""
     for rec in (records or []):
         if not isinstance(rec, dict):
             continue
@@ -66,30 +65,22 @@ def _normalize_records(records):
     return df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
 
 def _fetch_from_api(date_str=None):
-    url = f"{DATA_API_URL}{date_str}" if date_str else RID_API_URL
+    url = f"{DATA_API_URL}{date_str}" if date_str else DATA_API_URL.rstrip('/')
     response = requests.get(url, timeout=10)
     res_data = response.json()
     return res_data.get("data", res_data)
 
 def fetch_and_save_data():
-    """ดึงข้อมูลน้ำตามเงื่อนไขเวลา 12:00:
-    - ยังไม่เที่ยง & ข้อมูลวันนี้ยังว่าง  -> ไม่บันทึกวันนี้ ใช้ข้อมูลวาน
-    - ยังไม่เที่ยง & ข้อมูลวันนี้อัปเดตแล้ว -> บันทึกวันนี้ ใช้เลย
-    - เที่ยงแล้ว & ข้อมูลวันนี้ยังว่าง   -> เติมข้อมูลวันนี้ด้วยข้อมูลวาน
-    - เที่ยงแล้ว & ข้อมูลวันนี้อัปเดตแล้ว -> บันทึกวันนี้ ใช้เลย
-    """
     now = datetime.datetime.now()
     today = now.date()
     yesterday = today - datetime.timedelta(days=1)
 
-    # 1) มีข้อมูลวันนี้ใน DB แล้ว -> ใช้เลย
     df, recorded_at = _load_from_db(today)
     if df is not None:
         return df, today, recorded_at
 
     df_y, recorded_at_y = _load_from_db(yesterday)
 
-    # 2) ดึงข้อมูลวันนี้จาก API (จุด endpoint ตามวัน เพื่อดูว่าอัปเดตหรือยัง)
     try:
         records = _fetch_from_api(today.strftime("%Y-%m-%d"))
         data_available = _has_measurements(records)
@@ -99,7 +90,6 @@ def fetch_and_save_data():
             return df_y, yesterday, recorded_at_y
         return pd.DataFrame(), None, None
 
-    # 3) บันทึก/เลือกข้อมูลตามเวลา
     if data_available:
         df_new = _normalize_records(records)
         if 'month' not in df_new.columns:
@@ -109,14 +99,11 @@ def fetch_and_save_data():
             return df_new, today, get_recorded_time(today)
         return df_new, today, None
 
-    # ข้อมูลวันนี้ยังว่าง
     if now.time() < NOON:
-        # ยังไม่เที่ยง -> ไม่บันทึกวันนี้ ใช้ข้อมูลวาน
         if df_y is not None:
             return df_y, yesterday, recorded_at_y
         return pd.DataFrame(), yesterday, None
     else:
-        # เที่ยงแล้ว -> เติมข้อมูลวันนี้ด้วยข้อมูลวาน
         if df_y is not None:
             save_to_database(df_y, record_date=today)
             return df_y, today, get_recorded_time(today)

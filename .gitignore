@@ -18,8 +18,10 @@ venv/
 *.swp
 *.swo
 
-# Environment variables
+# Environment variables (secret) - ยกเว้น .env.example (template)
 .env
+.env.*
+!.env.example
 
 # Weka models & datasets (large/binary files)
 models/trained/*.model

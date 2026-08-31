@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 from core.weka_model import init_jvm_safe, load_resources
 from core.rid_api import fetch_and_save_data, backfill_historical_data

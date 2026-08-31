@@ -5,9 +5,7 @@ import plotly.graph_objects as go
 from core.db import get_historical_data
 from core.weka_model import predict_single_dam
 
-# ==============================
 # สถานะน้ำ : จำแนก + ธีมสี + SVG ไอคอน
-# ==============================
 def _classify_by_percent(pct):
     try:
         pct = float(pct)
@@ -85,11 +83,8 @@ def _svg_icon(name, size=18, color="currentColor"):
             f'style="display:inline-block; vertical-align:middle; flex-shrink:0;">{paths}</svg>')
 
 
-# ==============================
 # คอมโพเนนต์หน้า : การ์ดแสดงผลต่าง ๆ
-# ==============================
 def _card_box(inner, css=None):
-    """css: dict ของ property CSS (เช่น {'text-align': 'center'})"""
     style_attr = " ".join(f"{k}:{v};" for k, v in (css or {}).items())
     return f'<div class="card-box" style="{style_attr}">{inner}</div>'
 
@@ -105,7 +100,6 @@ def _metric_card(label, value, sub=None, color="#0f172a", icon=None, icon_color=
 
 
 def _pred_cards(items):
-    """items: list of (title, theme, sub) -> การ์ดพยากรณ์ 3 ช่อง เรียงแนวนอน"""
     cards = "".join(
         _card_box(f"""
             <div style="font-size:0.85rem; color:#64748b; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:6px;">{_svg_icon("calendar", 15, "#64748b")} {title}</div>
@@ -119,9 +113,7 @@ def _pred_cards(items):
     return f'<div style="display:flex; gap:16px; align-items:stretch;">{cards}</div>'
 
 
-# ==============================
 # Main Render
-# ==============================
 def render(raw_df, models_dict, data_date=None, recorded_at=None):
     st.markdown("""
         <style>
@@ -327,6 +319,6 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     # ---------- Footer ----------
     st.markdown("""
     <div style="text-align:center; color:#94a3b8; font-size:0.8rem; margin-top:25px;">
-        หมายเหตุ: ข้อมูลนี้เป็นข้อมูลสมมติสำหรับการศึกษาเท่านั้น
+        หมายเหตุ: ข้อมูลนี้อาจมีข้อผิดพลาดหรือไม่สมบูรณ์ และเป็นเพียงการพยากรณ์เท่านั้น โปรดใช้วิจารณญาณในการตัดสินใจ
     </div>
     """, unsafe_allow_html=True)

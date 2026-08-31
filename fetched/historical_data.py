@@ -9,7 +9,6 @@ BASE_API_URL = "https://app.rid.go.th/reservoir/api/dam/public/"
 DAYS_BACKWARD = 31
 
 def fetch_real_historical_data():
-    """ดึงข้อมูลจริงย้อนหลังจาก RID API ตามจำนวนวันที่กำหนด"""
     print(f"🔄 เริ่มดึงข้อมูลของจริงย้อนหลัง {DAYS_BACKWARD} วันจาก RID API...")
     
     try:
@@ -18,8 +17,7 @@ def fetch_real_historical_data():
         
         today = datetime.date.today()
         total_inserted = 0
-        
-        # วนลูปตั้งแต่วันที่ย้อนหลัง 31 วัน จนถึง วันปัจจุบัน
+
         for d in range(DAYS_BACKWARD, -1, -1):
             target_date = today - datetime.timedelta(days=d)
             date_str = target_date.strftime("%Y-%m-%d")
@@ -38,12 +36,10 @@ def fetch_real_historical_data():
                     continue
                     
                 df = pd.json_normalize(records, record_path=['dam'])
-                
-                # เปลี่ยนชื่อคอลัมน์ให้ตรงกับฐานข้อมูล
+
                 mapping = {"dam_id": "id", "dam_name": "name"}
                 df = df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
-                
-                # บันทึกคุณลักษณะเขื่อน
+
                 sql_info = """
                     INSERT INTO dam_info
                     (dam_id, dam_name, owner, region, capacity, storage, active_storage, dead_storage)
@@ -62,7 +58,6 @@ def fetch_real_historical_data():
                 ]
                 cursor.executemany(sql_info, info_data)
 
-                # บันทึกข้อมูลรายวัน
                 sql = """
                     INSERT IGNORE INTO dam_daily
                     (dam_id, record_date, volume, percent_storage, inflow, outflow)
@@ -84,8 +79,7 @@ def fetch_real_historical_data():
                 inserted_today = len(data)
                 total_inserted += inserted_today
                 print(f"บันทึกสำเร็จ {inserted_today} แถว")
-                
-                # หน่วงเวลา 1 วินาทีเพื่อไม่ให้ API ของกรมชลประทานทำงานหนักเกินไป (ป้องกันการโดนบล็อก IP)
+
                 time.sleep(1)
                 
             except requests.exceptions.RequestException as e:

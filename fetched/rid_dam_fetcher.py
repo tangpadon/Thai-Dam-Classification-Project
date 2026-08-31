@@ -1,25 +1,3 @@
-"""
-RID Dam Data Fetcher with Shifted Risk Prediction
-สร้างไฟล์ ARFF สำหรับพยากรณ์ความเสี่ยงน้ำท่วมและภัยแล้ง
-โดย shift percent_storage ล่วงหน้า 7 วัน และ 30 วัน
-
-หลักการ:
-- shift(-N) ทำให้แถว t ได้ค่า percent_storage ของวัน t+N
-- Buffer เดียว (ก่อน START_DATE ~1 เดือน) → เผื่อข้อมูลขาดหายเท่านั้น
-  (Forward Fill ให้ข้อมูลต้นปี 2024 มีค่าวันก่อนหน้าจริง)
-- Logic หลักยอมรับการเสียวัน: N วันท้ายของช่วงไม่มี future value
-  → แถวที่ไม่มี target ถูกตัดทิ้ง (รวมถึงวันที่ API ขาดจริง)
-- Output เฉพาะ [START_DATE, END_DATE] และทุกแถวต้องมีคลาสเป้าหมายจริง
-  * 7d  : 35 dams × (731−7)  = 25,340 records (731 = 366[leap]+365)
-  * 30d : 35 dams × (731−30) = 24,535 records
-- Train/Test split แบบ temporal 80:20 (time series → ห้ามสุ่ม ต้องตัดตามเวลา)
-  → export 4 ไฟล์: {7days,30days}_{train,test}.arff
-- ไม่มี attribute "total" และ "date" (แปลงเป็น month แล้ว / ไม่มี season)
-- Missing value → Forward Fill ด้วยข้อมูลวันก่อนหน้าของเขื่อนเดียวกัน
-- Request fail → retry พร้อม exponential backoff
-- ค่า categorical ใน ARFF (ชื่อเขื่อน/region ฯลฯ) ถูก quote ตามรูปแบบ ARFF
-"""
-
 import numpy as np
 import requests
 import pandas as pd
@@ -40,8 +18,6 @@ logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────────────────────────────────────
 
 class RIDDataFetcher:
-    """ดึงข้อมูลจาก RID API"""
-
     BASE_URL = "https://app.rid.go.th/reservoir/api/dam/public"
 
     def __init__(self):
@@ -78,7 +54,6 @@ class RIDDataFetcher:
         end_date: datetime,
         delay: float = 0.5,
     ) -> pd.DataFrame:
-        """ดึงข้อมูลในช่วงวันที่กำหนด (inclusive)"""
         all_records = []
         current_date = start_date
         total_days = (end_date - start_date).days + 1
@@ -124,7 +99,6 @@ class RIDDataFetcher:
 class RiskClassifier:
     @staticmethod
     def classify(pct: float) -> str:
-        # เรียกใช้ได้เฉพาะค่าที่ไม่ใช่ NaN (แถว NaN ถูกตัดก่อนหน้านี้แล้ว)
         if pct < 30:
             return "drought"
         if pct > 80:
@@ -137,20 +111,6 @@ class RiskClassifier:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class DataProcessor:
-    """
-    รับ df_raw ที่ครอบคลุม [START_DATE - 1 เดือน, END_DATE] แล้ว:
-      1. Forward-fill missing values (groupby dam_id)
-         → buffer ก่อน START_DATE ทำให้ข้อมูลต้นช่วง ffilled จากวันก่อนหน้าได้
-      2. Shift percent_storage ล่วงหน้า shift_days วัน → สร้าง target
-         → N วันท้ายไม่มี future value (เสียตาม logic หลัก by design)
-      3. ตัดแถวที่ไม่มีคลาสเป้าหมายออก (N วันท้าย + วันที่ API ขาด)
-         → ARFF เริ่มที่วันที่มี target ครบแล้วเท่านั้น
-      4. กรองเฉพาะ [start_date, end_date]
-      5. แปลง date → month แล้วตัด date ทิ้ง (ไม่มี season)
-    """
-
-    # คอลัมน์ที่ 0 = missing (API ส่ง 0 แทน null) → แปลงเป็น NaN ก่อน ffill
-    # ยกเว้น dead_storage: 0 มีความหมายจริง
     _FILL_ZERO_AS_NAN = [
         "capacity", "storage", "active_storage",
         "volume", "percent_storage", "inflow", "outflow",
@@ -161,12 +121,6 @@ class DataProcessor:
 
     @classmethod
     def _forward_fill(cls, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        แปลง 0 → NaN เฉพาะคอลัมน์ที่กำหนด แล้ว ffill ตาม dam_id
-        (ใช้ค่าของวันก่อนหน้า) — buffer ก่อน START_DATE ช่วยให้
-        แถวแรกๆ ของปี 2024 มีค่าก่อนหน้าให้ fill
-        แถวที่ยังเป็น NaN หลัง ffill (เขื่อนไม่มีข้อมูลเลยในช่วงดึง) → 0
-        """
         out = df.sort_values(["id", "date"]).copy()
         out[cls._FILL_ZERO_AS_NAN] = (
             out[cls._FILL_ZERO_AS_NAN].replace(0, np.nan)
@@ -186,35 +140,11 @@ class DataProcessor:
         shift_days: int,
         test_ratio: float = 0.0,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
-        """
-        สร้าง dataset ครบ 35 dams × n_days records
-
-        Args:
-            df_raw     : raw DataFrame จาก RIDDataFetcher
-                         ต้องครอบคลุม (start_date - buffer) ถึง end_date
-            start_date : วันเริ่มต้นของ output
-            end_date   : วันสุดท้ายของ output
-            shift_days : 7 หรือ 30
-            test_ratio : สัดส่วน test (0.2 = 20% ท้ายของช่วงเวลา)
-                         0 = ไม่แบ่ง
-
-        Returns:
-            test_ratio == 0 → DataFrame เดียว
-            test_ratio  > 0 → (train_df, test_df)
-                train : [start_date, cutoff)   ≈ 80% ต้น
-                test  : [cutoff, end_date]     ≈ 20% ท้าย
-                (time series → split ตามเวลาเสมอ ห้ามสุ่ม)
-            ทุกแถวมีคลาสเป้าหมาย, ไม่มีคอลัมน์ date (แทนด้วย month)
-        """
         df = df_raw.copy()
         df["date"] = pd.to_datetime(df["date"])
 
-        # 1. Forward fill
         df = cls._forward_fill(df)
 
-        # 2. Shift → สร้าง future_pct
-        #    shift(-N): แถว t จะได้ percent_storage ของวัน t+N
-        #    N วันท้ายของช่วงไม่มี future value → ถูกตัดในขั้นถัดไป (by design)
         future_col = f"future_pct_{shift_days}d"
         target_col = f"risk_class_{shift_days}d"
 
@@ -223,10 +153,6 @@ class DataProcessor:
             df.groupby("id")["percent_storage"].shift(-shift_days)
         )
 
-        # 3. ตัดแถวที่ไม่มีคลาสเป้าหมาย
-        #    - N วันท้ายของช่วง: เสียตาม logic หลัก (shift) by design
-        #    - วันที่ API ขาด: target ชี้ไปวันที่ไม่มีข้อมูล → ตัดเช่นกัน
-        #    (ARFF ต้องมีแต่แถวที่มี target จริง — ไม่ default เป็น normal)
         n_missing = int(df[future_col].isna().sum())
         if n_missing:
             logger.warning(
@@ -237,17 +163,12 @@ class DataProcessor:
         df = df.dropna(subset=[future_col])
         df[target_col] = df[future_col].apply(RiskClassifier.classify)
 
-        # 4. ตัด buffer ก่อน START_DATE ออก (เก็บเฉพาะ start_date ถึง end_date)
         start_ts = pd.Timestamp(start_date)
         end_ts   = pd.Timestamp(end_date)
         df = df[(df["date"] >= start_ts) & (df["date"] <= end_ts)].copy()
 
-        # 5. Temporal split — time series ห้ามสุ่ม: ตัดตามวันที่ cutoff เดียวกัน
-        #    ทุกเขื่อน → train = ช่วงต้น, test = ช่วงท้าย
         if test_ratio > 0:
             n_days = (end_ts - start_ts).days + 1
-            # cutoff ที่ (1 - test_ratio) → train = ช่วงต้น ~80%
-            # test = ช่วงท้าย ~20% (ตามสัดส่วนที่ประกาศ)
             cutoff = start_ts + pd.Timedelta(
                 days=round(n_days * (1 - test_ratio))
             )
@@ -262,11 +183,10 @@ class DataProcessor:
         else:
             splits = {"all": df}
 
-        # 6. Finalize แต่ละส่วน: ลบ future_pct, date → month
         out = {}
         for key, part in splits.items():
             p = part.drop(columns=[future_col])
-            p["month"] = p["date"].dt.month   # ไม่มี season feature
+            p["month"] = p["date"].dt.month
             out[key] = p.drop(columns=["date"])
             logger.info(
                 f"Dataset ({shift_days}d, {key}): {len(p):,} records\n"
@@ -288,16 +208,10 @@ class ARFFExporter:
         "capacity", "storage", "active_storage", "dead_storage",
         "volume", "percent_storage", "inflow", "outflow", "month",
     ]
-    # dam_id (id) และ dam_name (name) อยู่ก่อน region/owner ตามลำดับใน API doc
     CATEGORICAL_COLS = ["id", "name", "region", "owner"]
 
     @staticmethod
     def _quote(value) -> str:
-        """
-        Quote nominal value ตามรูปแบบ ARFF
-        → 'value' และ escape single quote ภายในด้วย ''
-        ป้องกันชื่อเขื่อน/region ที่มี comma/space ทำไฟล์เสีย
-        """
         escaped = str(value).replace("'", "''")
         return f"'{escaped}'"
 
@@ -310,14 +224,6 @@ class ARFFExporter:
         target_col: str,
         domain_df: Optional[pd.DataFrame] = None,
     ) -> None:
-        """
-        Args:
-            domain_df : DataFrame ต้นทางของ nominal domains
-                        (ส่ง union ของ train+test เพื่อให้ทั้งสองไฟล์
-                        declare @ATTRIBUTE ชุดเดียวกัน — กัน test
-                        มี value ที่ไม่อยู่ใน domain)
-                        None = ใช้ df เอง
-        """
         domain_src = df if domain_df is None else domain_df
 
         with open(filename, "w", encoding="utf-8") as f:
@@ -368,12 +274,8 @@ def main():
     START_DATE = datetime(2024, 1, 1)
     END_DATE   = datetime(2025, 12, 31)
 
-    # Buffer เผื่อข้อมูลขาดหายเท่านั้น: ก่อน START_DATE ~1 เดือน
-    # → ffill ข้อมูลต้นปี 2024 ต้องมีค่าวันก่อนหน้าจริง ไม่ใช่ 0
     PRE_BUFFER_DAYS = 31
 
-    # ไม่มี buffer ท้าย — logic หลักยอมรับการเสียวัน:
-    # shift(-N) ทำให้ N วันท้ายของช่วงไม่มี target → ถูกตัดใน build_dataset
     FETCH_START = START_DATE - timedelta(days=PRE_BUFFER_DAYS)
     FETCH_END   = END_DATE
 
@@ -397,7 +299,7 @@ def main():
     logger.info(f"Raw data shape (incl. missing-data buffer): {df_raw.shape}")
 
     # ── Train/Test split (time series → temporal, ห้ามสุ่ม) ──────────
-    TEST_RATIO = 0.2   # 20% ท้ายของช่วงเวลาเป็น test
+    TEST_RATIO = 0.2
 
     # ── Step 2: สร้าง dataset ─────────────────────────────────────────
     logger.info("\n[Step 2.1] Building 7-day forecast dataset...")
@@ -411,7 +313,6 @@ def main():
     )
 
     # ── Step 3: ส่งออก ARFF (train/test แยกไฟล์) ──────────────────────
-    # domain_df = union(train, test) → @ATTRIBUTE nominal เหมือนกันทั้งคู่
     logger.info("\n[Step 3] Exporting ARFF files...")
     dom_7d  = pd.concat([df_7d_train, df_7d_test], ignore_index=True)
     dom_30d = pd.concat([df_30d_train, df_30d_test], ignore_index=True)
@@ -434,8 +335,6 @@ def main():
     )
 
     # ── Step 4: สรุป ──────────────────────────────────────────────────
-    # 2024 เป็นปีอธิกสุรทิน (366 วัน) → ช่วงเต็ม = 366+365 = 731 วัน
-    # shift(-N) กิน N วันท้ายตามดีไซน์ → expected = 35 × (731 − N)
     days_in_range = (END_DATE - START_DATE).days + 1
     expected_7d   = 35 * (days_in_range - 7)
     expected_30d  = 35 * (days_in_range - 30)

@@ -83,6 +83,13 @@ streamlit run app.py
 python -m streamlit run app.py
 ```
 
+### การตั้งค่า .env
+คัดลอก `.env.example` เป็น `.env` แล้วแก้ค่าฐานข้อมูลของคุณ (ไม่ได้อัปโหลดขึ้น git):
+```bash
+cp .env.example .env
+```
+ตัวแปรที่ใช้: `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `RID_API_URL`
+
 ### ฐานข้อมูล
 - **DB**: MySQL (`dam_forecast_db`)
 - **Table**: `dam_records` (31 วัน × 35 เขื่อน = 1,085 rows)
@@ -95,7 +102,7 @@ python -m streamlit run app.py
 ### 1. Infrastructure
 - [ ] **Dockerize** — docker-compose (MySQL + app)
 - [ ] **CI/CD** — GitHub Actions deploy
-- [ ] **Environment variables** — ย้าย secrets ออกจาก `config.py` ไป `.env`
+- [x] **Environment variables** — ✅ ย้าย secrets จาก `config.py` ไป `.env` (ดูหัวข้อ "การตั้งค่า .env")
 - [ ] `.gitignore` — ✅ ทำแล้ว (exclude `.model`, `.arff`, `__pycache__`, `.xlsx`, `.env`)
 
 ### 2. Model & Training
