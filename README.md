@@ -25,7 +25,6 @@
 - [การรัน](#การรัน)
 - [ฐานข้อมูล](#ฐานข้อมูล)
 - [โมเดลพยากรณ์](#โมเดลพยากรณ์)
-- [แนวทางในอนาคต](#แนวทางในอนาคต)
 
 ---
 
@@ -214,41 +213,6 @@ streamlit run app.py
 |----------|-----------|-----------|
 | 7 วัน | Logistic | `Logistic_7days.model` |
 | 30 วัน | Random Forest | `RF_30days.model` |
-
----
-
-## แนวทางในอนาคต
-
-### Infrastructure
-- [ ] Dockerize (MySQL + app)
-- [ ] CI/CD (GitHub Actions)
-- [x] Environment variables -> `.env`
-- [x] `.gitignore` สำหรับ secrets, `.model`, `.arff`, `.xlsx`
-
-### Model & Training
-- [ ] Auto-retrain เมื่อมีข้อมูลใหม่
-- [ ] เพิ่ม features (rainfall, reservoir capacity)
-- [ ] เปรียบเทียบ XGBoost, LightGBM, LSTM
-- [ ] แสดง confidence score
-
-### UI & UX
-- [ ] Multi-language (EN/TH)
-- [ ] Map view แสดงสีความเสี่ยง
-- [ ] Export PDF/CSV
-- [ ] Line notify / email alert
-- [ ] Mobile responsive
-
-### Data & API
-- [ ] API caching (Redis)
-- [ ] เก็บข้อมูลเกิน 31 วัน
-- [ ] Fallback API สำรอง
-- [ ] Rate limiting
-
-### Monitoring & Testing
-- [ ] Structured logging
-- [ ] pytest สำหรับ core/*
-- [ ] Integration test (DB + API + Model)
-- [ ] E2E Streamlit test (Playwright)
 
 ---
 
