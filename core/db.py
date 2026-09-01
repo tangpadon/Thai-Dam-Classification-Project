@@ -99,13 +99,19 @@ def get_historical_data(dam_id, limit=30):
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         query = """
-            SELECT record_date, percent_storage, inflow, outflow
-            FROM dam_daily
-            WHERE dam_id = %s
-            ORDER BY record_date DESC
+            SELECT d.record_date, d.percent_storage, d.inflow, d.outflow
+            FROM dam_daily d
+            INNER JOIN (
+                SELECT record_date, MAX(recorded_at) AS latest_ts
+                FROM dam_daily
+                WHERE dam_id = %s
+                GROUP BY record_date
+            ) m
+            ON d.dam_id = %s AND d.record_date = m.record_date AND d.recorded_at = m.latest_ts
+            ORDER BY d.record_date DESC
             LIMIT %s
         """
-        df_hist = pd.read_sql(query, conn, params=(int(dam_id), int(limit)))
+        df_hist = pd.read_sql(query, conn, params=(int(dam_id), int(dam_id), int(limit)))
         if not df_hist.empty:
             df_hist = df_hist.sort_values('record_date', ascending=True).reset_index(drop=True)
         return df_hist

@@ -235,22 +235,39 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
             with g_head1:
                 st.markdown('<div class="section-title"><span class="badge-num">4</span> แนวโน้มร้อยละความจุของอ่างเก็บน้ำย้อนหลัง</div>', unsafe_allow_html=True)
             with g_head2:
-                time_range = st.selectbox("ช่วงเวลา", ["30 วันล่าสุด", "7 วันล่าสุด"], label_visibility="collapsed")
+                time_range = st.selectbox("ช่วงเวลา", ["30 วันล่าสุด", "7 วันล่าสุด"], label_visibility="collapsed", filter_mode=None)
             limit_days = 30 if "30" in time_range else 7
             hist_df = get_historical_data(dam_data['id'], limit=limit_days)
 
             if not hist_df.empty and len(hist_df) > 1:
                 hist_df = hist_df.sort_values('record_date').reset_index(drop=True)
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(x=hist_df['record_date'], y=hist_df['percent_storage'],
-                                         mode='lines+markers', line=dict(color='#0284c7', width=2),
-                                         marker=dict(size=5), name='ร้อยละความจุ (%)'))
-                fig.add_hline(y=80, line_dash="dash", line_color="#ef4444", annotation_text="เกณฑ์เสี่ยงน้ำล้น (80%)", annotation_position="top right")
-                fig.add_hline(y=30, line_dash="dash", line_color="#f59e0b", annotation_text="เกณฑ์เสี่ยงน้ำแห้ง (30%)", annotation_position="bottom right")
-                fig.update_layout(yaxis=dict(range=[0, 100], title="ร้อยละความจุ (%)"),
-                                  margin=dict(l=10, r=10, t=20, b=10), height=320,
-                                  paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-                st.plotly_chart(fig, use_container_width=True, config={'staticPlot': True, 'displayModeBar': False})
+                hist_df['record_date'] = pd.to_datetime(hist_df['record_date'])
+                daily = (hist_df.sort_values('record_date')
+                                .groupby(hist_df['record_date'].dt.date)
+                                .tail(1)
+                                .reset_index(drop=True))
+                if len(daily) > 1:
+                    x_start = daily['record_date'].dt.normalize().min()
+                    x_end = daily['record_date'].max() + pd.Timedelta(hours=12)
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(x=daily['record_date'], y=daily['percent_storage'],
+                                             mode='lines+markers', line=dict(color='#0284c7', width=2),
+                                             marker=dict(size=5), name='ร้อยละความจุ (%)',
+                                             hovertemplate='%{x|%d/%m/%Y}<br>ร้อยละความจุ: %{y:.2f}%<extra></extra>'))
+                    fig.add_hline(y=80, line_dash="dash", line_color="#ef4444", annotation_text="เกณฑ์เสี่ยงน้ำล้น (80%)", annotation_position="top right")
+                    fig.add_hline(y=30, line_dash="dash", line_color="#f59e0b", annotation_text="เกณฑ์เสี่ยงน้ำแห้ง (30%)", annotation_position="bottom right")
+                    fig.update_layout(yaxis=dict(range=[0, 100], title="ร้อยละความจุ (%)"),
+                                      margin=dict(l=10, r=10, t=20, b=10), height=320,
+                                      xaxis=dict(range=[x_start, x_end],
+                                                 tickformat="%d/%m",
+                                                 dtick=f"D{limit_days // 6}"),
+                                      hovermode="x unified",
+                                      hoverlabel=dict(font_size=12),
+                                      paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                      dragmode=False)
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False, 'doubleClick': False})
+                else:
+                    st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
             else:
                 st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
 
