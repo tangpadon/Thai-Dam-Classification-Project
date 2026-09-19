@@ -1,0 +1,800 @@
+=== Run information ===
+
+Scheme:       weka.classifiers.misc.InputMappedClassifier -I -trim -W weka.classifiers.trees.J48 -- -C 0.25 -M 2
+Relation:     dam_risk_forecast_30days-weka.filters.unsupervised.attribute.Remove-R1-4,10-13
+Instances:    20475
+Attributes:   6
+              volume
+              percent_storage
+              inflow
+              outflow
+              month
+              risk_class_30d
+Test mode:    user supplied test set:  size unknown (reading incrementally)
+
+=== Classifier model (full training set) ===
+
+InputMappedClassifier:
+
+J48 pruned tree
+------------------
+
+percent_storage <= 35
+|   percent_storage <= 24.61
+|   |   inflow <= 2.54
+|   |   |   month <= 5: drought (651.0)
+|   |   |   month > 5
+|   |   |   |   outflow <= 0.043
+|   |   |   |   |   inflow <= 0.14: drought (14.0)
+|   |   |   |   |   inflow > 0.14: normal (29.0/2.0)
+|   |   |   |   outflow > 0.043
+|   |   |   |   |   outflow <= 0.274
+|   |   |   |   |   |   volume <= 93.57
+|   |   |   |   |   |   |   percent_storage <= 17.68
+|   |   |   |   |   |   |   |   percent_storage <= 17.36
+|   |   |   |   |   |   |   |   |   outflow <= 0.095
+|   |   |   |   |   |   |   |   |   |   volume <= 32.81: normal (3.0)
+|   |   |   |   |   |   |   |   |   |   volume > 32.81: drought (3.0)
+|   |   |   |   |   |   |   |   |   outflow > 0.095: drought (79.0/1.0)
+|   |   |   |   |   |   |   |   percent_storage > 17.36
+|   |   |   |   |   |   |   |   |   outflow <= 0.13: drought (3.0)
+|   |   |   |   |   |   |   |   |   outflow > 0.13: normal (9.0)
+|   |   |   |   |   |   |   percent_storage > 17.68: drought (183.0)
+|   |   |   |   |   |   volume > 93.57
+|   |   |   |   |   |   |   month <= 7: drought (4.0)
+|   |   |   |   |   |   |   month > 7: normal (6.0/1.0)
+|   |   |   |   |   outflow > 0.274
+|   |   |   |   |   |   volume <= 108.06
+|   |   |   |   |   |   |   inflow <= 0.676
+|   |   |   |   |   |   |   |   outflow <= 1.4
+|   |   |   |   |   |   |   |   |   percent_storage <= 22.69
+|   |   |   |   |   |   |   |   |   |   percent_storage <= 17.78
+|   |   |   |   |   |   |   |   |   |   |   percent_storage <= 12: drought (5.0)
+|   |   |   |   |   |   |   |   |   |   |   percent_storage > 12
+|   |   |   |   |   |   |   |   |   |   |   |   month <= 6
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 32.56: normal (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume > 32.56
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 16.6: drought (6.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 16.6: normal (3.0)
+|   |   |   |   |   |   |   |   |   |   |   |   month > 6: normal (12.0/1.0)
+|   |   |   |   |   |   |   |   |   |   percent_storage > 17.78
+|   |   |   |   |   |   |   |   |   |   |   month <= 6
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 25.57: normal (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 25.57
+|   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 21.52: drought (32.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 21.52
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.264: drought (3.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.264: normal (4.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   month > 6: drought (17.0)
+|   |   |   |   |   |   |   |   |   percent_storage > 22.69
+|   |   |   |   |   |   |   |   |   |   outflow <= 0.58
+|   |   |   |   |   |   |   |   |   |   |   volume <= 72.4: normal (29.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 72.4: drought (2.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 0.58
+|   |   |   |   |   |   |   |   |   |   |   month <= 7
+|   |   |   |   |   |   |   |   |   |   |   |   month <= 6
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.264: drought (3.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.264: normal (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   month > 6: drought (11.0)
+|   |   |   |   |   |   |   |   |   |   |   month > 7
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 39.72: normal (5.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 39.72: drought (5.0/1.0)
+|   |   |   |   |   |   |   |   outflow > 1.4: drought (24.0)
+|   |   |   |   |   |   |   inflow > 0.676
+|   |   |   |   |   |   |   |   month <= 6: normal (16.0)
+|   |   |   |   |   |   |   |   month > 6
+|   |   |   |   |   |   |   |   |   volume <= 40.12: drought (11.0/1.0)
+|   |   |   |   |   |   |   |   |   volume > 40.12
+|   |   |   |   |   |   |   |   |   |   percent_storage <= 12.06
+|   |   |   |   |   |   |   |   |   |   |   inflow <= 1.25: normal (3.0)
+|   |   |   |   |   |   |   |   |   |   |   inflow > 1.25: drought (2.0)
+|   |   |   |   |   |   |   |   |   |   percent_storage > 12.06: normal (12.0)
+|   |   |   |   |   |   volume > 108.06: drought (104.0/2.0)
+|   |   inflow > 2.54
+|   |   |   month <= 6
+|   |   |   |   volume <= 56.57
+|   |   |   |   |   percent_storage <= 23.43: drought (3.0/1.0)
+|   |   |   |   |   percent_storage > 23.43: normal (3.0)
+|   |   |   |   volume > 56.57: drought (17.0)
+|   |   |   month > 6
+|   |   |   |   volume <= 123.32
+|   |   |   |   |   inflow <= 2.73: normal (5.0)
+|   |   |   |   |   inflow > 2.73: drought (25.0/8.0)
+|   |   |   |   volume > 123.32: normal (44.0)
+|   percent_storage > 24.61
+|   |   outflow <= 0.043
+|   |   |   outflow <= 0.003
+|   |   |   |   volume <= 41.16: normal (39.0)
+|   |   |   |   volume > 41.16
+|   |   |   |   |   month <= 8
+|   |   |   |   |   |   volume <= 41.27: normal (3.0/1.0)
+|   |   |   |   |   |   volume > 41.27: drought (11.0)
+|   |   |   |   |   month > 8: normal (5.0)
+|   |   |   outflow > 0.003
+|   |   |   |   volume <= 27.52
+|   |   |   |   |   volume <= 27.39
+|   |   |   |   |   |   inflow <= 0.125: normal (17.0)
+|   |   |   |   |   |   inflow > 0.125: drought (3.0/1.0)
+|   |   |   |   |   volume > 27.39: drought (6.0)
+|   |   |   |   volume > 27.52: normal (224.0/1.0)
+|   |   outflow > 0.043
+|   |   |   month <= 3
+|   |   |   |   percent_storage <= 31.63: drought (176.0)
+|   |   |   |   percent_storage > 31.63
+|   |   |   |   |   outflow <= 0.15: normal (6.0)
+|   |   |   |   |   outflow > 0.15
+|   |   |   |   |   |   volume <= 64.68
+|   |   |   |   |   |   |   volume <= 55.56: drought (15.0/2.0)
+|   |   |   |   |   |   |   volume > 55.56: normal (3.0)
+|   |   |   |   |   |   volume > 64.68: drought (51.0)
+|   |   |   month > 3
+|   |   |   |   month <= 5
+|   |   |   |   |   outflow <= 0.121
+|   |   |   |   |   |   volume <= 98.12: normal (111.0)
+|   |   |   |   |   |   volume > 98.12
+|   |   |   |   |   |   |   outflow <= 0.075: normal (3.0)
+|   |   |   |   |   |   |   outflow > 0.075: drought (7.0)
+|   |   |   |   |   outflow > 0.121
+|   |   |   |   |   |   percent_storage <= 32.08
+|   |   |   |   |   |   |   volume <= 519.97
+|   |   |   |   |   |   |   |   volume <= 29.9
+|   |   |   |   |   |   |   |   |   month <= 4: drought (9.0)
+|   |   |   |   |   |   |   |   |   month > 4
+|   |   |   |   |   |   |   |   |   |   outflow <= 0.79
+|   |   |   |   |   |   |   |   |   |   |   outflow <= 0.695: drought (3.0)
+|   |   |   |   |   |   |   |   |   |   |   outflow > 0.695: normal (3.0/1.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 0.79: normal (25.0)
+|   |   |   |   |   |   |   |   volume > 29.9
+|   |   |   |   |   |   |   |   |   percent_storage <= 27.79: drought (106.0)
+|   |   |   |   |   |   |   |   |   percent_storage > 27.79
+|   |   |   |   |   |   |   |   |   |   outflow <= 1.73
+|   |   |   |   |   |   |   |   |   |   |   month <= 4
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 58.44
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.26: normal (6.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.26: drought (17.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 58.44: drought (30.0)
+|   |   |   |   |   |   |   |   |   |   |   month > 4
+|   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.8
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.333
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.338
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.282: drought (20.0/4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.282: normal (8.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.338: drought (7.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.333: drought (39.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.8
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 85.16: drought (7.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume > 85.16: normal (14.0/1.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 1.73: drought (40.0)
+|   |   |   |   |   |   |   volume > 519.97: normal (24.0)
+|   |   |   |   |   |   percent_storage > 32.08
+|   |   |   |   |   |   |   outflow <= 0.183: normal (32.0)
+|   |   |   |   |   |   |   outflow > 0.183
+|   |   |   |   |   |   |   |   outflow <= 0.24: drought (21.0)
+|   |   |   |   |   |   |   |   outflow > 0.24
+|   |   |   |   |   |   |   |   |   outflow <= 0.544: normal (59.0/3.0)
+|   |   |   |   |   |   |   |   |   outflow > 0.544
+|   |   |   |   |   |   |   |   |   |   outflow <= 0.653
+|   |   |   |   |   |   |   |   |   |   |   outflow <= 0.585
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 74.66: normal (10.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 74.66: drought (7.0)
+|   |   |   |   |   |   |   |   |   |   |   outflow > 0.585: drought (16.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 0.653
+|   |   |   |   |   |   |   |   |   |   |   outflow <= 7.04
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 326.54
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 3.02
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 114.33
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month <= 4
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.755
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.28: normal (16.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.28: drought (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.755
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.415: drought (14.0/2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.415: normal (3.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month > 4
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 34.25: normal (7.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 34.25: drought (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume > 114.33: normal (33.0/2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 3.02: drought (19.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 326.54: normal (17.0)
+|   |   |   |   |   |   |   |   |   |   |   outflow > 7.04: drought (13.0/1.0)
+|   |   |   |   month > 5
+|   |   |   |   |   month <= 11
+|   |   |   |   |   |   month <= 8
+|   |   |   |   |   |   |   volume <= 102.43
+|   |   |   |   |   |   |   |   volume <= 84.08
+|   |   |   |   |   |   |   |   |   outflow <= 1.14
+|   |   |   |   |   |   |   |   |   |   outflow <= 0.055
+|   |   |   |   |   |   |   |   |   |   |   month <= 7: drought (17.0)
+|   |   |   |   |   |   |   |   |   |   |   month > 7: normal (16.0/7.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 0.055
+|   |   |   |   |   |   |   |   |   |   |   volume <= 41.67
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 33.6: normal (32.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 33.6
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.144: drought (7.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.144
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.05
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.032
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month <= 7: normal (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month > 7: flood (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.032: drought (14.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.05
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.42: normal (29.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.42
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.54: flood (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.54
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month <= 7
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 37.62: normal (8.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   volume > 37.62: drought (9.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month > 7: normal (6.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 41.67
+|   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 26.76
+|   |   |   |   |   |   |   |   |   |   |   |   |   month <= 7
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 26.35
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month <= 6: normal (22.0/2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month > 6
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.69: normal (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.69: drought (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 26.35: drought (12.0/3.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   month > 7: normal (14.0)
+|   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 26.76: normal (150.0/6.0)
+|   |   |   |   |   |   |   |   |   outflow > 1.14
+|   |   |   |   |   |   |   |   |   |   inflow <= 0.55: drought (27.0/1.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 0.55
+|   |   |   |   |   |   |   |   |   |   |   outflow <= 1.34: drought (7.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   outflow > 1.34
+|   |   |   |   |   |   |   |   |   |   |   |   inflow <= 2.24
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 2.28: normal (20.0/5.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 2.28: drought (3.0)
+|   |   |   |   |   |   |   |   |   |   |   |   inflow > 2.24: normal (11.0)
+|   |   |   |   |   |   |   |   volume > 84.08
+|   |   |   |   |   |   |   |   |   outflow <= 0.155
+|   |   |   |   |   |   |   |   |   |   outflow <= 0.115: drought (2.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 0.115: normal (8.0)
+|   |   |   |   |   |   |   |   |   outflow > 0.155
+|   |   |   |   |   |   |   |   |   |   outflow <= 0.395: drought (58.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 0.395
+|   |   |   |   |   |   |   |   |   |   |   percent_storage <= 30.51
+|   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 28.06
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.622
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 87.25: drought (3.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume > 87.25: normal (5.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.622: drought (5.0)
+|   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 28.06: drought (30.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   percent_storage > 30.51: normal (18.0)
+|   |   |   |   |   |   |   volume > 102.43
+|   |   |   |   |   |   |   |   volume <= 277.9: normal (215.0)
+|   |   |   |   |   |   |   |   volume > 277.9
+|   |   |   |   |   |   |   |   |   month <= 7
+|   |   |   |   |   |   |   |   |   |   outflow <= 13.66
+|   |   |   |   |   |   |   |   |   |   |   percent_storage <= 27.68: drought (16.0)
+|   |   |   |   |   |   |   |   |   |   |   percent_storage > 27.68
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 458.04
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 3.02: normal (5.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 3.02: drought (26.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 458.04: normal (81.0/3.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 13.66: drought (31.0)
+|   |   |   |   |   |   |   |   |   month > 7: normal (56.0/1.0)
+|   |   |   |   |   |   month > 8: normal (174.0/2.0)
+|   |   |   |   |   month > 11: drought (30.0)
+percent_storage > 35
+|   percent_storage <= 81.99
+|   |   month <= 7
+|   |   |   percent_storage <= 45.03
+|   |   |   |   outflow <= 0.534
+|   |   |   |   |   outflow <= 0.043
+|   |   |   |   |   |   volume <= 65.47
+|   |   |   |   |   |   |   percent_storage <= 37.89: normal (36.0)
+|   |   |   |   |   |   |   percent_storage > 37.89
+|   |   |   |   |   |   |   |   month <= 5: normal (6.0)
+|   |   |   |   |   |   |   |   month > 5
+|   |   |   |   |   |   |   |   |   inflow <= 0.214: drought (32.0/4.0)
+|   |   |   |   |   |   |   |   |   inflow > 0.214: normal (3.0)
+|   |   |   |   |   |   volume > 65.47: normal (100.0)
+|   |   |   |   |   outflow > 0.043
+|   |   |   |   |   |   outflow <= 0.195: normal (787.0)
+|   |   |   |   |   |   outflow > 0.195
+|   |   |   |   |   |   |   percent_storage <= 35.56
+|   |   |   |   |   |   |   |   month <= 4
+|   |   |   |   |   |   |   |   |   month <= 3: drought (8.0)
+|   |   |   |   |   |   |   |   |   month > 3
+|   |   |   |   |   |   |   |   |   |   inflow <= 0.175: drought (3.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 0.175: normal (5.0)
+|   |   |   |   |   |   |   |   month > 4: normal (31.0)
+|   |   |   |   |   |   |   percent_storage > 35.56
+|   |   |   |   |   |   |   |   inflow <= 0.135
+|   |   |   |   |   |   |   |   |   inflow <= 0.114
+|   |   |   |   |   |   |   |   |   |   volume <= 77.45: normal (140.0)
+|   |   |   |   |   |   |   |   |   |   volume > 77.45
+|   |   |   |   |   |   |   |   |   |   |   volume <= 94.84: drought (6.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 94.84: normal (48.0/1.0)
+|   |   |   |   |   |   |   |   |   inflow > 0.114
+|   |   |   |   |   |   |   |   |   |   inflow <= 0.125
+|   |   |   |   |   |   |   |   |   |   |   month <= 3
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 79.6: normal (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 79.6: drought (2.0)
+|   |   |   |   |   |   |   |   |   |   |   month > 3: normal (12.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 0.125
+|   |   |   |   |   |   |   |   |   |   |   percent_storage <= 41.76: drought (5.0)
+|   |   |   |   |   |   |   |   |   |   |   percent_storage > 41.76: normal (2.0)
+|   |   |   |   |   |   |   |   inflow > 0.135: normal (175.0)
+|   |   |   |   outflow > 0.534
+|   |   |   |   |   volume <= 937.35
+|   |   |   |   |   |   inflow <= 0.043
+|   |   |   |   |   |   |   month <= 2: drought (17.0)
+|   |   |   |   |   |   |   month > 2
+|   |   |   |   |   |   |   |   volume <= 97.85
+|   |   |   |   |   |   |   |   |   volume <= 62.79
+|   |   |   |   |   |   |   |   |   |   inflow <= 0.024: normal (24.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 0.024
+|   |   |   |   |   |   |   |   |   |   |   outflow <= 0.72
+|   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 38.6: drought (7.0)
+|   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 38.6: normal (2.0)
+|   |   |   |   |   |   |   |   |   |   |   outflow > 0.72: normal (7.0)
+|   |   |   |   |   |   |   |   |   volume > 62.79
+|   |   |   |   |   |   |   |   |   |   inflow <= 0.015
+|   |   |   |   |   |   |   |   |   |   |   volume <= 74.95: normal (4.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 74.95: drought (13.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 0.015: drought (23.0)
+|   |   |   |   |   |   |   |   volume > 97.85: normal (27.0/1.0)
+|   |   |   |   |   |   inflow > 0.043
+|   |   |   |   |   |   |   outflow <= 13.86
+|   |   |   |   |   |   |   |   month <= 4
+|   |   |   |   |   |   |   |   |   volume <= 57.23: drought (25.0/1.0)
+|   |   |   |   |   |   |   |   |   volume > 57.23
+|   |   |   |   |   |   |   |   |   |   inflow <= 3.06
+|   |   |   |   |   |   |   |   |   |   |   outflow <= 1.57
+|   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.105: normal (71.0)
+|   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.105
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.125
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 122.68: drought (7.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume > 122.68: normal (6.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.125
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   month <= 3: normal (80.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   month > 3
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.864
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.83: normal (18.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.83: drought (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.864: normal (26.0)
+|   |   |   |   |   |   |   |   |   |   |   outflow > 1.57
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 374.69
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 319.38
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   month <= 3: drought (24.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   month > 3
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 125.47: drought (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   volume > 125.47: normal (43.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume > 319.38: drought (29.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 374.69: normal (50.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 3.06
+|   |   |   |   |   |   |   |   |   |   |   inflow <= 3.15: drought (17.0)
+|   |   |   |   |   |   |   |   |   |   |   inflow > 3.15: normal (3.0)
+|   |   |   |   |   |   |   |   month > 4
+|   |   |   |   |   |   |   |   |   inflow <= 0.264
+|   |   |   |   |   |   |   |   |   |   outflow <= 6.66
+|   |   |   |   |   |   |   |   |   |   |   volume <= 105.16
+|   |   |   |   |   |   |   |   |   |   |   |   inflow <= 0.08: normal (14.0)
+|   |   |   |   |   |   |   |   |   |   |   |   inflow > 0.08
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.82: normal (18.0/2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.82: drought (7.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 105.16: normal (15.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 6.66: drought (3.0)
+|   |   |   |   |   |   |   |   |   inflow > 0.264: normal (354.0/3.0)
+|   |   |   |   |   |   |   outflow > 13.86: drought (31.0/7.0)
+|   |   |   |   |   volume > 937.35: normal (211.0)
+|   |   |   percent_storage > 45.03
+|   |   |   |   inflow <= 6.06
+|   |   |   |   |   volume <= 79.81
+|   |   |   |   |   |   volume <= 79.66
+|   |   |   |   |   |   |   outflow <= 1.765
+|   |   |   |   |   |   |   |   volume <= 52.9
+|   |   |   |   |   |   |   |   |   month <= 3
+|   |   |   |   |   |   |   |   |   |   inflow <= 0.015: normal (4.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 0.015: drought (4.0)
+|   |   |   |   |   |   |   |   |   month > 3: normal (37.0)
+|   |   |   |   |   |   |   |   volume > 52.9: normal (1117.0/1.0)
+|   |   |   |   |   |   |   outflow > 1.765
+|   |   |   |   |   |   |   |   inflow <= 0.73
+|   |   |   |   |   |   |   |   |   month <= 3
+|   |   |   |   |   |   |   |   |   |   volume <= 76.49: drought (17.0)
+|   |   |   |   |   |   |   |   |   |   volume > 76.49: normal (2.0)
+|   |   |   |   |   |   |   |   |   month > 3: normal (5.0)
+|   |   |   |   |   |   |   |   inflow > 0.73: normal (42.0)
+|   |   |   |   |   |   volume > 79.66
+|   |   |   |   |   |   |   month <= 6: normal (11.0)
+|   |   |   |   |   |   |   month > 6: drought (14.0)
+|   |   |   |   |   volume > 79.81
+|   |   |   |   |   |   volume <= 14407.93
+|   |   |   |   |   |   |   month <= 6: normal (5677.0/4.0)
+|   |   |   |   |   |   |   month > 6
+|   |   |   |   |   |   |   |   percent_storage <= 59.08: normal (273.0)
+|   |   |   |   |   |   |   |   percent_storage > 59.08
+|   |   |   |   |   |   |   |   |   percent_storage <= 59.7
+|   |   |   |   |   |   |   |   |   |   outflow <= 0.333: flood (5.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 0.333: normal (8.0/1.0)
+|   |   |   |   |   |   |   |   |   percent_storage > 59.7: normal (159.0/2.0)
+|   |   |   |   |   |   volume > 14407.93
+|   |   |   |   |   |   |   volume <= 14488.99: normal (15.0)
+|   |   |   |   |   |   |   volume > 14488.99
+|   |   |   |   |   |   |   |   outflow <= 13.29: flood (6.0)
+|   |   |   |   |   |   |   |   outflow > 13.29: normal (4.0)
+|   |   |   |   inflow > 6.06
+|   |   |   |   |   month <= 1
+|   |   |   |   |   |   percent_storage <= 76.78: normal (15.0)
+|   |   |   |   |   |   percent_storage > 76.78: flood (18.0/1.0)
+|   |   |   |   |   month > 1
+|   |   |   |   |   |   inflow <= 23.14: normal (525.0/1.0)
+|   |   |   |   |   |   inflow > 23.14
+|   |   |   |   |   |   |   outflow <= 6.09: normal (58.0)
+|   |   |   |   |   |   |   outflow > 6.09
+|   |   |   |   |   |   |   |   inflow <= 115.57
+|   |   |   |   |   |   |   |   |   month <= 6: normal (29.0)
+|   |   |   |   |   |   |   |   |   month > 6
+|   |   |   |   |   |   |   |   |   |   volume <= 4951: normal (20.0)
+|   |   |   |   |   |   |   |   |   |   volume > 4951
+|   |   |   |   |   |   |   |   |   |   |   percent_storage <= 55.02: flood (10.0)
+|   |   |   |   |   |   |   |   |   |   |   percent_storage > 55.02
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 6918.16
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 5392: normal (15.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume > 5392: flood (9.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 6918.16: normal (14.0)
+|   |   |   |   |   |   |   |   inflow > 115.57
+|   |   |   |   |   |   |   |   |   outflow <= 8.78: normal (3.0/1.0)
+|   |   |   |   |   |   |   |   |   outflow > 8.78: flood (11.0)
+|   |   month > 7
+|   |   |   percent_storage <= 71.72
+|   |   |   |   outflow <= 6.16
+|   |   |   |   |   month <= 9
+|   |   |   |   |   |   percent_storage <= 60.08
+|   |   |   |   |   |   |   volume <= 57.83
+|   |   |   |   |   |   |   |   outflow <= 0.195
+|   |   |   |   |   |   |   |   |   inflow <= 0.024: normal (5.0)
+|   |   |   |   |   |   |   |   |   inflow > 0.024: flood (38.0/3.0)
+|   |   |   |   |   |   |   |   outflow > 0.195: normal (94.0/3.0)
+|   |   |   |   |   |   |   volume > 57.83
+|   |   |   |   |   |   |   |   inflow <= 1.183
+|   |   |   |   |   |   |   |   |   outflow <= 1.263: normal (331.0)
+|   |   |   |   |   |   |   |   |   outflow > 1.263
+|   |   |   |   |   |   |   |   |   |   volume <= 90.84: drought (12.0/1.0)
+|   |   |   |   |   |   |   |   |   |   volume > 90.84: normal (28.0/1.0)
+|   |   |   |   |   |   |   |   inflow > 1.183
+|   |   |   |   |   |   |   |   |   volume <= 78.24
+|   |   |   |   |   |   |   |   |   |   percent_storage <= 57.41
+|   |   |   |   |   |   |   |   |   |   |   outflow <= 0.221
+|   |   |   |   |   |   |   |   |   |   |   |   month <= 8
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 3.97
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 2.16
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow <= 1.86: flood (3.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 1.86: normal (4.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 2.16: flood (7.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   inflow > 3.97: normal (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   month > 8: normal (7.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   outflow > 0.221: normal (27.0/1.0)
+|   |   |   |   |   |   |   |   |   |   percent_storage > 57.41: flood (6.0)
+|   |   |   |   |   |   |   |   |   volume > 78.24
+|   |   |   |   |   |   |   |   |   |   percent_storage <= 49.34: normal (184.0)
+|   |   |   |   |   |   |   |   |   |   percent_storage > 49.34
+|   |   |   |   |   |   |   |   |   |   |   inflow <= 4.24
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 176.55
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 166.32: normal (40.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume > 166.32
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 1.83: normal (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 1.83: flood (8.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 176.55: normal (86.0)
+|   |   |   |   |   |   |   |   |   |   |   inflow > 4.24
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 638
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 443.84
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 115.28: flood (4.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume > 115.28: normal (22.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume > 443.84
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 3.68: flood (11.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 3.68
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 464.88: flood (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   volume > 464.88: normal (2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 638
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 4.74: normal (40.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 4.74
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 5209.87: normal (11.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   volume > 5209.87
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month <= 8: flood (6.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   month > 8: normal (2.0)
+|   |   |   |   |   |   percent_storage > 60.08
+|   |   |   |   |   |   |   volume <= 919.3
+|   |   |   |   |   |   |   |   month <= 8
+|   |   |   |   |   |   |   |   |   volume <= 351.88
+|   |   |   |   |   |   |   |   |   |   inflow <= 0.43: normal (19.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 0.43
+|   |   |   |   |   |   |   |   |   |   |   volume <= 249.54
+|   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.333
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.075: normal (7.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.075: flood (20.0)
+|   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.333
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 2.86: normal (38.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 2.86
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 3.67: flood (12.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 3.67: normal (8.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 249.54: normal (17.0)
+|   |   |   |   |   |   |   |   |   volume > 351.88: flood (10.0)
+|   |   |   |   |   |   |   |   month > 8
+|   |   |   |   |   |   |   |   |   volume <= 96.91: flood (23.0)
+|   |   |   |   |   |   |   |   |   volume > 96.91
+|   |   |   |   |   |   |   |   |   |   volume <= 115.04: normal (14.0)
+|   |   |   |   |   |   |   |   |   |   volume > 115.04
+|   |   |   |   |   |   |   |   |   |   |   percent_storage <= 60.39: normal (3.0)
+|   |   |   |   |   |   |   |   |   |   |   percent_storage > 60.39
+|   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.083
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.051: flood (3.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.051: normal (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.083: flood (43.0)
+|   |   |   |   |   |   |   volume > 919.3
+|   |   |   |   |   |   |   |   inflow <= 69.94: normal (58.0)
+|   |   |   |   |   |   |   |   inflow > 69.94
+|   |   |   |   |   |   |   |   |   month <= 8: flood (6.0)
+|   |   |   |   |   |   |   |   |   month > 8: normal (2.0)
+|   |   |   |   |   month > 9
+|   |   |   |   |   |   inflow <= 11.72: normal (1063.0/3.0)
+|   |   |   |   |   |   inflow > 11.72
+|   |   |   |   |   |   |   volume <= 9225.17: normal (22.0/1.0)
+|   |   |   |   |   |   |   volume > 9225.17: flood (3.0)
+|   |   |   |   outflow > 6.16
+|   |   |   |   |   month <= 8
+|   |   |   |   |   |   outflow <= 7.05: flood (7.0)
+|   |   |   |   |   |   outflow > 7.05
+|   |   |   |   |   |   |   percent_storage <= 55.48: normal (72.0/1.0)
+|   |   |   |   |   |   |   percent_storage > 55.48
+|   |   |   |   |   |   |   |   inflow <= 10.73: normal (20.0)
+|   |   |   |   |   |   |   |   inflow > 10.73
+|   |   |   |   |   |   |   |   |   volume <= 3762.05: flood (9.0)
+|   |   |   |   |   |   |   |   |   volume > 3762.05: normal (2.0)
+|   |   |   |   |   month > 8
+|   |   |   |   |   |   month <= 10
+|   |   |   |   |   |   |   month <= 9: flood (91.0/20.0)
+|   |   |   |   |   |   |   month > 9
+|   |   |   |   |   |   |   |   volume <= 376.03: flood (2.0)
+|   |   |   |   |   |   |   |   volume > 376.03: normal (29.0)
+|   |   |   |   |   |   month > 10
+|   |   |   |   |   |   |   volume <= 739.22
+|   |   |   |   |   |   |   |   outflow <= 8.07
+|   |   |   |   |   |   |   |   |   volume <= 721.02: flood (2.0)
+|   |   |   |   |   |   |   |   |   volume > 721.02: normal (2.0)
+|   |   |   |   |   |   |   |   outflow > 8.07: flood (17.0)
+|   |   |   |   |   |   |   volume > 739.22: normal (2.0)
+|   |   |   percent_storage > 71.72
+|   |   |   |   month <= 11
+|   |   |   |   |   inflow <= 1.01
+|   |   |   |   |   |   month <= 8
+|   |   |   |   |   |   |   inflow <= 0.77: normal (4.0/1.0)
+|   |   |   |   |   |   |   inflow > 0.77: flood (4.0)
+|   |   |   |   |   |   month > 8: flood (97.0)
+|   |   |   |   |   inflow > 1.01
+|   |   |   |   |   |   month <= 10
+|   |   |   |   |   |   |   month <= 8
+|   |   |   |   |   |   |   |   volume <= 10033.17
+|   |   |   |   |   |   |   |   |   outflow <= 22.16
+|   |   |   |   |   |   |   |   |   |   outflow <= 3.34
+|   |   |   |   |   |   |   |   |   |   |   volume <= 224.16: flood (21.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 224.16
+|   |   |   |   |   |   |   |   |   |   |   |   outflow <= 1.97: normal (17.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   outflow > 1.97
+|   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 77.6: flood (13.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 77.6: normal (3.0)
+|   |   |   |   |   |   |   |   |   |   outflow > 3.34: normal (19.0)
+|   |   |   |   |   |   |   |   |   outflow > 22.16
+|   |   |   |   |   |   |   |   |   |   inflow <= 34.22: flood (21.0)
+|   |   |   |   |   |   |   |   |   |   inflow > 34.22: normal (2.0)
+|   |   |   |   |   |   |   |   volume > 10033.17: normal (38.0/2.0)
+|   |   |   |   |   |   |   month > 8
+|   |   |   |   |   |   |   |   outflow <= 0.905
+|   |   |   |   |   |   |   |   |   volume <= 1500.89
+|   |   |   |   |   |   |   |   |   |   volume <= 203.59
+|   |   |   |   |   |   |   |   |   |   |   volume <= 184.15: flood (14.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 184.15: normal (9.0)
+|   |   |   |   |   |   |   |   |   |   volume > 203.59: flood (30.0)
+|   |   |   |   |   |   |   |   |   volume > 1500.89: normal (21.0)
+|   |   |   |   |   |   |   |   outflow > 0.905
+|   |   |   |   |   |   |   |   |   percent_storage <= 75.66
+|   |   |   |   |   |   |   |   |   |   month <= 9
+|   |   |   |   |   |   |   |   |   |   |   inflow <= 8.84: flood (13.0)
+|   |   |   |   |   |   |   |   |   |   |   inflow > 8.84
+|   |   |   |   |   |   |   |   |   |   |   |   outflow <= 1.54: normal (4.0)
+|   |   |   |   |   |   |   |   |   |   |   |   outflow > 1.54
+|   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage <= 74.71: flood (7.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   percent_storage > 74.71: normal (2.0)
+|   |   |   |   |   |   |   |   |   |   month > 9: flood (23.0)
+|   |   |   |   |   |   |   |   |   percent_storage > 75.66: flood (125.0)
+|   |   |   |   |   |   month > 10
+|   |   |   |   |   |   |   inflow <= 17.58: normal (40.0)
+|   |   |   |   |   |   |   inflow > 17.58
+|   |   |   |   |   |   |   |   volume <= 10934.86: flood (13.0/1.0)
+|   |   |   |   |   |   |   |   volume > 10934.86: normal (8.0)
+|   |   |   |   month > 11
+|   |   |   |   |   inflow <= 6.94: normal (159.0)
+|   |   |   |   |   inflow > 6.94
+|   |   |   |   |   |   volume <= 1185.92
+|   |   |   |   |   |   |   inflow <= 22.63: flood (14.0)
+|   |   |   |   |   |   |   inflow > 22.63: normal (2.0)
+|   |   |   |   |   |   volume > 1185.92: normal (25.0)
+|   percent_storage > 81.99
+|   |   percent_storage <= 88.17
+|   |   |   inflow <= 2.581
+|   |   |   |   inflow <= 0.175: normal (159.0/2.0)
+|   |   |   |   inflow > 0.175
+|   |   |   |   |   outflow <= 0.53
+|   |   |   |   |   |   month <= 11
+|   |   |   |   |   |   |   month <= 5
+|   |   |   |   |   |   |   |   inflow <= 0.342: flood (10.0/1.0)
+|   |   |   |   |   |   |   |   inflow > 0.342: normal (3.0)
+|   |   |   |   |   |   |   month > 5: flood (42.0)
+|   |   |   |   |   |   month > 11
+|   |   |   |   |   |   |   volume <= 218.93: flood (4.0/1.0)
+|   |   |   |   |   |   |   volume > 218.93: normal (20.0/1.0)
+|   |   |   |   |   outflow > 0.53
+|   |   |   |   |   |   percent_storage <= 86.36
+|   |   |   |   |   |   |   volume <= 7413.61
+|   |   |   |   |   |   |   |   volume <= 235.25
+|   |   |   |   |   |   |   |   |   inflow <= 1.361
+|   |   |   |   |   |   |   |   |   |   volume <= 90.28: normal (28.0)
+|   |   |   |   |   |   |   |   |   |   volume > 90.28
+|   |   |   |   |   |   |   |   |   |   |   month <= 10
+|   |   |   |   |   |   |   |   |   |   |   |   month <= 1: flood (7.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   |   month > 1
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume <= 135.64: normal (5.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   volume > 135.64
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow <= 0.585: normal (5.0/2.0)
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   outflow > 0.585: flood (5.0)
+|   |   |   |   |   |   |   |   |   |   |   month > 10: normal (6.0)
+|   |   |   |   |   |   |   |   |   inflow > 1.361: flood (9.0)
+|   |   |   |   |   |   |   |   volume > 235.25: normal (159.0/4.0)
+|   |   |   |   |   |   |   volume > 7413.61
+|   |   |   |   |   |   |   |   month <= 6
+|   |   |   |   |   |   |   |   |   outflow <= 9.84: flood (2.0)
+|   |   |   |   |   |   |   |   |   outflow > 9.84: normal (15.0)
+|   |   |   |   |   |   |   |   month > 6: flood (19.0)
+|   |   |   |   |   |   percent_storage > 86.36
+|   |   |   |   |   |   |   month <= 5
+|   |   |   |   |   |   |   |   outflow <= 1.305: flood (9.0)
+|   |   |   |   |   |   |   |   outflow > 1.305: normal (21.0)
+|   |   |   |   |   |   |   month > 5
+|   |   |   |   |   |   |   |   month <= 11: flood (34.0/1.0)
+|   |   |   |   |   |   |   |   month > 11
+|   |   |   |   |   |   |   |   |   percent_storage <= 87.34: normal (7.0)
+|   |   |   |   |   |   |   |   |   percent_storage > 87.34: flood (6.0/1.0)
+|   |   |   inflow > 2.581
+|   |   |   |   outflow <= 26
+|   |   |   |   |   percent_storage <= 85.39
+|   |   |   |   |   |   volume <= 7434.69
+|   |   |   |   |   |   |   month <= 10
+|   |   |   |   |   |   |   |   month <= 6
+|   |   |   |   |   |   |   |   |   month <= 3
+|   |   |   |   |   |   |   |   |   |   volume <= 1432.77
+|   |   |   |   |   |   |   |   |   |   |   month <= 2: flood (57.0)
+|   |   |   |   |   |   |   |   |   |   |   month > 2
+|   |   |   |   |   |   |   |   |   |   |   |   volume <= 1230.43: normal (6.0)
+|   |   |   |   |   |   |   |   |   |   |   |   volume > 1230.43: flood (9.0)
+|   |   |   |   |   |   |   |   |   |   volume > 1432.77: normal (12.0)
+|   |   |   |   |   |   |   |   |   month > 3: normal (19.0)
+|   |   |   |   |   |   |   |   month > 6: flood (38.0)
+|   |   |   |   |   |   |   month > 10
+|   |   |   |   |   |   |   |   outflow <= 18.35: normal (15.0)
+|   |   |   |   |   |   |   |   outflow > 18.35
+|   |   |   |   |   |   |   |   |   volume <= 1206.61: flood (3.0)
+|   |   |   |   |   |   |   |   |   volume > 1206.61: normal (4.0)
+|   |   |   |   |   |   volume > 7434.69: flood (109.0/2.0)
+|   |   |   |   |   percent_storage > 85.39: flood (174.0/2.0)
+|   |   |   |   outflow > 26
+|   |   |   |   |   month <= 4: normal (17.0)
+|   |   |   |   |   month > 4: flood (8.0)
+|   |   percent_storage > 88.17
+|   |   |   inflow <= 0.081
+|   |   |   |   outflow <= 0.82
+|   |   |   |   |   month <= 11
+|   |   |   |   |   |   volume <= 109.94: normal (6.0)
+|   |   |   |   |   |   volume > 109.94
+|   |   |   |   |   |   |   percent_storage <= 95.89
+|   |   |   |   |   |   |   |   volume <= 156.71: flood (29.0)
+|   |   |   |   |   |   |   |   volume > 156.71
+|   |   |   |   |   |   |   |   |   volume <= 274.08: normal (10.0/1.0)
+|   |   |   |   |   |   |   |   |   volume > 274.08: flood (4.0)
+|   |   |   |   |   |   |   percent_storage > 95.89: flood (95.0)
+|   |   |   |   |   month > 11
+|   |   |   |   |   |   inflow <= 0.04
+|   |   |   |   |   |   |   volume <= 108.06: flood (2.0)
+|   |   |   |   |   |   |   volume > 108.06
+|   |   |   |   |   |   |   |   volume <= 214.09: normal (11.0)
+|   |   |   |   |   |   |   |   volume > 214.09: flood (3.0/1.0)
+|   |   |   |   |   |   inflow > 0.04: flood (8.0)
+|   |   |   |   outflow > 0.82
+|   |   |   |   |   volume <= 257.24: normal (65.0)
+|   |   |   |   |   volume > 257.24
+|   |   |   |   |   |   month <= 11: flood (11.0)
+|   |   |   |   |   |   month > 11: normal (3.0)
+|   |   |   inflow > 0.081
+|   |   |   |   month <= 5
+|   |   |   |   |   percent_storage <= 99.94
+|   |   |   |   |   |   outflow <= 2.72
+|   |   |   |   |   |   |   inflow <= 1.34
+|   |   |   |   |   |   |   |   inflow <= 1.01
+|   |   |   |   |   |   |   |   |   outflow <= 0.974
+|   |   |   |   |   |   |   |   |   |   volume <= 148.2
+|   |   |   |   |   |   |   |   |   |   |   outflow <= 0.474: normal (5.0)
+|   |   |   |   |   |   |   |   |   |   |   outflow > 0.474: flood (4.0)
+|   |   |   |   |   |   |   |   |   |   volume > 148.2: flood (18.0)
+|   |   |   |   |   |   |   |   |   outflow > 0.974
+|   |   |   |   |   |   |   |   |   |   volume <= 254.05
+|   |   |   |   |   |   |   |   |   |   |   volume <= 95.12: flood (3.0/1.0)
+|   |   |   |   |   |   |   |   |   |   |   volume > 95.12: normal (22.0)
+|   |   |   |   |   |   |   |   |   |   volume > 254.05: flood (4.0)
+|   |   |   |   |   |   |   |   inflow > 1.01
+|   |   |   |   |   |   |   |   |   month <= 1: flood (33.0)
+|   |   |   |   |   |   |   |   |   month > 1
+|   |   |   |   |   |   |   |   |   |   volume <= 100.75: flood (2.0)
+|   |   |   |   |   |   |   |   |   |   volume > 100.75: normal (2.0)
+|   |   |   |   |   |   |   inflow > 1.34: normal (9.0)
+|   |   |   |   |   |   outflow > 2.72: normal (17.0/1.0)
+|   |   |   |   |   percent_storage > 99.94: flood (79.0)
+|   |   |   |   month > 5
+|   |   |   |   |   inflow <= 0.484
+|   |   |   |   |   |   outflow <= 0.8
+|   |   |   |   |   |   |   percent_storage <= 91.58
+|   |   |   |   |   |   |   |   inflow <= 0.095: flood (16.0)
+|   |   |   |   |   |   |   |   inflow > 0.095
+|   |   |   |   |   |   |   |   |   inflow <= 0.2: normal (8.0/1.0)
+|   |   |   |   |   |   |   |   |   inflow > 0.2: flood (3.0)
+|   |   |   |   |   |   |   percent_storage > 91.58: flood (211.0)
+|   |   |   |   |   |   outflow > 0.8
+|   |   |   |   |   |   |   month <= 11
+|   |   |   |   |   |   |   |   volume <= 274.32
+|   |   |   |   |   |   |   |   |   volume <= 243.58: flood (2.0)
+|   |   |   |   |   |   |   |   |   volume > 243.58: normal (5.0)
+|   |   |   |   |   |   |   |   volume > 274.32: flood (21.0)
+|   |   |   |   |   |   |   month > 11
+|   |   |   |   |   |   |   |   volume <= 844.13: normal (19.0)
+|   |   |   |   |   |   |   |   volume > 844.13: flood (4.0)
+|   |   |   |   |   inflow > 0.484: flood (727.0)
+
+Number of Leaves  : 	366
+
+Size of the tree : 	731
+
+Attribute mappings:
+
+Model attributes           	    Incoming attributes
+---------------------------	    ----------------
+(numeric) volume           	--> 5 (numeric) volume
+(numeric) percent_storage  	--> 6 (numeric) percent_storage
+(numeric) inflow           	--> 7 (numeric) inflow
+(numeric) outflow          	--> 8 (numeric) outflow
+(numeric) month            	--> 9 (numeric) month
+(nominal) risk_class_30d   	--> 14 (nominal) risk_class_30d
+
+
+Time taken to build model: 0.13 seconds
+
+=== Evaluation on test set ===
+
+Time taken to test model on supplied test set: 0.76 seconds
+
+=== Summary ===
+
+Correctly Classified Instances        3398               83.6946 %
+Incorrectly Classified Instances       662               16.3054 %
+Kappa statistic                          0.6778
+Mean absolute error                      0.1106
+Root mean squared error                  0.3246
+Relative absolute error                 25.7198 %
+Root relative squared error             59.7183 %
+Total Number of Instances             4060     
+
+=== Detailed Accuracy By Class ===
+
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.565    0.012    0.500      0.565    0.530      0.521    0.873     0.379     drought
+                 0.862    0.177    0.737      0.862    0.794      0.667    0.835     0.660     normal
+                 0.831    0.101    0.929      0.831    0.878      0.714    0.859     0.890     flood
+Weighted Avg.    0.837    0.127    0.850      0.837    0.840      0.693    0.851     0.795     
+
+=== Confusion Matrix ===
+
+    a    b    c   <-- classified as
+   48   37    0 |    a = drought
+   46 1275  158 |    b = normal
+    2  419 2075 |    c = flood
+

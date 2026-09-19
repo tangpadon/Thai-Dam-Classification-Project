@@ -1,0 +1,67 @@
+=== Run information ===
+
+Scheme:       weka.classifiers.misc.InputMappedClassifier -I -trim -W weka.classifiers.trees.RandomForest -- -P 100 -I 100 -num-slots 1 -K 0 -M 1.0 -V 0.001 -S 1
+Relation:     dam_risk_forecast_30days-weka.filters.unsupervised.attribute.Remove-R1-4,10-13
+Instances:    20475
+Attributes:   6
+              volume
+              percent_storage
+              inflow
+              outflow
+              month
+              risk_class_30d
+Test mode:    user supplied test set:  size unknown (reading incrementally)
+
+=== Classifier model (full training set) ===
+
+InputMappedClassifier:
+
+RandomForest
+
+Bagging with 100 iterations and base learner
+
+weka.classifiers.trees.RandomTree -K 0 -M 1.0 -V 0.001 -S 1 -do-not-check-capabilities
+Attribute mappings:
+
+Model attributes           	    Incoming attributes
+---------------------------	    ----------------
+(numeric) volume           	--> 5 (numeric) volume
+(numeric) percent_storage  	--> 6 (numeric) percent_storage
+(numeric) inflow           	--> 7 (numeric) inflow
+(numeric) outflow          	--> 8 (numeric) outflow
+(numeric) month            	--> 9 (numeric) month
+(nominal) risk_class_30d   	--> 14 (nominal) risk_class_30d
+
+
+Time taken to build model: 2.45 seconds
+
+=== Evaluation on test set ===
+
+Time taken to test model on supplied test set: 0.82 seconds
+
+=== Summary ===
+
+Correctly Classified Instances        3477               85.6404 %
+Incorrectly Classified Instances       583               14.3596 %
+Kappa statistic                          0.7165
+Mean absolute error                      0.1096
+Root mean squared error                  0.2595
+Relative absolute error                 25.4803 %
+Root relative squared error             47.7481 %
+Total Number of Instances             4060     
+
+=== Detailed Accuracy By Class ===
+
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.788    0.013    0.563      0.788    0.657      0.658    0.991     0.609     drought
+                 0.873    0.152    0.767      0.873    0.816      0.704    0.938     0.862     normal
+                 0.849    0.088    0.939      0.849    0.892      0.745    0.950     0.972     flood
+Weighted Avg.    0.856    0.110    0.868      0.856    0.859      0.728    0.947     0.924     
+
+=== Confusion Matrix ===
+
+    a    b    c   <-- classified as
+   67   18    0 |    a = drought
+   50 1291  138 |    b = normal
+    2  375 2119 |    c = flood
+

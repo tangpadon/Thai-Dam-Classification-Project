@@ -1,0 +1,69 @@
+=== Run information ===
+
+Scheme:       weka.classifiers.functions.Logistic -R 1.0E-8 -M -1 -num-decimal-places 4
+Relation:     dam_risk_forecast_7days-weka.filters.unsupervised.attribute.Remove-R1-4,12-15-weka.filters.unsupervised.attribute.Remove-R3-4-weka.filters.unsupervised.attribute.Remove-R1
+Instances:    20475
+Attributes:   5
+              percent_storage
+              inflow_pct
+              outflow_pct
+              month
+              risk_class_7d
+Test mode:    user supplied test set:  size unknown (reading incrementally)
+
+=== Classifier model (full training set) ===
+
+Logistic Regression with ridge parameter of 1.0E-8
+Coefficients...
+                      Class
+Variable            drought    normal
+=====================================
+percent_storage     -1.5005   -0.5525
+inflow_pct          -5.3393   -0.7714
+outflow_pct          5.1713    0.9234
+month               -0.2544   -0.1208
+Intercept           74.1767   45.1931
+
+
+Odds Ratios...
+                      Class
+Variable            drought    normal
+=====================================
+percent_storage       0.223    0.5755
+inflow_pct           0.0048    0.4624
+outflow_pct        176.1413    2.5179
+month                0.7753    0.8862
+
+
+Time taken to build model: 0.18 seconds
+
+=== Evaluation on test set ===
+
+Time taken to test model on supplied test set: 0.01 seconds
+
+=== Summary ===
+
+Correctly Classified Instances        4653               95.6423 %
+Incorrectly Classified Instances       212                4.3577 %
+Kappa statistic                          0.9193
+Mean absolute error                      0.0432
+Root mean squared error                  0.1508
+Relative absolute error                 10.853  %
+Root relative squared error             29.487  %
+Total Number of Instances             4865     
+
+=== Detailed Accuracy By Class ===
+
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.990    0.004    0.912      0.990    0.949      0.948    1.000     0.992     drought
+                 0.972    0.056    0.931      0.972    0.951      0.913    0.989     0.975     normal
+                 0.940    0.017    0.984      0.940    0.962      0.923    0.992     0.994     flood
+Weighted Avg.    0.956    0.033    0.958      0.956    0.957      0.919    0.991     0.986     
+
+=== Confusion Matrix ===
+
+    a    b    c   <-- classified as
+  206    2    0 |    a = drought
+   20 2064   39 |    b = normal
+    0  151 2383 |    c = flood
+

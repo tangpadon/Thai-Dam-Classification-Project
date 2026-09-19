@@ -7,7 +7,7 @@ from weka.classifiers import Classifier
 from weka.core.dataset import Instance, Instances
 from weka.core.converters import Loader
 
-FEATURES = ["volume", "percent_storage", "inflow", "outflow", "month"]
+FEATURES = ["percent_storage", "inflow_pct", "outflow_pct", "month"]
 
 @st.cache_resource
 def init_jvm_safe():
@@ -18,7 +18,9 @@ def init_jvm_safe():
         print(f"JVM Error: {e}")
         return False
 
-def _extract_header(arff_path, class_attr_name):
+def _extract_header(arff_path, class_attr_name, features=None):
+    if features is None:
+        features = FEATURES
     from jpype import JClass
     loader = Loader("weka.core.converters.ArffLoader")
     full = loader.load_file(arff_path)
@@ -28,7 +30,7 @@ def _extract_header(arff_path, class_attr_name):
     InstancesJ = JClass("weka.core.Instances")
 
     attr_list = ArrayList()
-    for name in FEATURES:
+    for name in features:
         for attr in full.attributes():
             if attr.name == name:
                 attr_list.add(attr.jobject)
@@ -84,8 +86,18 @@ def predict_single_dam(row_series, model_config):
 
     class_attr_name, numeric_attrs, nominal_attrs = mapping
 
+    # Auto-calculate percentage features if needed (ensures compatibility with both old and new models)
+    row_dict = dict(row_series)
+    cap = float(row_dict.get('capacity', 0) or 0)
+    if "inflow_pct" not in row_dict or pd.isna(row_dict["inflow_pct"]):
+        inflow = float(row_dict.get('inflow', 0) or 0)
+        row_dict["inflow_pct"] = (inflow / cap * 100.0) if cap > 0 else 0.0
+    if "outflow_pct" not in row_dict or pd.isna(row_dict["outflow_pct"]):
+        outflow = float(row_dict.get('outflow', 0) or 0)
+        row_dict["outflow_pct"] = (outflow / cap * 100.0) if cap > 0 else 0.0
+
     for attr in numeric_attrs:
-        val = row_series.get(attr.name, None)
+        val = row_dict.get(attr.name, None)
         if val is None or pd.isna(val) or val == "None":
             inst.set_missing(attr.index)
             continue
@@ -95,7 +107,7 @@ def predict_single_dam(row_series, model_config):
             inst.set_value(attr.index, 0.0)
 
     for attr in nominal_attrs:
-        val = row_series.get(attr.name, None)
+        val = row_dict.get(attr.name, None)
         if val is None or pd.isna(val) or val == "None":
             inst.set_missing(attr.index)
             continue

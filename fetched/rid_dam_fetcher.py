@@ -145,6 +145,10 @@ class DataProcessor:
 
         df = cls._forward_fill(df)
 
+        # Domain-specific capacity-relative features (inflow/outflow as % of dam capacity)
+        df["inflow_pct"] = np.where(df["capacity"] > 0, (df["inflow"] / df["capacity"]) * 100, 0.0)
+        df["outflow_pct"] = np.where(df["capacity"] > 0, (df["outflow"] / df["capacity"]) * 100, 0.0)
+
         future_col = f"future_pct_{shift_days}d"
         target_col = f"risk_class_{shift_days}d"
 
@@ -206,7 +210,9 @@ class ARFFExporter:
 
     NUMERIC_COLS = [
         "capacity", "storage", "active_storage", "dead_storage",
-        "volume", "percent_storage", "inflow", "outflow", "month",
+        "volume", "percent_storage", "inflow", "outflow",
+        "inflow_pct", "outflow_pct",
+        "month",
     ]
     CATEGORICAL_COLS = ["id", "name", "region", "owner"]
 
