@@ -26,4 +26,4 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PORT=10000
 
 # 7. สั่งรันหน้าเว็บ Streamlit ทันทีเมื่อเซิร์ฟเวอร์เริ่มทำงาน
-CMD ["sh", "-c", "python -m streamlit run app.py --server.port $PORT --server.address 0.0.0.0"]
+CMD ["sh", "-c", "python3 -m streamlit run app.py --server.port $PORT --server.address 0.0.0.0"]
