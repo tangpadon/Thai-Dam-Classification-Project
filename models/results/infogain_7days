@@ -1,0 +1,34 @@
+=== Run information ===
+
+Evaluator:    weka.attributeSelection.InfoGainAttributeEval 
+Search:       weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N -1
+Relation:     dam_risk_forecast_7days-weka.filters.unsupervised.attribute.Remove-R1-4,7-8,12-15
+Instances:    20475
+Attributes:   6
+              volume
+              percent_storage
+              inflow_pct
+              outflow_pct
+              month
+              risk_class_7d
+Evaluation mode:    evaluate on all training data
+
+
+
+=== Attribute Selection on all input data ===
+
+Search Method:
+	Attribute ranking.
+
+Attribute Evaluator (supervised, Class (nominal): 6 risk_class_7d):
+	Information Gain Ranking Filter
+
+Ranked attributes:
+ 0.908  2 percent_storage
+ 0.334  1 volume
+ 0.319  4 outflow_pct
+ 0.226  5 month
+ 0.152  3 inflow_pct
+
+Selected attributes: 2,1,4,5,3 : 5
+

@@ -49,11 +49,19 @@ def _extract_header(arff_path, class_attr_name, features=None):
 def load_resources():
     base = os.path.join(os.path.dirname(__file__), "..", "models")
 
-    raw_7d = serialization.read(os.path.join(base, "trained", "Logistic_7days.model"))
+    # 7-day model (supports Log_7days.model or Logistic_7days.model)
+    path_7d = os.path.join(base, "trained", "Log_7days.model")
+    if not os.path.exists(path_7d):
+        path_7d = os.path.join(base, "trained", "Logistic_7days.model")
+    raw_7d = serialization.read(path_7d)
     model_7d = Classifier(jobject=raw_7d)
     header_7d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_7days_header.arff"), "risk_class_7d")
 
-    raw_30d = serialization.read(os.path.join(base, "trained", "RF_30days.model"))
+    # 30-day model (supports RF_30days.model or RandomForest_30days.model)
+    path_30d = os.path.join(base, "trained", "RF_30days.model")
+    if not os.path.exists(path_30d):
+        path_30d = os.path.join(base, "trained", "RandomForest_30days.model")
+    raw_30d = serialization.read(path_30d)
     model_30d = Classifier(jobject=raw_30d)
     header_30d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_30days_header.arff"), "risk_class_30d")
 
