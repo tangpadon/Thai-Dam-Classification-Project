@@ -10,9 +10,11 @@ from weka.core.converters import Loader
 FEATURES = ["percent_storage", "inflow_pct", "outflow_pct", "month"]
 
 @st.cache_resource
-def init_jvm_safe():
+def init_jvm_safe(max_heap_size: str = "128m"):
     try:
-        jvm.start(packages=True)
+        if not jvm.started:
+            heap_size = os.environ.get("WEKA_MAX_HEAP_SIZE", max_heap_size)
+            jvm.start(max_heap_size=heap_size, packages=False)
         return True
     except Exception as e:
         print(f"JVM Error: {e}")

@@ -4,10 +4,15 @@ from core.rid_api import fetch_and_save_data, backfill_historical_data
 
 from views import user_view
 
+
 st.set_page_config(page_title="ระบบพยากรณ์ระดับน้ำในอ่างเก็บน้ำ", layout="wide", initial_sidebar_state="expanded")
 
-init_jvm_safe()
-models_dict = load_resources()
+@st.cache_resource
+def init_models():
+    init_jvm_safe()
+    return load_resources()
+
+models_dict = init_models()
 
 raw_df, data_date, recorded_at = fetch_and_save_data()
 backfill_historical_data(lookback_days=30)
