@@ -1,10 +1,9 @@
-# 1. ใช้ภาพระบบจำลอง Ubuntu มาตรฐานที่เสถียรและใช้งานกันอย่างแพร่หลาย
+# 1. ใช้ภาพระบบจำลอง Ubuntu มาตรฐาน
 FROM ubuntu:22.04
 
-# ตั้งค่าไม่ให้ระบบหยุดถามคำถามระหว่างติดตั้งแพ็กเกจ (เช่น ป้อนโซนเวลา)
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 2. อัปเดตและติดตั้ง Java 11, Python 3, และ pip พร้อมล้างแคชเพื่อลดขนาดไฟล์
+# 2. ติดตั้ง Java 11, Python 3, และ pip
 RUN apt-get update && apt-get install -y \
     openjdk-11-jdk \
     python3 \
@@ -12,18 +11,21 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
+# 🌟 เพิ่มบรรทัดนี้: ลิงก์คำสั่ง python และ pip ให้เรียกใช้งาน python3/pip3 อัตโนมัติ
+RUN ln -s /usr/bin/python3 /usr/bin/python && ln -s /usr/bin/pip3 /usr/bin/pip
+
 # 3. กำหนดโฟลเดอร์ทำงานภายในเซิร์ฟเวอร์
 WORKDIR /app
 
-# 4. คัดลอกไฟล์ทั้งหมดจาก GitHub เข้ามาในโฟลเดอร์ /app
+# 4. คัดลอกไฟล์ทั้งหมดจาก GitHub เข้ามา
 COPY . /app
 
-# 5. ติดตั้งไลบรารี Python ตามที่ระบุไว้ใน requirements.txt
+# 5. ติดตั้งไลบรารี Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6. ตั้งค่าตัวแปรระบบเพื่อให้ Python ดึงและเรียกใช้ Java (สำคัญมากสำหรับ Weka/JPype)
+# 6. ตั้งค่าตัวแปรระบบเพื่อให้เจอ Java
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PORT=10000
 
-# 7. สั่งรันหน้าเว็บ Streamlit ทันทีเมื่อเซิร์ฟเวอร์เริ่มทำงาน
-CMD ["sh", "-c", "python3 -m streamlit run app.py --server.port $PORT --server.address 0.0.0.0"]
+# 7. สั่งรันหน้าเว็บ Streamlit
+CMD ["sh", "-c", "streamlit run app.py --server.port $PORT --server.address 0.0.0.0"]
