@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 🌟 เพิ่มบรรทัดนี้: ลิงก์คำสั่ง python และ pip ให้เรียกใช้งาน python3/pip3 อัตโนมัติ
-RUN ln -s /usr/bin/python3 /usr/bin/python && ln -s /usr/bin/pip3 /usr/bin/pip
+RUN ln -sf /usr/bin/python3 /usr/bin/python && ln -sf /usr/bin/pip3 /usr/bin/pip
+
 
 # 3. กำหนดโฟลเดอร์ทำงานภายในเซิร์ฟเวอร์
 WORKDIR /app
