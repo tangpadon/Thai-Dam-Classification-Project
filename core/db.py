@@ -99,23 +99,22 @@ def get_historical_data(dam_id, limit=30):
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         query = """
-            SELECT d.record_date, d.percent_storage, d.inflow, d.outflow
+            SELECT d.record_date, d.volume, d.percent_storage, d.inflow, d.outflow
             FROM dam_daily d
             INNER JOIN (
-                SELECT record_date, MAX(recorded_at) AS latest_ts
+                SELECT MAX(id) AS max_id
                 FROM dam_daily
                 WHERE dam_id = %s
                 GROUP BY record_date
-            ) m
-            ON d.dam_id = %s AND d.record_date = m.record_date AND d.recorded_at = m.latest_ts
-            ORDER BY d.record_date DESC
-            LIMIT %s
+                ORDER BY record_date DESC
+                LIMIT %s
+            ) m ON d.id = m.max_id
+            ORDER BY d.record_date ASC
         """
-        df_hist = pd.read_sql(query, conn, params=(int(dam_id), int(dam_id), int(limit)))
-        if not df_hist.empty:
-            df_hist = df_hist.sort_values('record_date', ascending=True).reset_index(drop=True)
+        df_hist = pd.read_sql(query, conn, params=(int(dam_id), int(limit)))
         return df_hist
     except Exception as e:
+        print(f"Historical query error: {e}")
         return pd.DataFrame()
     finally:
         if 'conn' in locals() and conn.is_connected():

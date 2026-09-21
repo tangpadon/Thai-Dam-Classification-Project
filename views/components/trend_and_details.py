@@ -32,14 +32,15 @@ def render_trend_and_details(
                     label_visibility="collapsed", filter_mode=None
                 )
             limit_days = 30 if "30" in time_range else 7
-            hist_df = get_historical_data(dam_data['id'], limit=limit_days)
+            hist_df = get_historical_data(dam_data['id'], limit=30)
 
             if not hist_df.empty and len(hist_df) > 1:
                 hist_df = hist_df.sort_values('record_date').reset_index(drop=True)
                 hist_df['record_date'] = pd.to_datetime(hist_df['record_date'])
+                chart_data = hist_df.tail(limit_days) if len(hist_df) > limit_days else hist_df
                 daily = (
-                    hist_df.sort_values('record_date')
-                    .groupby(hist_df['record_date'].dt.date)
+                    chart_data.sort_values('record_date')
+                    .groupby(chart_data['record_date'].dt.date)
                     .tail(1)
                     .reset_index(drop=True)
                 )

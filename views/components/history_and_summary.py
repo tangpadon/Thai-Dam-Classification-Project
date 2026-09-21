@@ -24,7 +24,7 @@ def render_history_and_summary(
         with st.container(border=True, key="sec_history"):
             st.markdown(
                 '<div id="section-history" class="section-title">'
-                '<span class="badge-num">6</span> ข้อมูลย้อนหลัง (ตาราง)</div>',
+                '<span class="badge-num">6</span> ข้อมูลย้อนหลัง 30 วัน (ตาราง)</div>',
                 unsafe_allow_html=True
             )
             if not hist_df.empty:
@@ -35,17 +35,18 @@ def render_history_and_summary(
                     .groupby(t_df['record_date'].dt.date)
                     .first()
                     .reset_index(drop=True)
-                    .head(10)
                 )
 
                 table_rows = []
                 for _, r in daily_table.iterrows():
                     r_pct = to_num(r.get('percent_storage'))
                     r_pct_str = f"{r_pct:.2f}" if r_pct is not None else "-"
-                    r_storage = to_num(r.get('storage'))
+                    r_storage = to_num(r.get('volume'))
+                    if r_storage is None:
+                        r_storage = to_num(r.get('storage'))
                     if r_storage is None:
                         r_storage = to_num(dam_data.get('storage'))
-                    r_storage_str = f"{r_storage:,.0f}" if r_storage is not None else "-"
+                    r_storage_str = f"{r_storage:,.2f}" if r_storage is not None else "-"
                     r_in = to_num(r.get('inflow'))
                     r_in_str = f"{r_in:.2f}" if r_in is not None else "-"
                     r_out = to_num(r.get('outflow'))
@@ -70,27 +71,27 @@ def render_history_and_summary(
 
                     table_rows.append(
                         f'<tr style="border-bottom:1px solid #f1f5f9; text-align:center;">'
-                        f'<td style="padding:7px 8px; text-align:left; color:#1e293b;">{date_cell}</td>'
+                        f'<td style="padding:7px 8px; text-align:left; color:#1e293b; white-space:nowrap;">{date_cell}</td>'
                         f'<td style="padding:7px 8px; color:#1e293b;">{r_pct_str}</td>'
                         f'<td style="padding:7px 8px; color:#1e293b;">{r_storage_str}</td>'
                         f'<td style="padding:7px 8px; color:#1e293b;">{r_in_str}</td>'
                         f'<td style="padding:7px 8px; color:#1e293b;">{r_out_str}</td>'
-                        f'<td style="padding:7px 8px;">{pill_badge}</td>'
+                        f'<td style="padding:7px 8px; white-space:nowrap;">{pill_badge}</td>'
                         f'</tr>'
                     )
 
                 rows_html = "".join(table_rows)
                 table_html = (
-                    '<div class="table-responsive">'
-                    '<table style="width:100%; border-collapse:collapse; font-size:0.8rem; background:white; border-radius:8px; border:1px solid #e2e8f0; overflow:hidden;">'
+                    '<div class="table-responsive" style="max-height:480px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">'
+                    '<table style="width:100%; border-collapse:collapse; font-size:0.8rem; background:white;">'
                     '<thead>'
-                    '<tr style="background-color:#f8fafc; border-bottom:1px solid #e2e8f0; color:#475569; font-weight:600; text-align:center;">'
-                    '<th style="padding:8px; text-align:left;">วันที่</th>'
-                    '<th style="padding:8px;">ร้อยละความจุ (%)</th>'
-                    '<th style="padding:8px;">ปริมาณน้ำกักเก็บ (ล้าน ลบ.ม.)</th>'
-                    '<th style="padding:8px;">Inflow (ล้าน ลบ.ม./วัน)</th>'
-                    '<th style="padding:8px;">Outflow (ล้าน ลบ.ม./วัน)</th>'
-                    '<th style="padding:8px;">ระดับสถานการณ์น้ำ</th>'
+                    '<tr style="background-color:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569; font-weight:600; text-align:center; position:sticky; top:0; z-index:2; box-shadow:0 1px 2px rgba(0,0,0,0.05);">'
+                    '<th style="padding:9px 8px; text-align:left; background-color:#f8fafc;">วันที่</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc;">ร้อยละความจุ (%)</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc;">ปริมาณน้ำกักเก็บ (ล้าน ลบ.ม.)</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc;">Inflow (ล้าน ลบ.ม./วัน)</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc;">Outflow (ล้าน ลบ.ม./วัน)</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc;">ระดับสถานการณ์น้ำ</th>'
                     '</tr>'
                     '</thead>'
                     f'<tbody>{rows_html}</tbody>'
