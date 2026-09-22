@@ -40,7 +40,7 @@ def _load_from_db(target_date):
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
-        if rows:
+        if rows and len(rows) >= 30:
             df = pd.DataFrame(rows)
             df = df.rename(columns={"dam_id": "id", "dam_name": "name"})
             recorded_at = get_recorded_time(target_date)

@@ -74,9 +74,10 @@ def init_db_schema():
             try:
                 cursor.execute("SELECT COUNT(*) FROM dam_daily;")
                 cnt = cursor.fetchone()[0]
-                # ใน TiDB Cloud ไม่สามารถ ALTER เพิ่ม AUTO_INCREMENT ได้ หากมีข้อมูล <= 1 แถว ให้ Re-create ตารางอัตโนมัติ
-                if cnt <= 1:
-                    cursor.execute("DROP TABLE dam_daily;")
+                # ใน TiDB Cloud ไม่สามารถ ALTER เพิ่ม AUTO_INCREMENT ได้ หากมีข้อมูลไม่สมบูรณ์ (< 50 แถว) ให้ Re-create ตารางอัตโนมัติ
+                if cnt < 50:
+                    cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+                    cursor.execute("DROP TABLE IF EXISTS dam_daily;")
                     cursor.execute("""
                         CREATE TABLE `dam_daily` (
                           `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -94,6 +95,7 @@ def init_db_schema():
                           CONSTRAINT `fk_dam_char` FOREIGN KEY (`dam_id`) REFERENCES `dam_info` (`dam_id`) ON DELETE CASCADE
                         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
                     """)
+                    cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
                     conn.commit()
             except Exception as e:
                 print(f"Auto-increment fix warning: {e}")
