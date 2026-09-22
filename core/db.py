@@ -100,7 +100,26 @@ def init_db_schema():
             except Exception as e:
                 print(f"Auto-increment fix warning: {e}")
 
-        # 4. ตรวจสอบ Composite Index เพิ่มเติมหากตารางมีอยู่เดิมแล้ว
+        # 4. ตรวจสอบและซ่อมแซมแถวที่ id เป็น NULL หรือ 0 (เช่น กรณี import ข้อมูลหรือ insert ขาด AUTO_INCREMENT บน Cloud)
+        try:
+            cursor.execute("SELECT COUNT(*) FROM dam_daily WHERE id IS NULL OR id = 0;")
+            null_cnt = cursor.fetchone()[0]
+            if null_cnt > 0:
+                cursor.execute("SELECT COALESCE(MAX(CASE WHEN id > 0 THEN id ELSE 0 END), 0) FROM dam_daily;")
+                base_id = cursor.fetchone()[0] or 0
+                cursor.execute("SELECT dam_id, record_date FROM dam_daily WHERE id IS NULL OR id = 0;")
+                missing_rows = cursor.fetchall()
+                for i, (d_id, r_date) in enumerate(missing_rows):
+                    new_id = base_id + i + 1
+                    cursor.execute(
+                        "UPDATE dam_daily SET id = %s WHERE dam_id = %s AND record_date = %s AND (id IS NULL OR id = 0) LIMIT 1;",
+                        (new_id, d_id, r_date)
+                    )
+                conn.commit()
+        except Exception as e:
+            print(f"ID repair warning: {e}")
+
+        # 5. ตรวจสอบ Composite Index เพิ่มเติมหากตารางมีอยู่เดิมแล้ว
         cursor.execute("SHOW INDEX FROM dam_daily WHERE Key_name = %s", ('idx_dam_record_date',))
         if not cursor.fetchall():
             cursor.execute("ALTER TABLE dam_daily ADD INDEX idx_dam_record_date (dam_id, record_date DESC);")
@@ -183,26 +202,43 @@ def save_to_database(df, record_date=None):
         conn = get_connection()
         cursor = conn.cursor()
 
-        sql = """
-            INSERT IGNORE INTO dam_daily
-            (dam_id, record_date, recorded_at, volume,
-             percent_storage, inflow, outflow)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-        data = [
-            (
-                str(row.get('id')),
-                record_date,
-                now,
-                _safe_float(row.get('volume')),
-                _safe_float(row.get('percent_storage')),
-                _safe_float(row.get('inflow')),
-                _safe_float(row.get('outflow')),
-            )
-            for _, row in df.iterrows()
-        ]
-        cursor.executemany(sql, data)
-        conn.commit()
+        # ลบข้อมูลเก่าของวันนี้ที่มีข้อผิดพลาด (เช่น id เป็น NULL หรือ 0) เพื่อป้องกันความขัดแย้ง
+        cursor.execute("DELETE FROM dam_daily WHERE record_date = %s AND (id IS NULL OR id = 0);", (record_date,))
+
+        # คำนวณ max_id ล่าสุดเพื่อส่งค่า id ชัดเจนเสมอ หมดปัญหา TiDB Cloud ไม่มี AUTO_INCREMENT หรือค่า id หลุดเป็น NULL
+        cursor.execute("SELECT COALESCE(MAX(id), 0) FROM dam_daily;")
+        row_max = cursor.fetchone()
+        base_id = int(row_max[0]) if row_max and row_max[0] is not None else 0
+
+        # ตรวจสอบว่ามี dam_id ไหนบันทึกแล้วในวันนี้บ้าง เพื่อไม่ให้ insert ซ้ำ
+        cursor.execute("SELECT dam_id FROM dam_daily WHERE record_date = %s;", (record_date,))
+        existing_dam_ids = {str(r[0]) for r in cursor.fetchall()}
+
+        new_rows = []
+        for _, row in df.iterrows():
+            d_id = str(row.get('id'))
+            if d_id not in existing_dam_ids:
+                base_id += 1
+                new_rows.append((
+                    base_id,
+                    d_id,
+                    record_date,
+                    now,
+                    _safe_float(row.get('volume')),
+                    _safe_float(row.get('percent_storage')),
+                    _safe_float(row.get('inflow')),
+                    _safe_float(row.get('outflow')),
+                ))
+
+        if new_rows:
+            sql = """
+                INSERT INTO dam_daily
+                (id, dam_id, record_date, recorded_at, volume,
+                 percent_storage, inflow, outflow)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.executemany(sql, new_rows)
+            conn.commit()
         return True
     except Exception as e:
         err_msg = f"DB Save Error: {e}"
@@ -238,28 +274,27 @@ def get_recorded_time(target_date):
 def get_historical_data(dam_id, limit=30):
     """
     ดึงข้อมูลย้อนหลังของเขื่อน พร้อม Cache 10 นาที เพื่อให้การสลับเขื่อนและเปลี่ยนช่วงเวลาลื่นไหลทันที
+    ไม่ผูกมัดกับคอลัมน์ id เพื่อป้องกันปัญหาข้อมูลของวันนี้ไม่แสดงกรณี id เป็น NULL
     """
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         query = """
-            SELECT d.record_date, d.volume, d.percent_storage, d.inflow, d.outflow
-            FROM dam_daily d
-            INNER JOIN (
-                SELECT MAX(id) AS max_id
-                FROM dam_daily
-                WHERE dam_id = %s
-                GROUP BY record_date
-                ORDER BY record_date DESC
-                LIMIT %s
-            ) m ON d.id = m.max_id
-            ORDER BY d.record_date ASC
+            SELECT record_date, volume, percent_storage, inflow, outflow
+            FROM dam_daily
+            WHERE dam_id = %s
+            ORDER BY record_date DESC, recorded_at DESC
+            LIMIT %s
         """
         # ส่ง dam_id เป็น str เพื่อให้ตรงกับประเภท varchar(50) ของ column และใช้ Index ได้เต็มประสิทธิภาพ
-        cursor.execute(query, (str(dam_id), int(limit)))
+        cursor.execute(query, (str(dam_id), int(limit) * 2))
         rows = cursor.fetchall()
         if rows:
-            return pd.DataFrame(rows)
+            df = pd.DataFrame(rows)
+            df = df.drop_duplicates(subset=['record_date'], keep='first')
+            df = df.head(int(limit))
+            df = df.sort_values('record_date', ascending=True).reset_index(drop=True)
+            return df
         return pd.DataFrame(columns=['record_date', 'volume', 'percent_storage', 'inflow', 'outflow'])
     except Exception as e:
         print(f"Historical query error: {e}")
