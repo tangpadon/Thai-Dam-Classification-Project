@@ -5,3 +5,8 @@ pandas
 mysql-connector-python
 python-dotenv
 plotly
+SQLAlchemy
+mysqlclient
+PyMySQL
+cryptography
+certifi

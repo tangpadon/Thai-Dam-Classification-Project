@@ -1,0 +1,7 @@
+default-jdk
+build-essential
+python3-dev
+default-libmysqlclient-dev
+pkg-config
+ca-certificates
+

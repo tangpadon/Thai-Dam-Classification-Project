@@ -9,10 +9,24 @@ from weka.core.converters import Loader
 
 FEATURES = ["percent_storage", "inflow_pct", "outflow_pct", "month"]
 
+def _ensure_java_home():
+    if not os.environ.get("JAVA_HOME"):
+        candidates = [
+            "/usr/lib/jvm/default-java",
+            "/usr/lib/jvm/java-17-openjdk-amd64",
+            "/usr/lib/jvm/java-11-openjdk-amd64",
+            "/usr/lib/jvm/java-21-openjdk-amd64",
+        ]
+        for path in candidates:
+            if os.path.exists(path):
+                os.environ["JAVA_HOME"] = path
+                break
+
 @st.cache_resource
 def init_jvm_safe(max_heap_size: str = "128m"):
     try:
         if not jvm.started:
+            _ensure_java_home()
             heap_size = os.environ.get("WEKA_MAX_HEAP_SIZE", max_heap_size)
             jvm.start(max_heap_size=heap_size, packages=False)
         return True
