@@ -9,21 +9,6 @@ from core.db import get_connection, save_to_database, get_recorded_time
 DATA_API_URL = RID_API_URL
 
 
-def _count_records_for_date(target_date):
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM dam_daily WHERE record_date = %s", (target_date,))
-        row = cursor.fetchone()
-        return row[0] if row else 0
-    except Exception:
-        return 0
-    finally:
-        if 'conn' in locals() and conn:
-            cursor.close()
-            conn.close()
-
-
 def _load_from_db(target_date):
     try:
         conn = get_connection()
@@ -105,8 +90,8 @@ def fetch_and_save_data():
         df_new = _normalize_records(records)
         if 'month' not in df_new.columns:
             df_new['month'] = today.month
-        save_to_database(df_new, record_date=today)
-        if _count_records_for_date(today) > 0:
+        saved = save_to_database(df_new, record_date=today)
+        if saved:
             return df_new, today, get_recorded_time(today)
         return df_new, today, None
 
