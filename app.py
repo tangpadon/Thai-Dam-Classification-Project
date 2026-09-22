@@ -15,7 +15,9 @@ def init_models():
 models_dict = init_models()
 
 raw_df, data_date, recorded_at = fetch_and_save_data()
-backfill_historical_data(lookback_days=30)
+if "backfill_checked" not in st.session_state:
+    backfill_historical_data(lookback_days=30)
+    st.session_state["backfill_checked"] = True
 
 if not raw_df.empty:
     user_view.render(raw_df, models_dict, data_date, recorded_at)

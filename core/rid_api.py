@@ -3,28 +3,30 @@ import time
 import streamlit as st
 import requests
 import pandas as pd
-import mysql.connector
-from config import RID_API_URL, DB_CONFIG
-from core.db import save_to_database, get_recorded_time
+from config import RID_API_URL
+from core.db import get_connection, save_to_database, get_recorded_time
 
 DATA_API_URL = RID_API_URL
 
+
 def _count_records_for_date(target_date):
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
+        conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM dam_daily WHERE record_date = %s", (target_date,))
-        return cursor.fetchone()[0]
+        row = cursor.fetchone()
+        return row[0] if row else 0
     except Exception:
         return 0
     finally:
-        if 'conn' in locals() and conn.is_connected():
+        if 'conn' in locals() and conn:
             cursor.close()
             conn.close()
 
+
 def _load_from_db(target_date):
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """SELECT dc.dam_id, dc.dam_name, dc.owner, dc.region,
@@ -48,7 +50,9 @@ def _load_from_db(target_date):
     except Exception:
         return None, None
 
+
 NOON = datetime.time(12, 0)
+
 
 def _has_measurements(records):
     for rec in (records or []):
@@ -59,10 +63,12 @@ def _has_measurements(records):
                 return True
     return False
 
+
 def _normalize_records(records):
     df = pd.json_normalize(records, record_path=['dam'], meta=['region'])
     mapping = {"dam_id": "id", "dam_name": "name"}
     return df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
+
 
 def _fetch_from_api(date_str=None):
     url = f"{DATA_API_URL}{date_str}" if date_str else DATA_API_URL.rstrip('/')
@@ -70,7 +76,12 @@ def _fetch_from_api(date_str=None):
     res_data = response.json()
     return res_data.get("data", res_data)
 
+
+@st.cache_data(ttl=300, show_spinner=False)
 def fetch_and_save_data():
+    """
+    ดึงข้อมูลสถานการณ์น้ำประจำวัน (แคช 5 นาที เพื่อให้การสลับเมนูและคลิกเลือกเขื่อนบนเว็บรวดเร็วระดับมิลลิวินาที)
+    """
     now = datetime.datetime.now()
     today = now.date()
     yesterday = today - datetime.timedelta(days=1)
@@ -109,21 +120,47 @@ def fetch_and_save_data():
             return df_y, today, get_recorded_time(today)
         return pd.DataFrame(), today, None
 
-def backfill_historical_data(lookback_days=30):
-    today = datetime.date.today()
-    backfill_count = 0
-    days_to_fetch = []
 
-    for d in range(1, lookback_days + 1):
-        target = today - datetime.timedelta(days=d)
-        if _count_records_for_date(target) == 0:
-            days_to_fetch.append(target)
+def backfill_historical_data(lookback_days=30):
+    """
+    ตรวจสอบข้อมูลย้อนหลัง 30 วันแบบ Batch Query (1 รอบคำสั่ง) แทนการวนลูป Query 30 ครั้ง
+    ช่วยประหยัดเวลาและลด Network Round-trip ไปยัง TiDB Cloud จากหลายสิบวินาทีเหลือเสี้ยววินาที
+    """
+    today = datetime.date.today()
+    start_date = today - datetime.timedelta(days=lookback_days)
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """SELECT record_date
+               FROM dam_daily
+               WHERE record_date >= %s
+               GROUP BY record_date
+               HAVING COUNT(*) >= 30""",
+            (start_date,)
+        )
+        existing_dates = {row[0] for row in cursor.fetchall()}
+    except Exception as e:
+        print(f"Error checking backfill dates: {e}")
+        existing_dates = set()
+    finally:
+        if 'conn' in locals() and conn:
+            cursor.close()
+            conn.close()
+
+    days_to_fetch = [
+        today - datetime.timedelta(days=d)
+        for d in range(1, lookback_days + 1)
+        if (today - datetime.timedelta(days=d)) not in existing_dates
+    ]
 
     if not days_to_fetch:
         return
 
     progress_bar = st.sidebar.progress(0, text="⏳ กำลังดึงข้อมูลย้อนหลัง...")
     status_text = st.sidebar.empty()
+    backfill_count = 0
 
     for i, target_date in enumerate(days_to_fetch):
         date_str = target_date.strftime("%Y-%m-%d")
