@@ -29,6 +29,7 @@ models/datasets/*.arff
 
 # Excel outputs
 scripts/*.xlsx
+docs/
 
 # OS files
 Thumbs.db
