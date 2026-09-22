@@ -67,12 +67,34 @@ def init_db_schema():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
 
-        # 3. ตรวจสอบว่าคอลัมน์ id มี AUTO_INCREMENT หรือไม่ (หากสร้างตารางไว้แต่ลืมใส่ AUTO_INCREMENT จะทำให้แถวถัดไปติด Duplicate Key 0)
+        # 3. ตรวจสอบว่าคอลัมน์ id มี AUTO_INCREMENT หรือไม่ (หากขาด AUTO_INCREMENT จะทำให้ TiDB ใส่ id=0 แถวแรก และแถวถัดไปติด Duplicate Key 0)
         cursor.execute("SHOW COLUMNS FROM dam_daily LIKE 'id';")
         col_id = cursor.fetchone()
         if col_id and 'auto_increment' not in str(col_id[5]).lower():
             try:
-                cursor.execute("ALTER TABLE dam_daily MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT;")
+                cursor.execute("SELECT COUNT(*) FROM dam_daily;")
+                cnt = cursor.fetchone()[0]
+                # ใน TiDB Cloud ไม่สามารถ ALTER เพิ่ม AUTO_INCREMENT ได้ หากมีข้อมูล <= 1 แถว ให้ Re-create ตารางอัตโนมัติ
+                if cnt <= 1:
+                    cursor.execute("DROP TABLE dam_daily;")
+                    cursor.execute("""
+                        CREATE TABLE `dam_daily` (
+                          `id` int(11) NOT NULL AUTO_INCREMENT,
+                          `dam_id` varchar(50) NOT NULL,
+                          `record_date` date NOT NULL,
+                          `recorded_at` datetime DEFAULT NULL,
+                          `volume` float DEFAULT NULL,
+                          `percent_storage` float DEFAULT NULL,
+                          `inflow` float DEFAULT NULL,
+                          `outflow` float DEFAULT NULL,
+                          PRIMARY KEY (`id`),
+                          KEY `idx_dam_id` (`dam_id`),
+                          KEY `idx_record_date` (`record_date`),
+                          KEY `idx_dam_record_date` (`dam_id`, `record_date` DESC),
+                          CONSTRAINT `fk_dam_char` FOREIGN KEY (`dam_id`) REFERENCES `dam_info` (`dam_id`) ON DELETE CASCADE
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                    """)
+                    conn.commit()
             except Exception as e:
                 print(f"Auto-increment fix warning: {e}")
 
