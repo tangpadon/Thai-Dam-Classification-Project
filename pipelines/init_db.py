@@ -76,3 +76,4 @@ def init_db_schema():
 
 if __name__ == "__main__":
     init_db_schema()
+
