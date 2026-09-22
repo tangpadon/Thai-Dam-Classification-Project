@@ -182,8 +182,11 @@ def backfill_historical_data(lookback_days=30):
                     df_hist = pd.json_normalize(records)
                 mapping = {"dam_id": "id", "dam_name": "name"}
                 df_hist = df_hist.rename(columns={k: v for k, v in mapping.items() if k in df_hist.columns})
-                save_to_database(df_hist, record_date=target_date)
-                backfill_count += 1
+                saved = save_to_database(df_hist, record_date=target_date)
+                if saved:
+                    backfill_count += 1
+                else:
+                    status_text.error(f"❌ บันทึกวันที่ {date_str} ลงฐานข้อมูลไม่สำเร็จ")
             else:
                 status_text.warning(f"⚠️ API ไม่มีข้อมูลวันที่ {date_str}")
         except Exception as e:

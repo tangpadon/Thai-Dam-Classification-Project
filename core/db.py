@@ -27,27 +27,72 @@ def get_connection():
         return mysql.connector.connect(**DB_CONFIG)
 
 
-def ensure_indexes():
-    """ตรวจสอบและสร้าง Composite Index อัตโนมัติ เพื่อเร่งความเร็ว Query บน Cloud Database / TiDB"""
+def init_db_schema():
+    """สร้างตาราง dam_info และ dam_daily พร้อม Indexes อัตโนมัติหากยังไม่มีใน Database"""
     try:
         conn = get_connection()
         cursor = conn.cursor()
+
+        # 1. ตารางข้อมูลเขื่อนหลัก
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `dam_info` (
+              `dam_id` varchar(50) NOT NULL,
+              `dam_name` varchar(255) NOT NULL,
+              `owner` varchar(100) DEFAULT NULL,
+              `region` varchar(100) DEFAULT NULL,
+              `capacity` float DEFAULT NULL,
+              `storage` float DEFAULT NULL,
+              `active_storage` float DEFAULT NULL,
+              `dead_storage` float DEFAULT NULL,
+              PRIMARY KEY (`dam_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """)
+
+        # 2. ตารางข้อมูลรายวัน
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `dam_daily` (
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `dam_id` varchar(50) NOT NULL,
+              `record_date` date NOT NULL,
+              `recorded_at` datetime DEFAULT NULL,
+              `volume` float DEFAULT NULL,
+              `percent_storage` float DEFAULT NULL,
+              `inflow` float DEFAULT NULL,
+              `outflow` float DEFAULT NULL,
+              PRIMARY KEY (`id`),
+              KEY `idx_dam_id` (`dam_id`),
+              KEY `idx_record_date` (`record_date`),
+              KEY `idx_dam_record_date` (`dam_id`, `record_date` DESC),
+              CONSTRAINT `fk_dam_char` FOREIGN KEY (`dam_id`) REFERENCES `dam_info` (`dam_id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """)
+
+        # 3. ตรวจสอบว่าคอลัมน์ id มี AUTO_INCREMENT หรือไม่ (หากสร้างตารางไว้แต่ลืมใส่ AUTO_INCREMENT จะทำให้แถวถัดไปติด Duplicate Key 0)
+        cursor.execute("SHOW COLUMNS FROM dam_daily LIKE 'id';")
+        col_id = cursor.fetchone()
+        if col_id and 'auto_increment' not in str(col_id[5]).lower():
+            try:
+                cursor.execute("ALTER TABLE dam_daily MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT;")
+            except Exception as e:
+                print(f"Auto-increment fix warning: {e}")
+
+        # 4. ตรวจสอบ Composite Index เพิ่มเติมหากตารางมีอยู่เดิมแล้ว
         cursor.execute("SHOW INDEX FROM dam_daily WHERE Key_name = %s", ('idx_dam_record_date',))
-        exists = cursor.fetchall()
-        if not exists:
+        if not cursor.fetchall():
             cursor.execute("ALTER TABLE dam_daily ADD INDEX idx_dam_record_date (dam_id, record_date DESC);")
-            conn.commit()
+
+        conn.commit()
     except Exception as e:
-        pass
+        print(f"Database Schema Init Warning: {e}")
     finally:
         if 'conn' in locals() and conn:
             cursor.close()
             conn.close()
 
 
-# เรียกใช้งาน index check เพียงครั้งเดียวเมื่อโหลดโมดูล
+# เรียกใช้งานสร้างตารางอัตโนมัติเมื่อเริ่มต้นโมดูล
 try:
-    ensure_indexes()
+    init_db_schema()
 except Exception:
     pass
 
@@ -86,8 +131,15 @@ def save_to_characteristics(df):
         ]
         cursor.executemany(sql, data)
         conn.commit()
+        return True
     except Exception as e:
-        print(f"DB Characteristics Save Error: {e}")
+        err_msg = f"DB Characteristics Save Error: {e}"
+        print(err_msg)
+        try:
+            st.error(f"⚠️ {err_msg}")
+        except Exception:
+            pass
+        return False
     finally:
         if 'conn' in locals() and conn:
             cursor.close()
@@ -99,7 +151,10 @@ def save_to_database(df, record_date=None):
         record_date = datetime.date.today()
     now = datetime.datetime.now()
     try:
-        save_to_characteristics(df)
+        ok = save_to_characteristics(df)
+        if not ok:
+            print("Warning: save_to_characteristics failed, skipping dam_daily insert")
+            return False
 
         conn = get_connection()
         cursor = conn.cursor()
@@ -124,8 +179,15 @@ def save_to_database(df, record_date=None):
         ]
         cursor.executemany(sql, data)
         conn.commit()
+        return True
     except Exception as e:
-        print(f"DB Save Error: {e}")
+        err_msg = f"DB Save Error: {e}"
+        print(err_msg)
+        try:
+            st.error(f"⚠️ {err_msg}")
+        except Exception:
+            pass
+        return False
     finally:
         if 'conn' in locals() and conn:
             cursor.close()
