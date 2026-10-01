@@ -36,37 +36,18 @@ def render_history_and_summary(
     models_dict: dict = None,
 ):
     """Render Section 6 (Historical data table) and Section 7 (Risk summary card)."""
-    b5_col, b6_col = st.columns([1.45, 1.05])
+    b5_col, b6_col = st.columns([1.5, 1.0])
     with b5_col:
         with st.container(border=True, key="sec_history"):
-            has_models = bool(models_dict and "7_day" in models_dict and "30_day" in models_dict)
-            if has_models:
-                h_col1, h_col2 = st.columns([1.1, 1.4])
-                with h_col1:
-                    st.markdown(
-                        '<div id="section-history" class="section-title" style="margin-bottom:0;">'
-                        '<span class="badge-num">6</span> ข้อมูลย้อนหลัง 30 วัน (ตาราง)</div>',
-                        unsafe_allow_html=True
-                    )
-                with h_col2:
-                    pred_mode = st.radio(
-                        "โมเดลพยากรณ์:",
-                        options=["พยากรณ์ 7 วัน", "พยากรณ์ 30 วัน", "แสดงทั้ง 2 โมเดล"],
-                        horizontal=True,
-                        index=0,
-                        key="sec6_pred_mode",
-                        label_visibility="collapsed"
-                    )
-            else:
-                st.markdown(
-                    '<div id="section-history" class="section-title">'
-                    '<span class="badge-num">6</span> ข้อมูลย้อนหลัง 30 วัน (ตาราง)</div>',
-                    unsafe_allow_html=True
-                )
-                pred_mode = None
+            st.markdown(
+                '<div id="section-history" class="section-title">'
+                '<span class="badge-num">6</span> ข้อมูลย้อนหลัง 30 วัน (ตาราง)</div>',
+                unsafe_allow_html=True
+            )
 
-            show_7d = has_models and pred_mode in ("พยากรณ์ 7 วัน", "แสดงทั้ง 2 โมเดล")
-            show_30d = has_models and pred_mode in ("พยากรณ์ 30 วัน", "แสดงทั้ง 2 โมเดล")
+            has_models = bool(models_dict and "7_day" in models_dict and "30_day" in models_dict)
+            show_7d = has_models
+            show_30d = has_models
 
             if not hist_df.empty:
                 t_df = hist_df.copy()
@@ -160,24 +141,24 @@ def render_history_and_summary(
                         f'</tr>'
                     )
 
-                th_actual = '<th style="padding:9px 8px; background-color:#f8fafc;">สถานการณ์จริง (Actual)</th>'
-                th_pred_7d = '<th style="padding:9px 8px; background-color:#f8fafc;">พยากรณ์ 7 วัน (Predicted)</th>' if show_7d else ''
-                th_pred_30d = '<th style="padding:9px 8px; background-color:#f8fafc;">พยากรณ์ 30 วัน (Predicted)</th>' if show_30d else ''
+                th_actual = '<th style="padding:9px 8px; background-color:#f8fafc; white-space:nowrap;">สถานการณ์จริง (Actual)</th>'
+                th_pred_7d = '<th style="padding:9px 8px; background-color:#f8fafc; white-space:nowrap;">พยากรณ์ 7 วัน (Predicted)</th>' if show_7d else ''
+                th_pred_30d = '<th style="padding:9px 8px; background-color:#f8fafc; white-space:nowrap;">พยากรณ์ 30 วัน (Predicted)</th>' if show_30d else ''
 
                 if not (show_7d or show_30d):
-                    th_actual = '<th style="padding:9px 8px; background-color:#f8fafc;">ระดับสถานการณ์น้ำ</th>'
+                    th_actual = '<th style="padding:9px 8px; background-color:#f8fafc; white-space:nowrap;">ระดับสถานการณ์น้ำ</th>'
 
                 rows_html = "".join(table_rows)
                 table_html = (
-                    '<div class="table-responsive" style="max-height:480px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">'
+                    '<div class="table-responsive" style="max-height:480px; overflow-y:auto; overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px;">'
                     '<table style="width:100%; border-collapse:collapse; font-size:0.8rem; background:white;">'
                     '<thead>'
                     '<tr style="background-color:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569; font-weight:600; text-align:center; position:sticky; top:0; z-index:2; box-shadow:0 1px 2px rgba(0,0,0,0.05);">'
-                    '<th style="padding:9px 8px; text-align:left; background-color:#f8fafc;">วันที่</th>'
-                    '<th style="padding:9px 8px; background-color:#f8fafc;">ร้อยละความจุ (%)</th>'
-                    '<th style="padding:9px 8px; background-color:#f8fafc;">ปริมาณน้ำกักเก็บ (ล้าน ลบ.ม.)</th>'
-                    '<th style="padding:9px 8px; background-color:#f8fafc;">Inflow (ล้าน ลบ.ม./วัน)</th>'
-                    '<th style="padding:9px 8px; background-color:#f8fafc;">Outflow (ล้าน ลบ.ม./วัน)</th>'
+                    '<th style="padding:9px 8px; text-align:left; background-color:#f8fafc; white-space:nowrap;">วันที่</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc; white-space:nowrap;">ร้อยละความจุ (%)</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc; white-space:nowrap;">ปริมาณน้ำกักเก็บ (ล้าน ลบ.ม.)</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc; white-space:nowrap;">Inflow (ล้าน ลบ.ม./วัน)</th>'
+                    '<th style="padding:9px 8px; background-color:#f8fafc; white-space:nowrap;">Outflow (ล้าน ลบ.ม./วัน)</th>'
                     f'{th_actual}'
                     f'{th_pred_7d}'
                     f'{th_pred_30d}'
