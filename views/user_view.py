@@ -53,7 +53,8 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     # 7. Section 6 (Historical Table) & Section 7 (Summary Box)
     render_history_and_summary(
         dam_data, selected_dam_name, pct, inflow_m, outflow_m, hist_df,
-        theme_curr=theme_curr, theme_7d=theme_7d, theme_30d=theme_30d
+        theme_curr=theme_curr, theme_7d=theme_7d, theme_30d=theme_30d,
+        models_dict=models_dict
     )
 
     # 8. Footer Note
