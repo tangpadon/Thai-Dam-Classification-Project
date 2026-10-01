@@ -193,3 +193,38 @@ def get_historical_data(dam_id, limit=30):
         if 'conn' in locals() and conn:
             cursor.close()
             conn.close()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def get_yesterday_valid_data(dam_id, current_date=None):
+    """
+    ดึงข้อมูลย้อนหลังล่าสุด (เมื่อวาน หรือวันล่าสุดที่มีข้อมูล) ของเขื่อนที่มีค่า input สมบูรณ์
+    สำหรับใช้เป็น Fallback ในการพยากรณ์กรณีที่วันนี้ไม่มีค่า input
+    """
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        if current_date is None:
+            current_date = datetime.date.today()
+        elif hasattr(current_date, 'date'):
+            current_date = current_date.date()
+
+        query = """
+            SELECT record_date, volume, percent_storage, inflow, outflow
+            FROM dam_daily
+            WHERE dam_id = %s
+              AND record_date < %s
+              AND (percent_storage IS NOT NULL OR volume IS NOT NULL)
+            ORDER BY record_date DESC, recorded_at DESC
+            LIMIT 1
+        """
+        cursor.execute(query, (str(dam_id), current_date))
+        row = cursor.fetchone()
+        return row
+    except Exception as e:
+        print(f"Error getting yesterday valid data for dam {dam_id}: {e}")
+        return None
+    finally:
+        if 'conn' in locals() and conn:
+            cursor.close()
+            conn.close()

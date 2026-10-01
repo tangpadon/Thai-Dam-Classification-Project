@@ -173,7 +173,7 @@ def render_history_and_summary(
                 st.markdown(table_html, unsafe_allow_html=True)
 
                 if show_7d or show_30d:
-                    footnote_parts = ['<span>💡 <b>Actual</b> = สถานการณ์จริง ณ วันที่บันทึก | <b>Predicted</b> = ผลพยากรณ์จากโมเดล AI</span>']
+                    footnote_parts = ['<span>💡 <b>Actual</b> = สถานการณ์จริง ณ วันที่บันทึก | <b>Predicted</b> = ผลพยากรณ์จากโมเดล ML</span>']
                     if has_models and total_cnt > 0:
                         stats = []
                         if show_7d:

@@ -12,7 +12,9 @@ def render_forecast_cards(
     dam_data: Any,
     models_dict: Dict,
     _dt: datetime.datetime,
-    theme_curr: Dict[str, str]
+    theme_curr: Dict[str, str],
+    is_fallback: bool = False,
+    fallback_date: Any = None,
 ) -> Tuple[Dict[str, str], Dict[str, str]]:
     """Render Section 3: Three forecast cards (Current, 7-day, 30-day) styled by predicted risk level."""
     theme_7d = get_status_theme(predict_single_dam(dam_data, models_dict["7_day"]))
@@ -22,12 +24,18 @@ def render_forecast_cards(
     d_end_7 = _dt + datetime.timedelta(days=7)
     d_end_30 = _dt + datetime.timedelta(days=30)
 
+    curr_date_str = format_date_th_short(fallback_date) if (is_fallback and fallback_date) else format_date_th_short(_dt)
+    curr_date_suffix = " (เมื่อวาน)" if is_fallback else ""
+
     with st.container(border=True, key="sec_forecast"):
         st.markdown(
             '<div id="section-forecast" class="section-title">'
             '<span class="badge-num">3</span> ผลการพยากรณ์ระดับสถานการณ์น้ำ</div>',
             unsafe_allow_html=True
         )
+        if is_fallback:
+            st.caption(f"💡 *วันนี้ยังไม่มีข้อมูลตรวจวัด จึงใช้ค่า Input ล่าสุดจากเมื่อวาน ({curr_date_str}) ในการพยากรณ์")
+
         f_c1, f_c2, f_c3 = st.columns(3)
         with f_c1:
             st.markdown(f"""
@@ -37,7 +45,7 @@ def render_forecast_cards(
                 </div>
                 <div class="forecast-risk-title" style="font-size:1.5rem; font-weight:700; color:{theme_curr['color']}; margin-bottom:2px;">{theme_curr['label_short']}</div>
                 <div style="font-size:0.85rem; color:{theme_curr['color']};">({theme_curr['en']})</div>
-                <div style="font-size:0.75rem; color:#64748b; margin-top:6px;">ข้อมูล ณ วันที่ {format_date_th_short(_dt)}</div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:6px;">ข้อมูล ณ วันที่ {curr_date_str}{curr_date_suffix}</div>
             </div>
             """, unsafe_allow_html=True)
         with f_c2:

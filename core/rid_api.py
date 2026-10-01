@@ -26,6 +26,14 @@ def _load_from_db(target_date):
         cursor.close()
         conn.close()
         if rows and len(rows) >= 30:
+            valid_count = sum(
+                1 for r in rows
+                if r.get('percent_storage') is not None or r.get('volume') is not None
+            )
+            # ถ้าข้อมูลเกือบทั้งหมดเป็นค่าว่าง (NULL) ถือว่าวันนี้ยังไม่มีข้อมูล input
+            if valid_count < 15:
+                return None, None
+
             df = pd.DataFrame(rows)
             df = df.rename(columns={"dam_id": "id", "dam_name": "name"})
             recorded_at = get_recorded_time(target_date)
@@ -62,20 +70,40 @@ def _fetch_from_api(date_str=None):
     return res_data.get("data", res_data)
 
 
+def _fill_missing_from_yesterday(target_df, source_df_y):
+    """เติมค่า input จากเมื่อวานให้กับเขื่อนที่วันนี้ยังไม่มีข้อมูล เพื่อใช้ในการพยากรณ์"""
+    if target_df is None or target_df.empty or source_df_y is None or source_df_y.empty:
+        return target_df
+    for idx, row in target_df.iterrows():
+        pct_val = row.get('percent_storage')
+        vol_val = row.get('volume')
+        if (pct_val is None or pd.isna(pct_val)) and (vol_val is None or pd.isna(vol_val)):
+            d_id = str(row.get('id'))
+            y_matches = source_df_y[source_df_y['id'].astype(str) == d_id]
+            if not y_matches.empty:
+                y_row = y_matches.iloc[0]
+                for col in ['percent_storage', 'volume', 'inflow', 'outflow']:
+                    if col in y_row and pd.notna(y_row[col]):
+                        target_df.at[idx, col] = y_row[col]
+    return target_df
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_and_save_data():
     """
     ดึงข้อมูลสถานการณ์น้ำประจำวัน (แคช 5 นาที เพื่อให้การสลับเมนูและคลิกเลือกเขื่อนบนเว็บรวดเร็วระดับมิลลิวินาที)
+    หากวันนี้ยังไม่มีค่า input จะ fallback ไปใช้ข้อมูลจากเมื่อวานอัตโนมัติ
     """
     now = datetime.datetime.now()
     today = now.date()
     yesterday = today - datetime.timedelta(days=1)
 
-    df, recorded_at = _load_from_db(today)
-    if df is not None:
-        return df, today, recorded_at
-
     df_y, recorded_at_y = _load_from_db(yesterday)
+    df, recorded_at = _load_from_db(today)
+
+    if df is not None:
+        df = _fill_missing_from_yesterday(df, df_y)
+        return df, today, recorded_at
 
     try:
         records = _fetch_from_api(today.strftime("%Y-%m-%d"))
@@ -90,20 +118,16 @@ def fetch_and_save_data():
         df_new = _normalize_records(records)
         if 'month' not in df_new.columns:
             df_new['month'] = today.month
+        df_new = _fill_missing_from_yesterday(df_new, df_y)
         saved = save_to_database(df_new, record_date=today)
         if saved:
             return df_new, today, get_recorded_time(today)
         return df_new, today, None
 
-    if now.time() < NOON:
-        if df_y is not None:
-            return df_y, yesterday, recorded_at_y
-        return pd.DataFrame(), yesterday, None
-    else:
-        if df_y is not None:
-            save_to_database(df_y, record_date=today)
-            return df_y, today, get_recorded_time(today)
-        return pd.DataFrame(), today, None
+    # หากวันนี้ยังไม่มีข้อมูลการตรวจวัด ให้ใช้ข้อมูลของเมื่อวาน
+    if df_y is not None:
+        return df_y, yesterday, recorded_at_y
+    return pd.DataFrame(), today, None
 
 
 def backfill_historical_data(lookback_days=30):
