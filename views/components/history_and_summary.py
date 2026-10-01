@@ -36,7 +36,7 @@ def render_history_and_summary(
     models_dict: dict = None,
 ):
     """Render Section 6 (Historical data table) and Section 7 (Risk summary card)."""
-    b5_col, b6_col = st.columns([1.5, 1.0])
+    b5_col, b6_col = st.columns([1.35, 1.05])
     with b5_col:
         with st.container(border=True, key="sec_history"):
             st.markdown(
@@ -45,9 +45,11 @@ def render_history_and_summary(
                 unsafe_allow_html=True
             )
 
+            # ตั้งค่าซ่อน/แสดงคอลัมน์พยากรณ์ในตาราง Section 6 (ปัจจุบันซ่อนไว้ตามต้องการ)
+            SHOW_PREDICTIONS_IN_SECTION_6 = False
             has_models = bool(models_dict and "7_day" in models_dict and "30_day" in models_dict)
-            show_7d = has_models
-            show_30d = has_models
+            show_7d = has_models and SHOW_PREDICTIONS_IN_SECTION_6
+            show_30d = has_models and SHOW_PREDICTIONS_IN_SECTION_6
 
             if not hist_df.empty:
                 t_df = hist_df.copy()
@@ -97,7 +99,7 @@ def render_history_and_summary(
                     td_pred_7d = ""
                     td_pred_30d = ""
 
-                    if has_models:
+                    if (show_7d or show_30d) and has_models:
                         month_val = date_val.month if hasattr(date_val, 'month') else 1
                         row_input = dict(dam_data)
                         row_input.update({
@@ -170,20 +172,21 @@ def render_history_and_summary(
                 )
                 st.markdown(table_html, unsafe_allow_html=True)
 
-                footnote_parts = ['<span>💡 <b>Actual</b> = สถานการณ์จริง ณ วันที่บันทึก | <b>Predicted</b> = ผลพยากรณ์จากโมเดล AI</span>']
-                if has_models and total_cnt > 0:
-                    stats = []
-                    if show_7d:
-                        pct_7d = (match_7d_cnt / total_cnt) * 100.0
-                        stats.append(f'ความสอดคล้อง 7 วัน: <b style="color:#0284c7;">{match_7d_cnt}/{total_cnt} วัน ({pct_7d:.1f}%)</b>')
-                    if show_30d:
-                        pct_30d = (match_30d_cnt / total_cnt) * 100.0
-                        stats.append(f'ความสอดคล้อง 30 วัน: <b style="color:#0284c7;">{match_30d_cnt}/{total_cnt} วัน ({pct_30d:.1f}%)</b>')
-                    if stats:
-                        footnote_parts.append(f'<span>{" &nbsp;|&nbsp; ".join(stats)}</span>')
+                if show_7d or show_30d:
+                    footnote_parts = ['<span>💡 <b>Actual</b> = สถานการณ์จริง ณ วันที่บันทึก | <b>Predicted</b> = ผลพยากรณ์จากโมเดล AI</span>']
+                    if has_models and total_cnt > 0:
+                        stats = []
+                        if show_7d:
+                            pct_7d = (match_7d_cnt / total_cnt) * 100.0
+                            stats.append(f'ความสอดคล้อง 7 วัน: <b style="color:#0284c7;">{match_7d_cnt}/{total_cnt} วัน ({pct_7d:.1f}%)</b>')
+                        if show_30d:
+                            pct_30d = (match_30d_cnt / total_cnt) * 100.0
+                            stats.append(f'ความสอดคล้อง 30 วัน: <b style="color:#0284c7;">{match_30d_cnt}/{total_cnt} วัน ({pct_30d:.1f}%)</b>')
+                        if stats:
+                            footnote_parts.append(f'<span>{" &nbsp;|&nbsp; ".join(stats)}</span>')
 
-                footnote_html = f'<div style="font-size:0.75rem; color:#64748b; margin-top:8px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">{"".join(footnote_parts)}</div>'
-                st.markdown(footnote_html, unsafe_allow_html=True)
+                    footnote_html = f'<div style="font-size:0.75rem; color:#64748b; margin-top:8px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">{"".join(footnote_parts)}</div>'
+                    st.markdown(footnote_html, unsafe_allow_html=True)
             else:
                 st.info("ไม่พบข้อมูลย้อนหลัง")
             st.markdown('<div style="height: 14px;"></div>', unsafe_allow_html=True)
