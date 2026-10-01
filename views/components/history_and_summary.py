@@ -85,12 +85,19 @@ def render_history_and_summary(
 
                 for _, r in daily_table.iterrows():
                     r_pct = to_num(r.get('percent_storage'))
-                    r_pct_str = f"{r_pct:.2f}" if r_pct is not None else "-"
                     r_storage = to_num(r.get('volume'))
                     if r_storage is None:
                         r_storage = to_num(r.get('storage'))
                     if r_storage is None:
                         r_storage = to_num(dam_data.get('storage'))
+
+                    # Fallback calculation if percent_storage is missing in DB
+                    if r_pct is None and r_storage is not None:
+                        cap = to_num(dam_data.get('capacity'))
+                        if cap and cap > 0:
+                            r_pct = (r_storage / cap) * 100.0
+
+                    r_pct_str = f"{r_pct:.2f}" if r_pct is not None else "-"
                     r_storage_str = f"{r_storage:,.2f}" if r_storage is not None else "-"
                     r_in = to_num(r.get('inflow'))
                     r_in_str = f"{r_in:.2f}" if r_in is not None else "-"
@@ -113,8 +120,8 @@ def render_history_and_summary(
                         month_val = date_val.month if hasattr(date_val, 'month') else 1
                         row_input = dict(dam_data)
                         row_input.update({
-                            'percent_storage': r_pct,
-                            'volume': r_storage,
+                            'percent_storage': r_pct if r_pct is not None else 0.0,
+                            'volume': r_storage if r_storage is not None else 0.0,
                             'inflow': r_in or 0.0,
                             'outflow': r_out or 0.0,
                             'month': month_val,

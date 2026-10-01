@@ -4,13 +4,24 @@ from typing import Any, Optional, Dict
 from views.constants import STATUS_THEMES
 
 
-def classify_by_percent(pct: float) -> str:
+import math
+
+
+def classify_by_percent(pct: Optional[float]) -> str:
     """Classify storage percent into drought, flood, or normal risk status."""
-    if pct < 30:
-        return "drought"
-    elif pct > 80:
-        return "flood"
-    return "normal"
+    if pct is None:
+        return "normal"
+    try:
+        pct_f = float(pct)
+        if math.isnan(pct_f):
+            return "normal"
+        if pct_f < 30.0:
+            return "drought"
+        elif pct_f > 80.0:
+            return "flood"
+        return "normal"
+    except (TypeError, ValueError):
+        return "normal"
 
 
 def get_status_theme(status_key: str) -> Dict[str, str]:
