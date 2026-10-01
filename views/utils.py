@@ -10,9 +10,7 @@ import pandas as pd
 from views.constants import STATUS_THEMES
 
 
-# ==============================================================================
 # 1. การประเมินระดับสถานะน้ำและธีมสี (Risk Classification & Themes)
-# ==============================================================================
 
 def classify_by_percent(pct: Optional[float]) -> str:
     """
@@ -42,9 +40,7 @@ def get_status_theme(status_key: str) -> Dict[str, str]:
     return STATUS_THEMES.get(status_key, STATUS_THEMES["normal"])
 
 
-# ==============================================================================
 # 2. การแปลงค่าและจัดรูปแบบตัวเลข (Number Parsing & Formatting)
-# ==============================================================================
 
 def to_num(val: Any) -> Optional[float]:
     """แปลงค่าเป็น float อย่างปลอดภัย หากเป็นค่าว่างหรือไม่ใช่ตัวเลขจะส่งกลับ None"""
@@ -67,9 +63,7 @@ def fmt_num(val: Any, decimals: int = 2) -> str:
         return str(val)
 
 
-# ==============================================================================
 # 3. การจัดรูปแบบวันที่ภาษาไทย (Date Formatting)
-# ==============================================================================
 
 def format_date_th(dt) -> str:
     """แปลงวันที่เป็นภาษาไทยแบบเต็ม เช่น '20 มีนาคม 2568'"""
@@ -89,9 +83,7 @@ def format_date_th_short(dt) -> str:
     return f"{dt.day} {months_short[dt.month]} {dt.year + 543}"
 
 
-# ==============================================================================
 # 4. การจัดเตรียมข้อมูลเขื่อน (Dam Data Preparation)
-# ==============================================================================
 
 def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str, Any], bool, Any]:
     """

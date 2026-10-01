@@ -16,9 +16,7 @@ from core.db import get_connection, save_to_database, get_recorded_time
 DATA_API_URL = RID_API_URL
 
 
-# ==============================================================================
 # 1. การอ่านข้อมูลจากฐานข้อมูล (Load from Database)
-# ==============================================================================
 
 def _load_from_db(target_date):
     """
@@ -62,9 +60,7 @@ def _load_from_db(target_date):
         return None, None
 
 
-# ==============================================================================
 # 2. การเชื่อมต่อและแปลงข้อมูลจาก API (API Helpers)
-# ==============================================================================
 
 def _has_measurements(records):
     """ตรวจสอบว่าข้อมูล JSON ที่ได้จาก API มีตัวเลขตรวจวัดจริง (volume หรือ percent_storage) หรือไม่"""
@@ -110,9 +106,7 @@ def _fill_missing_from_yesterday(target_df, source_df_y):
     return target_df
 
 
-# ==============================================================================
 # 3. ฟังก์ชันหลักสำหรับดึงและจัดเก็บข้อมูล (Main Fetch & Save)
-# ==============================================================================
 
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_and_save_data():
@@ -162,9 +156,7 @@ def fetch_and_save_data():
     return pd.DataFrame(), today, None
 
 
-# ==============================================================================
 # 4. การดึงข้อมูลย้อนหลัง 30 วัน (Backfill Historical Data)
-# ==============================================================================
 
 def backfill_historical_data(lookback_days=30):
     """

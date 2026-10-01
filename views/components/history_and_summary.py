@@ -47,9 +47,7 @@ def render_history_and_summary(
     """
     b5_col, b6_col = st.columns([1.35, 1.05])
 
-    # ==========================================================================
     # ฝั่งซ้าย: Section 6 ข้อมูลย้อนหลัง 30 วัน (ตาราง)
-    # ==========================================================================
     with b5_col:
         with st.container(border=True, key="sec_history"):
             st.markdown(
@@ -131,9 +129,7 @@ def render_history_and_summary(
                 st.info("ไม่พบข้อมูลย้อนหลัง")
             st.markdown('<div style="height: 14px;"></div>', unsafe_allow_html=True)
 
-    # ==========================================================================
     # ฝั่งขวา: Section 7 สรุปสถานการณ์น้ำ (Summary Card)
-    # ==========================================================================
     with b6_col:
         with st.container(border=True, key="sec_summary"):
             st.markdown(

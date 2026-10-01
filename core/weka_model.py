@@ -17,9 +17,7 @@ from weka.core.converters import Loader
 FEATURES = ["percent_storage", "inflow_pct", "outflow_pct", "month"]
 
 
-# ==============================================================================
 # 1. การจัดการ Java Virtual Machine (JVM)
-# ==============================================================================
 
 def _ensure_java_home():
     """ค้นหาและตั้งค่า JAVA_HOME อัตโนมัติ (จำเป็นสำหรับการรัน Weka บน Linux/Debian/Streamlit Cloud)"""
@@ -50,9 +48,7 @@ def init_jvm_safe(max_heap_size: str = "128m"):
         return False
 
 
-# ==============================================================================
 # 2. การโหลดโมเดลและ Header (Load Models & Resources)
-# ==============================================================================
 
 def _extract_header(arff_path, class_attr_name, features=None):
     """สกัดโครงสร้าง Header จากไฟล์ ARFF เพื่อใช้สร้าง Instance ในการทำนาย"""
@@ -129,9 +125,7 @@ def _build_attr_mapping(header):
     return class_attr_name, numeric_attrs, nominal_attrs
 
 
-# ==============================================================================
 # 3. การประมวลผลพยากรณ์ (Inference / Prediction)
-# ==============================================================================
 
 def predict_single_dam(row_series, model_config):
     """
