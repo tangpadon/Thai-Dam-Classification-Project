@@ -1,3 +1,9 @@
+"""
+โมดูลดึงข้อมูลสถานการณ์น้ำจากกรมชลประทาน (RID API Module)
+ทำหน้าที่เชื่อมต่อ API ของกรมชลประทาน, ซิงก์ข้อมูลประจำวันลงฐานข้อมูล,
+และตรวจสอบความสมบูรณ์ของข้อมูล (พร้อม Fallback ไปใช้วันก่อนหน้ากรณีที่ข้อมูลวันนี้ยังไม่ออก)
+"""
+
 import datetime
 import time
 import streamlit as st
@@ -6,10 +12,21 @@ import pandas as pd
 from config import RID_API_URL
 from core.db import get_connection, save_to_database, get_recorded_time
 
+# URL สำหรับเชื่อมต่อ API กรมชลประทาน
 DATA_API_URL = RID_API_URL
 
 
+# ==============================================================================
+# 1. การอ่านข้อมูลจากฐานข้อมูล (Load from Database)
+# ==============================================================================
+
 def _load_from_db(target_date):
+    """
+    โหลดข้อมูลเขื่อนของวันที่ระบุจากฐานข้อมูล:
+    - ตรวจสอบว่ามีข้อมูลครบอย่างน้อย 30 เขื่อน
+    - ตรวจสอบว่ามีข้อมูลตรวจวัดจริง (percent_storage หรือ volume ไม่เป็น NULL)
+    - หากข้อมูลว่างเกินครึ่ง จะคืนค่า (None, None) เพื่อให้ระบบ fallback ไปใช้วันก่อนหน้า
+    """
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
@@ -25,12 +42,13 @@ def _load_from_db(target_date):
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
+
         if rows and len(rows) >= 30:
             valid_count = sum(
                 1 for r in rows
                 if r.get('percent_storage') is not None or r.get('volume') is not None
             )
-            # ถ้าข้อมูลเกือบทั้งหมดเป็นค่าว่าง (NULL) ถือว่าวันนี้ยังไม่มีข้อมูล input
+            # ถ้าข้อมูลเกือบทั้งหมดเป็นค่าว่าง (NULL) ถือว่าวันนี้ยังไม่มีข้อมูลตรวจวัด
             if valid_count < 15:
                 return None, None
 
@@ -44,10 +62,12 @@ def _load_from_db(target_date):
         return None, None
 
 
-NOON = datetime.time(12, 0)
-
+# ==============================================================================
+# 2. การเชื่อมต่อและแปลงข้อมูลจาก API (API Helpers)
+# ==============================================================================
 
 def _has_measurements(records):
+    """ตรวจสอบว่าข้อมูล JSON ที่ได้จาก API มีตัวเลขตรวจวัดจริง (volume หรือ percent_storage) หรือไม่"""
     for rec in (records or []):
         if not isinstance(rec, dict):
             continue
@@ -58,12 +78,14 @@ def _has_measurements(records):
 
 
 def _normalize_records(records):
+    """แปลง JSON โครงสร้างซ้อนกัน (Nested) ของกรมชลประทานให้อยู่ในรูป DataFrame แบนราบ"""
     df = pd.json_normalize(records, record_path=['dam'], meta=['region'])
     mapping = {"dam_id": "id", "dam_name": "name"}
     return df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
 
 
 def _fetch_from_api(date_str=None):
+    """ยิง HTTP GET Request ไปยัง API ของกรมชลประทานเพื่อดึงข้อมูลสถานการณ์น้ำ"""
     url = f"{DATA_API_URL}{date_str}" if date_str else DATA_API_URL.rstrip('/')
     response = requests.get(url, timeout=10)
     res_data = response.json()
@@ -71,7 +93,7 @@ def _fetch_from_api(date_str=None):
 
 
 def _fill_missing_from_yesterday(target_df, source_df_y):
-    """เติมค่า input จากเมื่อวานให้กับเขื่อนที่วันนี้ยังไม่มีข้อมูล เพื่อใช้ในการพยากรณ์"""
+    """เติมค่า Input จากเมื่อวานให้กับเขื่อนที่วันนี้ยังไม่มีข้อมูล เพื่อให้โมเดลพยากรณ์มีค่าสมบูรณ์"""
     if target_df is None or target_df.empty or source_df_y is None or source_df_y.empty:
         return target_df
     for idx, row in target_df.iterrows():
@@ -88,32 +110,42 @@ def _fill_missing_from_yesterday(target_df, source_df_y):
     return target_df
 
 
+# ==============================================================================
+# 3. ฟังก์ชันหลักสำหรับดึงและจัดเก็บข้อมูล (Main Fetch & Save)
+# ==============================================================================
+
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_and_save_data():
     """
-    ดึงข้อมูลสถานการณ์น้ำประจำวัน (แคช 5 นาที เพื่อให้การสลับเมนูและคลิกเลือกเขื่อนบนเว็บรวดเร็วระดับมิลลิวินาที)
-    หากวันนี้ยังไม่มีค่า input จะ fallback ไปใช้ข้อมูลจากเมื่อวานอัตโนมัติ
+    ดึงข้อมูลสถานการณ์น้ำประจำวัน (แคช 5 นาที เพื่อให้การใช้งานบนเว็บรวดเร็ว):
+    1. ลองค้นหาข้อมูลของวันนี้จากฐานข้อมูลก่อน
+    2. หากไม่มีในฐานข้อมูล จะดึงจาก RID API
+    3. หากวันนี้ยังไม่มีข้อมูล (API ยังไม่อัปเดต) จะสลับไปใช้ข้อมูลเมื่อวานอัตโนมัติ
     """
     now = datetime.datetime.now()
     today = now.date()
     yesterday = today - datetime.timedelta(days=1)
 
+    # โหลดข้อมูลของเมื่อวานไว้เป็นฐานสำรอง
     df_y, recorded_at_y = _load_from_db(yesterday)
-    df, recorded_at = _load_from_db(today)
 
+    # 1. ตรวจสอบข้อมูลวันนี้ในฐานข้อมูล
+    df, recorded_at = _load_from_db(today)
     if df is not None:
         df = _fill_missing_from_yesterday(df, df_y)
         return df, today, recorded_at
 
+    # 2. ดึงข้อมูลวันนี้จาก RID API
     try:
         records = _fetch_from_api(today.strftime("%Y-%m-%d"))
         data_available = _has_measurements(records)
     except Exception as e:
-        st.error(f"ไม่สามารถเชื่อมต่อ API ได้: {e}")
+        st.error(f"⚠️ ไม่สามารถเชื่อมต่อ RID API ได้: {e}")
         if df_y is not None:
             return df_y, yesterday, recorded_at_y
         return pd.DataFrame(), None, None
 
+    # หากมีข้อมูลตรวจวัดวันนี้ ให้บันทึกลงฐานข้อมูล
     if data_available:
         df_new = _normalize_records(records)
         if 'month' not in df_new.columns:
@@ -124,16 +156,20 @@ def fetch_and_save_data():
             return df_new, today, get_recorded_time(today)
         return df_new, today, None
 
-    # หากวันนี้ยังไม่มีข้อมูลการตรวจวัด ให้ใช้ข้อมูลของเมื่อวาน
+    # 3. หากวันนี้ยังไม่มีข้อมูลการตรวจวัด ให้ใช้ข้อมูลของเมื่อวาน
     if df_y is not None:
         return df_y, yesterday, recorded_at_y
     return pd.DataFrame(), today, None
 
 
+# ==============================================================================
+# 4. การดึงข้อมูลย้อนหลัง 30 วัน (Backfill Historical Data)
+# ==============================================================================
+
 def backfill_historical_data(lookback_days=30):
     """
-    ตรวจสอบข้อมูลย้อนหลัง 30 วันแบบ Batch Query (1 รอบคำสั่ง) แทนการวนลูป Query 30 ครั้ง
-    ช่วยประหยัดเวลาและลด Network Round-trip ไปยัง TiDB Cloud จากหลายสิบวินาทีเหลือเสี้ยววินาที
+    ตรวจสอบข้อมูลย้อนหลัง 30 วันแบบ Batch Query (1 คำสั่ง):
+    หากวันใดยังไม่มีในฐานข้อมูล ระบบจะช่วยดึงจาก API อัตโนมัติในพื้นหลัง
     """
     today = datetime.date.today()
     start_date = today - datetime.timedelta(days=lookback_days)
@@ -158,6 +194,7 @@ def backfill_historical_data(lookback_days=30):
             cursor.close()
             conn.close()
 
+    # หาวันที่ยังขาดหายไปในฐานข้อมูล
     days_to_fetch = [
         today - datetime.timedelta(days=d)
         for d in range(1, lookback_days + 1)
@@ -167,7 +204,8 @@ def backfill_historical_data(lookback_days=30):
     if not days_to_fetch:
         return
 
-    progress_bar = st.sidebar.progress(0, text="⏳ กำลังดึงข้อมูลย้อนหลัง...")
+    # แสดง Progress Bar เล็กๆ บน Sidebar ระหว่างดึงข้อมูลย้อนหลัง
+    progress_bar = st.sidebar.progress(0, text="⏳ กำลังตรวจสอบข้อมูลย้อนหลัง...")
     status_text = st.sidebar.empty()
     backfill_count = 0
 
@@ -185,8 +223,6 @@ def backfill_historical_data(lookback_days=30):
             if records:
                 if isinstance(records, list) and len(records) > 0 and isinstance(records[0], dict) and 'dam' in records[0]:
                     df_hist = pd.json_normalize(records, record_path=['dam'], meta=['region'])
-                elif isinstance(records, list):
-                    df_hist = pd.json_normalize(records)
                 else:
                     df_hist = pd.json_normalize(records)
                 mapping = {"dam_id": "id", "dam_name": "name"}
@@ -194,18 +230,10 @@ def backfill_historical_data(lookback_days=30):
                 saved = save_to_database(df_hist, record_date=target_date)
                 if saved:
                     backfill_count += 1
-                else:
-                    status_text.error(f"❌ บันทึกวันที่ {date_str} ลงฐานข้อมูลไม่สำเร็จ")
-            else:
-                status_text.warning(f"⚠️ API ไม่มีข้อมูลวันที่ {date_str}")
-        except Exception as e:
-            status_text.warning(f"⚠️ ดึงวันที่ {date_str} ไม่สำเร็จ: {e}")
+        except Exception:
+            pass
 
-        time.sleep(0.5)
+        time.sleep(0.3)
 
     progress_bar.empty()
     status_text.empty()
-    if backfill_count > 0:
-        st.sidebar.success(f"✅ ดึงข้อมูลย้อนหลัง {backfill_count} วันเรียบร้อย")
-    elif days_to_fetch:
-        st.sidebar.warning(f"⚠️ ไม่สามารถดึงข้อมูลย้อนหลังได้ ({len(days_to_fetch)} วัน)")

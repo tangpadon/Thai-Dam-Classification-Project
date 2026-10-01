@@ -1,14 +1,18 @@
 """
-User View Module for Dam Forecast Dashboard.
-Orchestrates styles, scripts, and components for Sections 1 to 7.
+โมดูลหน้าจอผู้ใช้ (User View Module)
+ทำหน้าที่เป็นศูนย์กลางเชื่อมโยงส่วนประกอบ (Components) ของ Dashboard
+ตั้งแต่ Section 1 ถึง Section 8 ให้แสดงผลอย่างเป็นระเบียบบนหน้าเว็บ Streamlit
 """
 
 import streamlit as st
 import streamlit.components.v1 as components
 
 from views.styles import get_custom_css, get_client_js
-from views.utils import classify_by_percent, get_status_theme, to_num
-from core.db import get_yesterday_valid_data
+from views.utils import (
+    classify_by_percent,
+    get_status_theme,
+    prepare_dam_data,
+)
 from views.components import (
     render_sidebar,
     render_header,
@@ -22,54 +26,32 @@ from views.components import (
 
 
 def render(raw_df, models_dict, data_date=None, recorded_at=None):
-    """Main entry point to render the Dam Forecast dashboard."""
-    # 1. Inject Styles
+    """
+    ฟังก์ชันหลักในการเรนเดอร์หน้า Dashboard ทั้งหมด:
+    - raw_df: ตารางข้อมูลเขื่อนประจำวัน
+    - models_dict: โมเดล Weka ML สำหรับพยากรณ์ 7 วัน และ 30 วัน
+    - data_date: วันที่ของข้อมูล (เช่น วันนี้ หรือเมื่อวาน)
+    - recorded_at: วันที่และเวลาที่มีการดึงข้อมูลล่าสุด
+    """
+
+    # 1. แทรกสไตล์ CSS ปรับแต่งความสวยงามของหน้าเว็บ
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
-    # 2. Sidebar Navigation
+    # 2. แถบเมนูด้านข้าง (Sidebar) แนะนำการใช้งานและคำอธิบายเกณฑ์ความเสี่ยง
     render_sidebar()
 
-    # 3. Main Header (Title & Timestamp)
+    # 3. ส่วนหัวของหน้าเว็บ (Header) แสดงชื่อระบบและเวลาที่อัปเดตข้อมูล
     _dt = render_header(recorded_at=recorded_at, data_date=data_date)
 
-    # 4. Section 1 & Section 2 (Top Row)
+    # 4. Section 1 (เลือกเขื่อน) และ Section 2 (ภาพรวมสถานการณ์น้ำปัจจุบัน)
     top_left, top_right = st.columns([1.1, 1.4])
     with top_left:
-        selected_dam_name, dam_data = render_dam_selector(raw_df)
+        selected_dam_name, raw_dam = render_dam_selector(raw_df)
 
-    # ตรวจสอบว่าวันนี้มีค่า input ของเขื่อนนี้หรือไม่ หากไม่มีเลย ให้ดึงค่าจากเมื่อวาน
-    dam_dict = dict(dam_data)
-    pct_raw = to_num(dam_dict.get('percent_storage'))
-    vol_raw = to_num(dam_dict.get('volume'))
-    has_input = (pct_raw is not None and pct_raw > 0) or (vol_raw is not None and vol_raw > 0)
-
-    is_fallback = False
-    fallback_date = None
-    if not has_input:
-        dam_id = dam_dict.get('id') or dam_dict.get('dam_id')
-        y_data = get_yesterday_valid_data(dam_id, current_date=data_date)
-        if y_data:
-            if y_data.get('percent_storage') is not None:
-                dam_dict['percent_storage'] = float(y_data['percent_storage'])
-            if y_data.get('volume') is not None:
-                dam_dict['volume'] = float(y_data['volume'])
-            if y_data.get('inflow') is not None:
-                dam_dict['inflow'] = float(y_data['inflow'])
-            if y_data.get('outflow') is not None:
-                dam_dict['outflow'] = float(y_data['outflow'])
-            is_fallback = True
-            fallback_date = y_data.get('record_date')
-            dam_data = dam_dict
+    # จัดเตรียมข้อมูลเขื่อน (ตรวจสอบความสมบูรณ์ หากวันนี้ไม่มีค่าจะดึงค่าเมื่อวานมาใช้แทนอัตโนมัติ)
+    dam_data, is_fallback, fallback_date = prepare_dam_data(raw_dam, data_date=data_date)
 
     pct = float(dam_data.get('percent_storage', 0) or 0)
-    if pct <= 0 and dam_data.get('volume') and dam_data.get('capacity'):
-        cap = float(dam_data.get('capacity', 0) or 0)
-        vol = float(dam_data.get('volume', 0) or 0)
-        if cap > 0:
-            pct = (vol / cap) * 100.0
-            if isinstance(dam_data, dict):
-                dam_data['percent_storage'] = pct
-
     theme_curr = get_status_theme(classify_by_percent(pct))
     inflow_m = float(dam_data.get('inflow', 0) or 0)
     outflow_m = float(dam_data.get('outflow', 0) or 0)
@@ -77,24 +59,35 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     with top_right:
         render_current_overview(dam_data, theme_curr, pct, inflow_m, outflow_m)
 
-    # 5. Section 3: Forecast Cards
+    # 5. Section 3: การ์ดผลพยากรณ์ระดับน้ำ (สถานการณ์ปัจจุบัน, พยากรณ์ 7 วัน, พยากรณ์ 30 วัน)
     theme_7d, theme_30d = render_forecast_cards(
-        dam_data, models_dict, _dt, theme_curr,
-        is_fallback=is_fallback, fallback_date=fallback_date
+        dam_data,
+        models_dict,
+        _dt,
+        theme_curr,
+        is_fallback=is_fallback,
+        fallback_date=fallback_date
     )
 
-    # 6. Section 4 (Trend Chart) & Section 5 (Dam Details)
+    # 6. Section 4 (กราฟแนวโน้มร้อยละความจุย้อนหลัง) และ Section 5 (ตารางข้อมูลจำเพาะของเขื่อน)
     hist_df = render_trend_and_details(dam_data, selected_dam_name, pct, inflow_m, outflow_m)
 
-    # 7. Section 6 (Historical Table) & Section 7 (Summary Box)
+    # 7. Section 6 (ตารางข้อมูลย้อนหลัง 30 วัน) และ Section 7 (กล่องสรุปสถานการณ์น้ำภาพรวม)
     render_history_and_summary(
-        dam_data, selected_dam_name, pct, inflow_m, outflow_m, hist_df,
-        theme_curr=theme_curr, theme_7d=theme_7d, theme_30d=theme_30d,
+        dam_data,
+        selected_dam_name,
+        pct,
+        inflow_m,
+        outflow_m,
+        hist_df,
+        theme_curr=theme_curr,
+        theme_7d=theme_7d,
+        theme_30d=theme_30d,
         models_dict=models_dict
     )
 
-    # 8. Footer Note
+    # 8. ส่วนท้ายของหน้าเว็บ (Footer) แสดงแหล่งที่มาและลิขสิทธิ์
     render_footer()
 
-    # 9. Client-side JavaScript (Smooth scrolling, Search icon, Section padding)
+    # 9. สคริปต์ JavaScript เสริมบนเบราว์เซอร์ (Smooth Scroll และการปรับระยะห่าง)
     components.html(get_client_js(), height=0, width=0)

@@ -1,3 +1,9 @@
+"""
+โมดูลจัดการฐานข้อมูล (Database Module)
+ทำหน้าที่เชื่อมต่อฐานข้อมูล TiDB Cloud / MySQL,
+บันทึกข้อมูลเขื่อนประจำวัน, และดึงข้อมูลย้อนหลังสำหรับแสดงผลและพยากรณ์
+"""
+
 import datetime
 import math
 import mysql.connector
@@ -6,11 +12,19 @@ import pandas as pd
 import streamlit as st
 from config import DB_CONFIG
 
+# ตัวแปร Connection Pool ระดับโกลบอล
 _pool = None
 
 
+# ==============================================================================
+# 1. การเชื่อมต่อฐานข้อมูล (Database Connection)
+# ==============================================================================
+
 def get_connection():
-    """สร้างหรือดึง Connection จาก Pool เพื่อลด Overhead การทำ TLS Handshake ไปยัง Cloud DB"""
+    """
+    สร้างหรือดึง Connection จาก Pool เพื่อลด Overhead การทำ TLS Handshake ไปยัง Cloud DB
+    หาก Connection Pool ขัดข้อง จะ fallback ไปเชื่อมต่อตรงกับฐานข้อมูลอัตโนมัติ
+    """
     global _pool
     try:
         if _pool is None:
@@ -22,15 +36,13 @@ def get_connection():
                 **pool_config
             )
         return _pool.get_connection()
-    except Exception as e:
+    except Exception:
         # หากเกิดข้อผิดพลาดกับ Connection Pool ให้ fallback ไปเชื่อมต่อตรง
         return mysql.connector.connect(**DB_CONFIG)
 
 
-
-
-
 def _safe_float(val):
+    """แปลงค่าเป็น float อย่างปลอดภัย โดยแปลงค่าว่าง (None หรือ NaN) ให้เป็น None สำหรับบันทึกลงฐานข้อมูล"""
     if val is None:
         return None
     try:
@@ -41,7 +53,15 @@ def _safe_float(val):
     return float(val)
 
 
+# ==============================================================================
+# 2. การบันทึกข้อมูลเขื่อน (Save Data)
+# ==============================================================================
+
 def save_to_characteristics(df):
+    """
+    บันทึกหรืออัปเดตข้อมูลคุณลักษณะจำเพาะของเขื่อนลงตาราง dam_info
+    (เช่น ความจุอ่าง, ปริมาณน้ำกักเก็บ, หน่วยงานที่ดูแล)
+    """
     try:
         conn = get_connection()
         cursor = conn.cursor()
@@ -66,12 +86,7 @@ def save_to_characteristics(df):
         conn.commit()
         return True
     except Exception as e:
-        err_msg = f"DB Characteristics Save Error: {e}"
-        print(err_msg)
-        try:
-            st.error(f"⚠️ {err_msg}")
-        except Exception:
-            pass
+        print(f"DB Characteristics Save Error: {e}")
         return False
     finally:
         if 'conn' in locals() and conn:
@@ -80,27 +95,30 @@ def save_to_characteristics(df):
 
 
 def save_to_database(df, record_date=None):
+    """
+    บันทึกข้อมูลตรวจวัดประจำวันของแต่ละเขื่อนลงตาราง dam_daily
+    (เช่น ร้อยละความจุ, ปริมาณน้ำ, น้ำไหลเข้า Inflow, น้ำระบาย Outflow)
+    """
     if record_date is None:
         record_date = datetime.date.today()
     now = datetime.datetime.now()
     try:
         ok = save_to_characteristics(df)
         if not ok:
-            print("Warning: save_to_characteristics failed, skipping dam_daily insert")
             return False
 
         conn = get_connection()
         cursor = conn.cursor()
 
-        # ลบข้อมูลเก่าของวันนี้ที่มีข้อผิดพลาด (เช่น id เป็น NULL หรือ 0) เพื่อป้องกันความขัดแย้ง
+        # ลบข้อมูลเก่าของวันนี้ที่มีข้อผิดพลาด เพื่อป้องกันความขัดแย้ง
         cursor.execute("DELETE FROM dam_daily WHERE record_date = %s AND (id IS NULL OR id = 0);", (record_date,))
 
-        # คำนวณ max_id ล่าสุดเพื่อส่งค่า id ชัดเจนเสมอ หมดปัญหา TiDB Cloud ไม่มี AUTO_INCREMENT หรือค่า id หลุดเป็น NULL
+        # คำนวณค่า ID ล่าสุด เพื่อกำหนดค่า Primary Key id อย่างต่อเนื่อง
         cursor.execute("SELECT COALESCE(MAX(id), 0) FROM dam_daily;")
         row_max = cursor.fetchone()
         base_id = int(row_max[0]) if row_max and row_max[0] is not None else 0
 
-        # ตรวจสอบว่ามี dam_id ไหนบันทึกแล้วในวันนี้บ้าง เพื่อไม่ให้ insert ซ้ำ
+        # ตรวจสอบว่าเขื่อนไหนบันทึกแล้วในวันนี้บ้าง เพื่อป้องกันการบันทึกซ้ำ
         cursor.execute("SELECT dam_id FROM dam_daily WHERE record_date = %s;", (record_date,))
         existing_dam_ids = {str(r[0]) for r in cursor.fetchall()}
 
@@ -131,12 +149,7 @@ def save_to_database(df, record_date=None):
             conn.commit()
         return True
     except Exception as e:
-        err_msg = f"DB Save Error: {e}"
-        print(err_msg)
-        try:
-            st.error(f"⚠️ {err_msg}")
-        except Exception:
-            pass
+        print(f"DB Save Error: {e}")
         return False
     finally:
         if 'conn' in locals() and conn:
@@ -144,8 +157,13 @@ def save_to_database(df, record_date=None):
             conn.close()
 
 
+# ==============================================================================
+# 3. การดึงข้อมูลสำหรับแสดงผล (Queries & Fallbacks)
+# ==============================================================================
+
 @st.cache_data(ttl=300, show_spinner=False)
 def get_recorded_time(target_date):
+    """ดึงวันและเวลาล่าสุดที่มีการบันทึกข้อมูลของวันที่ระบุ"""
     try:
         conn = get_connection()
         cursor = conn.cursor()
@@ -163,8 +181,8 @@ def get_recorded_time(target_date):
 @st.cache_data(ttl=600, show_spinner=False)
 def get_historical_data(dam_id, limit=30):
     """
-    ดึงข้อมูลย้อนหลังของเขื่อน พร้อม Cache 10 นาที เพื่อให้การสลับเขื่อนและเปลี่ยนช่วงเวลาลื่นไหลทันที
-    ไม่ผูกมัดกับคอลัมน์ id เพื่อป้องกันปัญหาข้อมูลของวันนี้ไม่แสดงกรณี id เป็น NULL
+    ดึงข้อมูลย้อนหลังของเขื่อนตามจำนวนวันที่กำหนด (ค่าเริ่มต้น 30 วัน)
+    พร้อมแคช 10 นาที เพื่อให้การสลับเขื่อนและเปลี่ยนช่วงเวลาบนเว็บรวดเร็ว
     """
     try:
         conn = get_connection()
@@ -176,7 +194,6 @@ def get_historical_data(dam_id, limit=30):
             ORDER BY record_date DESC, recorded_at DESC
             LIMIT %s
         """
-        # ส่ง dam_id เป็น str เพื่อให้ตรงกับประเภท varchar(50) ของ column และใช้ Index ได้เต็มประสิทธิภาพ
         cursor.execute(query, (str(dam_id), int(limit) * 2))
         rows = cursor.fetchall()
         if rows:
@@ -198,8 +215,8 @@ def get_historical_data(dam_id, limit=30):
 @st.cache_data(ttl=600, show_spinner=False)
 def get_yesterday_valid_data(dam_id, current_date=None):
     """
-    ดึงข้อมูลย้อนหลังล่าสุด (เมื่อวาน หรือวันล่าสุดที่มีข้อมูล) ของเขื่อนที่มีค่า input สมบูรณ์
-    สำหรับใช้เป็น Fallback ในการพยากรณ์กรณีที่วันนี้ไม่มีค่า input
+    ดึงข้อมูลย้อนหลังล่าสุด (เมื่อวาน หรือวันล่าสุดที่มีข้อมูล) ของเขื่อนที่มีค่า Input สมบูรณ์
+    สำหรับใช้เป็น Fallback ในการพยากรณ์กรณีที่วันนี้ยังไม่มีข้อมูลตรวจวัด
     """
     try:
         conn = get_connection()
