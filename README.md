@@ -139,10 +139,6 @@ flowchart LR
 │   ├── rid_dam_fetcher.py      # ดึงข้อมูลเขื่อนและ Export สู่รูปแบบ ARFF
 │   └── historical_data.py      # เครื่องมือดึงข้อมูลประวัติย้อนหลัง
 │
-├── fetched/                    # Backward-compatibility shims
-│   ├── rid_dam_fetcher.py      # Shim ส่งต่อการเรียกไปยัง pipelines/
-│   └── historical_data.py      # Shim ส่งต่อการเรียกไปยัง pipelines/
-│
 ├── views/                      # Presentation Layer (Modular Architecture)
 │   ├── user_view.py            # Main dashboard orchestrator
 │   ├── constants.py            # นิยามค่าคงที่ สี ความหมายสถานะ และเกณฑ์ความเสี่ยง
