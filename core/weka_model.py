@@ -127,6 +127,50 @@ def _build_attr_mapping(header):
 
 # 3. การประมวลผลพยากรณ์ (Inference / Prediction)
 
+def _prepare_dam_features(row_dict):
+    """
+    เตรียมค่า Features ให้พร้อมสำหรับโมเดล Weka:
+    1. หากไม่มีค่า Input ตรวจวัดเลย ให้ดึงข้อมูลเมื่อวานมาใช้เป็น Fallback
+    2. คำนวณ Features เสริม: percent_storage, inflow_pct, outflow_pct
+    """
+    data = dict(row_dict)
+
+    # 1. ตรวจสอบค่า Input หากไม่มีค่าเลย ให้ดึงค่าจากเมื่อวาน
+    pct_val = data.get('percent_storage')
+    vol_val = data.get('volume')
+    has_valid_input = (
+        (pct_val is not None and not pd.isna(pct_val) and float(pct_val or 0) > 0) or
+        (vol_val is not None and not pd.isna(vol_val) and float(vol_val or 0) > 0)
+    )
+    if not has_valid_input:
+        dam_id = data.get('id') or data.get('dam_id')
+        if dam_id:
+            try:
+                from core.db import get_yesterday_valid_data
+                y_rec = get_yesterday_valid_data(dam_id)
+                if y_rec:
+                    for col in ['percent_storage', 'volume', 'inflow', 'outflow']:
+                        if y_rec.get(col) is not None:
+                            data[col] = float(y_rec[col])
+            except Exception:
+                pass
+
+    # 2. คำนวณ Feature อัตราส่วนความจุ Inflow/Outflow (%)
+    cap = float(data.get('capacity', 0) or 0)
+    if (data.get('percent_storage') is None or pd.isna(data.get('percent_storage'))) and data.get('volume') and cap > 0:
+        data['percent_storage'] = (float(data['volume']) / cap) * 100.0
+
+    if "inflow_pct" not in data or pd.isna(data["inflow_pct"]):
+        inflow = float(data.get('inflow', 0) or 0)
+        data["inflow_pct"] = (inflow / cap * 100.0) if cap > 0 else 0.0
+
+    if "outflow_pct" not in data or pd.isna(data["outflow_pct"]):
+        outflow = float(data.get('outflow', 0) or 0)
+        data["outflow_pct"] = (outflow / cap * 100.0) if cap > 0 else 0.0
+
+    return data
+
+
 def predict_single_dam(row_series, model_config):
     """
     พยากรณ์ระดับความเสี่ยงของเขื่อน 1 แห่ง:
@@ -137,56 +181,18 @@ def predict_single_dam(row_series, model_config):
     model = model_config["model"]
     header = model_config["header"]
 
-    inst = Instance.create_instance([0.0] * header.num_attributes)
-    inst.dataset = header
-
     mapping = model_config.get("_attr_mapping")
     if mapping is None:
         mapping = _build_attr_mapping(header)
         model_config["_attr_mapping"] = mapping
 
     class_attr_name, numeric_attrs, nominal_attrs = mapping
-    row_dict = dict(row_series)
+    row_dict = _prepare_dam_features(dict(row_series))
 
-    # 1. ตรวจสอบค่า Input หากไม่มีค่าเลย (เป็น None หรือ 0 ทั้งหมด) ให้ดึงค่าจากเมื่อวาน
-    pct_val = row_dict.get('percent_storage')
-    vol_val = row_dict.get('volume')
-    has_valid_input = (
-        (pct_val is not None and not pd.isna(pct_val) and float(pct_val or 0) > 0) or
-        (vol_val is not None and not pd.isna(vol_val) and float(vol_val or 0) > 0)
-    )
-    if not has_valid_input:
-        dam_id = row_dict.get('id') or row_dict.get('dam_id')
-        if dam_id:
-            try:
-                from core.db import get_yesterday_valid_data
-                y_rec = get_yesterday_valid_data(dam_id)
-                if y_rec:
-                    if y_rec.get('percent_storage') is not None:
-                        row_dict['percent_storage'] = float(y_rec['percent_storage'])
-                    if y_rec.get('volume') is not None:
-                        row_dict['volume'] = float(y_rec['volume'])
-                    if y_rec.get('inflow') is not None:
-                        row_dict['inflow'] = float(y_rec['inflow'])
-                    if y_rec.get('outflow') is not None:
-                        row_dict['outflow'] = float(y_rec['outflow'])
-            except Exception:
-                pass
+    inst = Instance.create_instance([0.0] * header.num_attributes)
+    inst.dataset = header
 
-    # 2. คำนวณ Feature อัตราส่วนความจุ Inflow/Outflow (%)
-    cap = float(row_dict.get('capacity', 0) or 0)
-    if (row_dict.get('percent_storage') is None or pd.isna(row_dict.get('percent_storage'))) and row_dict.get('volume') and cap > 0:
-        row_dict['percent_storage'] = (float(row_dict['volume']) / cap) * 100.0
-
-    if "inflow_pct" not in row_dict or pd.isna(row_dict["inflow_pct"]):
-        inflow = float(row_dict.get('inflow', 0) or 0)
-        row_dict["inflow_pct"] = (inflow / cap * 100.0) if cap > 0 else 0.0
-
-    if "outflow_pct" not in row_dict or pd.isna(row_dict["outflow_pct"]):
-        outflow = float(row_dict.get('outflow', 0) or 0)
-        row_dict["outflow_pct"] = (outflow / cap * 100.0) if cap > 0 else 0.0
-
-    # 3. กำหนดค่าตัวเลขลงใน Weka Instance
+    # กำหนดค่าตัวเลขลงใน Weka Instance
     for attr in numeric_attrs:
         val = row_dict.get(attr.name, None)
         if val is None or pd.isna(val) or val == "None":
@@ -197,7 +203,7 @@ def predict_single_dam(row_series, model_config):
         except:
             inst.set_value(attr.index, 0.0)
 
-    # 4. กำหนดค่าข้อความ/Nominal ลงใน Weka Instance
+    # กำหนดค่าข้อความ/Nominal ลงใน Weka Instance
     for attr in nominal_attrs:
         val = row_dict.get(attr.name, None)
         if val is None or pd.isna(val) or val == "None":
@@ -208,8 +214,9 @@ def predict_single_dam(row_series, model_config):
         except:
             inst.set_missing(attr.index)
 
-    # 5. สั่งให้โมเดลทำนายและส่งกลับผลลัพธ์
+    # สั่งให้โมเดลทำนายและส่งกลับผลลัพธ์
     pred_index = model.classify_instance(inst)
     if header.class_attribute.is_nominal:
         return header.class_attribute.value(int(pred_index))
     return pred_index
+

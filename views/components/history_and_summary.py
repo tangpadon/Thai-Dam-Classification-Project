@@ -11,6 +11,7 @@ from views.utils import (
     classify_by_percent,
     get_status_theme,
     format_date_th_short,
+    calc_storage_percent,
 )
 
 
@@ -38,7 +39,6 @@ def render_history_and_summary(
     theme_curr: dict = None,
     theme_7d: dict = None,
     theme_30d: dict = None,
-    models_dict: dict = None,
 ):
     """
     แสดงผล 2 ส่วนคู่กันในแถวเดียวกัน:
@@ -73,11 +73,10 @@ def render_history_and_summary(
                     r_pct = to_num(r.get('percent_storage'))
                     r_storage = to_num(r.get('volume')) or to_num(r.get('storage')) or to_num(dam_data.get('storage'))
                     
-                    # ถ้า percent_storage ว่าง ให้คำนวณจาก (volume / capacity) * 100
-                    if r_pct is None and r_storage is not None:
-                        cap = to_num(dam_data.get('capacity'))
-                        if cap and cap > 0:
-                            r_pct = (r_storage / cap) * 100.0
+                    # ถ้า percent_storage ว่าง ให้คำนวณสำรองจากปริมาตรน้ำและความจุอ่าง
+                    if r_pct is None:
+                        r_pct = calc_storage_percent(r_storage, dam_data.get('capacity'))
+
 
                     r_pct_str = f"{r_pct:.2f}" if r_pct is not None else "-"
                     r_storage_str = f"{r_storage:,.2f}" if r_storage is not None else "-"

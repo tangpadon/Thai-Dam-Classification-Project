@@ -83,8 +83,8 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
         theme_curr=theme_curr,
         theme_7d=theme_7d,
         theme_30d=theme_30d,
-        models_dict=models_dict
     )
+
 
     # 8. ส่วนท้ายของหน้าเว็บ (Footer) แสดงแหล่งที่มาและลิขสิทธิ์
     render_footer()

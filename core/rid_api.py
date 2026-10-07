@@ -158,14 +158,10 @@ def fetch_and_save_data():
 
 # 4. การดึงข้อมูลย้อนหลัง 30 วัน (Backfill Historical Data)
 
-def backfill_historical_data(lookback_days=30):
-    """
-    ตรวจสอบข้อมูลย้อนหลัง 30 วันแบบ Batch Query (1 คำสั่ง):
-    หากวันใดยังไม่มีในฐานข้อมูล ระบบจะช่วยดึงจาก API อัตโนมัติในพื้นหลัง
-    """
+def _get_missing_historical_dates(lookback_days=30):
+    """ตรวจสอบวันที่ยังไม่มีข้อมูลในฐานข้อมูลย้อนหลังตามจำนวนวันที่กำหนด"""
     today = datetime.date.today()
     start_date = today - datetime.timedelta(days=lookback_days)
-
     try:
         conn = get_connection()
         cursor = conn.cursor()
@@ -186,42 +182,37 @@ def backfill_historical_data(lookback_days=30):
             cursor.close()
             conn.close()
 
-    # หาวันที่ยังขาดหายไปในฐานข้อมูล
-    days_to_fetch = [
+    return [
         today - datetime.timedelta(days=d)
         for d in range(1, lookback_days + 1)
         if (today - datetime.timedelta(days=d)) not in existing_dates
     ]
 
+
+def backfill_historical_data(lookback_days=30):
+    """
+    ตรวจสอบและดึงข้อมูลย้อนหลังจาก RID API อัตโนมัติสำหรับวันที่ยังขาดหายในฐานข้อมูล
+    """
+    # 1. หาวันที่ยังขาดหายไปในฐานข้อมูล
+    days_to_fetch = _get_missing_historical_dates(lookback_days)
     if not days_to_fetch:
         return
 
-    # แสดง Progress Bar เล็กๆ บน Sidebar ระหว่างดึงข้อมูลย้อนหลัง
+    # 2. แสดง Progress Bar บนแถบด้านข้าง (Sidebar) ระหว่างดึงข้อมูล
     progress_bar = st.sidebar.progress(0, text="⏳ กำลังตรวจสอบข้อมูลย้อนหลัง...")
     status_text = st.sidebar.empty()
-    backfill_count = 0
 
+    # 3. ทยอยดึงข้อมูลทีละวันแล้วบันทึกลงฐานข้อมูล
     for i, target_date in enumerate(days_to_fetch):
         date_str = target_date.strftime("%Y-%m-%d")
         status_text.info(f"⏳ ดึงข้อมูลวันที่ {date_str}")
         progress_bar.progress((i + 1) / len(days_to_fetch))
 
         try:
-            resp = requests.get(f"{DATA_API_URL}{date_str}", timeout=15)
-            resp.raise_for_status()
-            data = resp.json()
-            records = data.get("data", data)
-
+            records = _fetch_from_api(date_str)
             if records:
-                if isinstance(records, list) and len(records) > 0 and isinstance(records[0], dict) and 'dam' in records[0]:
-                    df_hist = pd.json_normalize(records, record_path=['dam'], meta=['region'])
-                else:
-                    df_hist = pd.json_normalize(records)
-                mapping = {"dam_id": "id", "dam_name": "name"}
-                df_hist = df_hist.rename(columns={k: v for k, v in mapping.items() if k in df_hist.columns})
-                saved = save_to_database(df_hist, record_date=target_date)
-                if saved:
-                    backfill_count += 1
+                df_hist = _normalize_records(records)
+                save_to_database(df_hist, record_date=target_date)
         except Exception:
             pass
 
@@ -229,3 +220,4 @@ def backfill_historical_data(lookback_days=30):
 
     progress_bar.empty()
     status_text.empty()
+

@@ -63,6 +63,16 @@ def fmt_num(val: Any, decimals: int = 2) -> str:
         return str(val)
 
 
+def calc_storage_percent(volume: Any, capacity: Any) -> Optional[float]:
+    """คำนวณร้อยละความจุเก็บกักจาก (ปริมาตรน้ำ / ความจุอ่าง) * 100 อย่างปลอดภัย"""
+    vol = to_num(volume)
+    cap = to_num(capacity)
+    if vol is not None and cap is not None and cap > 0:
+        return (vol / cap) * 100.0
+    return None
+
+
+
 # 3. การจัดรูปแบบวันที่ภาษาไทย (Date Formatting)
 
 def format_date_th(dt) -> str:
@@ -122,14 +132,13 @@ def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str
 
     # คำนวณร้อยละความจุเก็บกักสำรอง หากไม่มีค่า percent_storage แต่มี volume และ capacity
     current_pct = to_num(dam_dict.get('percent_storage')) or 0.0
-    cap = to_num(dam_dict.get('capacity')) or 0.0
-    vol = to_num(dam_dict.get('volume')) or 0.0
-
-    if current_pct <= 0 and vol > 0 and cap > 0:
-        current_pct = (vol / cap) * 100.0
-        dam_dict['percent_storage'] = current_pct
+    if current_pct <= 0:
+        calculated_pct = calc_storage_percent(dam_dict.get('volume'), dam_dict.get('capacity'))
+        if calculated_pct is not None:
+            dam_dict['percent_storage'] = calculated_pct
 
     return dam_dict, is_fallback, fallback_date
+
 
 
 # Aliases สำหรับรองรับโค้ดเก่า

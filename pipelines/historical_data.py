@@ -1,100 +1,68 @@
-import requests
-import pandas as pd
+"""
+สคริปต์ดึงข้อมูลย้อนหลัง 31 วันจาก RID API และบันทึกลงฐานข้อมูล (Historical ETL Script)
+ใช้สำหรับดึงข้อมูลประวัติย้อนหลังเมื่อเริ่มต้นระบบใหม่ หรือต้องการเติมข้อมูลในฐานข้อมูล
+"""
+
+import sys
+import os
 import datetime
 import time
-import mysql.connector
-from config import DB_CONFIG
+import requests
+import pandas as pd
 
-BASE_API_URL = "https://app.rid.go.th/reservoir/api/dam/public/"
+# เพิ่ม root directory ใน sys.path เพื่อให้อ่าน config และ core ได้
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from config import RID_API_URL
+from core.db import save_to_database
+
+
+BASE_API_URL = RID_API_URL
 DAYS_BACKWARD = 31
 
+
 def fetch_real_historical_data():
+    """ดึงข้อมูลย้อนหลัง 31 วันจาก RID API และบันทึกลงฐานข้อมูลโดยอัตโนมัติ"""
     print(f"🔄 เริ่มดึงข้อมูลของจริงย้อนหลัง {DAYS_BACKWARD} วันจาก RID API...")
-    
-    try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        
-        today = datetime.date.today()
-        total_inserted = 0
+    today = datetime.date.today()
+    total_days = 0
 
-        for d in range(DAYS_BACKWARD, -1, -1):
-            target_date = today - datetime.timedelta(days=d)
-            date_str = target_date.strftime("%Y-%m-%d")
-            api_url = f"{BASE_API_URL}{date_str}"
-            
-            print(f"📅 กำลังดึงข้อมูลวันที่: {date_str} ... ", end="")
-            
-            try:
-                response = requests.get(api_url, timeout=15)
-                response.raise_for_status()
-                res_data = response.json()
-                
-                records = res_data.get("data", res_data)
-                if not records:
-                    print("ไม่มีข้อมูล")
-                    continue
-                    
-                df = pd.json_normalize(records, record_path=['dam'])
+    for d in range(DAYS_BACKWARD, -1, -1):
+        target_date = today - datetime.timedelta(days=d)
+        date_str = target_date.strftime("%Y-%m-%d")
+        api_url = f"{BASE_API_URL}{date_str}"
 
-                mapping = {"dam_id": "id", "dam_name": "name"}
-                df = df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
+        print(f"📅 กำลังดึงข้อมูลวันที่: {date_str} ... ", end="")
 
-                sql_info = """
-                    INSERT INTO dam_info
-                    (dam_id, dam_name, owner, region, capacity, storage, active_storage, dead_storage)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    ON DUPLICATE KEY UPDATE dam_name=VALUES(dam_name)
-                """
-                info_data = [
-                    (
-                        row.get('id'), row.get('name'), row.get('owner'), row.get('region'),
-                        float(row.get('capacity', 0) if pd.notna(row.get('capacity')) else 0),
-                        float(row.get('storage', 0) if pd.notna(row.get('storage')) else 0),
-                        float(row.get('active_storage', 0) if pd.notna(row.get('active_storage')) else 0),
-                        float(row.get('dead_storage', 0) if pd.notna(row.get('dead_storage')) else 0),
-                    )
-                    for _, row in df.iterrows()
-                ]
-                cursor.executemany(sql_info, info_data)
+        try:
+            response = requests.get(api_url, timeout=15)
+            response.raise_for_status()
+            res_data = response.json()
 
-                sql = """
-                    INSERT IGNORE INTO dam_daily
-                    (dam_id, record_date, volume, percent_storage, inflow, outflow)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """
-                data = [
-                    (
-                        row.get('id'),
-                        target_date,
-                        float(row.get('volume', 0) if pd.notna(row.get('volume')) else 0),
-                        float(row.get('percent_storage', 0) if pd.notna(row.get('percent_storage')) else 0),
-                        float(row.get('inflow', 0) if pd.notna(row.get('inflow')) else 0),
-                        float(row.get('outflow', 0) if pd.notna(row.get('outflow')) else 0),
-                    )
-                    for _, row in df.iterrows()
-                ]
-                cursor.executemany(sql, data)
-                conn.commit()
-                inserted_today = len(data)
-                total_inserted += inserted_today
-                print(f"บันทึกสำเร็จ {inserted_today} แถว")
+            records = res_data.get("data", res_data)
+            if not records:
+                print("ไม่มีข้อมูล")
+                continue
 
-                time.sleep(1)
-                
-            except requests.exceptions.RequestException as e:
-                print(f"❌ Error API: {e}")
-            except Exception as e:
-                print(f"❌ Error Processing: {e}")
-                
-        print(f"\n✨ เสร็จสิ้น! ดึงข้อมูลจริงย้อนหลังสำเร็จและบันทึกข้อมูลใหม่ทั้งหมด {total_inserted} แถว")
-        
-    except Exception as e:
-        print(f"❌ Database Connection Error: {e}")
-    finally:
-        if 'conn' in locals() and conn.is_connected():
-            cursor.close()
-            conn.close()
+            df = pd.json_normalize(records, record_path=['dam'], meta=['region'])
+            df = df.rename(columns={"dam_id": "id", "dam_name": "name"})
+
+            saved = save_to_database(df, record_date=target_date)
+            if saved:
+                total_days += 1
+                print(f"บันทึกสำเร็จ ({len(df)} เขื่อน)")
+            else:
+                print("เกิดข้อผิดพลาดในการบันทึก")
+
+            time.sleep(0.5)
+
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error API: {e}")
+        except Exception as e:
+            print(f"❌ Error Processing: {e}")
+
+    print(f"\n✨ เสร็จสิ้น! บันทึกข้อมูลย้อนหลังสำเร็จทั้งหมด {total_days} วัน")
+
 
 if __name__ == "__main__":
     fetch_real_historical_data()
