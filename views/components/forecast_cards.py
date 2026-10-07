@@ -4,8 +4,9 @@ import datetime
 import streamlit as st
 from typing import Dict, Any, Tuple
 from views.icons import svg_icon
-from views.utils import format_date_th_short, get_status_theme
-from core.weka_model import predict_single_dam
+from views.helpers import format_date_th_short, get_status_theme
+from core.risk_predictor import predict_single_dam
+
 
 
 def render_forecast_cards(

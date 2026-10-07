@@ -1,8 +1,9 @@
 """
-โมดูลฟังก์ชันตัวช่วย (Utility Functions)
+โมดูลฟังก์ชันตัวช่วย (Helpers Module)
 รวบรวมฟังก์ชันแปลงค่าตัวเลข, วันที่ภาษาไทย, การประเมินระดับสถานการณ์น้ำ,
 และการจัดเตรียมข้อมูลเขื่อนสำหรับส่งต่อไปยังโมเดลพยากรณ์และหน้าจอ
 """
+
 
 import math
 from typing import Any, Optional, Dict, Tuple
@@ -115,7 +116,8 @@ def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str
 
     # หากวันนี้ไม่มีค่า Input ให้ดึงข้อมูลจากวันก่อนหน้า (เมื่อวาน)
     if not has_input:
-        from core.db import get_yesterday_valid_data
+        from core.database import get_yesterday_valid_data
+
         dam_id = dam_dict.get('id') or dam_dict.get('dam_id')
         y_data = get_yesterday_valid_data(dam_id, current_date=data_date)
         if y_data:

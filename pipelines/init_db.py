@@ -11,7 +11,8 @@ import os
 # เพิ่ม root directory ใน sys.path เพื่อให้อ่าน config ได้
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from core.db import get_connection
+from core.database import get_connection
+
 
 
 def init_db_schema():

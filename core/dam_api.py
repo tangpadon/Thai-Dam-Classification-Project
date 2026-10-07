@@ -1,8 +1,9 @@
 """
-โมดูลดึงข้อมูลสถานการณ์น้ำจากกรมชลประทาน (RID API Module)
+โมดูลดึงข้อมูลสถานการณ์น้ำจากกรมชลประทาน (Dam API Module)
 ทำหน้าที่เชื่อมต่อ API ของกรมชลประทาน, ซิงก์ข้อมูลประจำวันลงฐานข้อมูล,
 และตรวจสอบความสมบูรณ์ของข้อมูล (พร้อม Fallback ไปใช้วันก่อนหน้ากรณีที่ข้อมูลวันนี้ยังไม่ออก)
 """
+
 
 import datetime
 import time
@@ -10,7 +11,8 @@ import streamlit as st
 import requests
 import pandas as pd
 from config import RID_API_URL
-from core.db import get_connection, save_to_database, get_recorded_time
+from core.database import get_connection, save_to_database, get_recorded_time
+
 
 # URL สำหรับเชื่อมต่อ API กรมชลประทาน
 DATA_API_URL = RID_API_URL

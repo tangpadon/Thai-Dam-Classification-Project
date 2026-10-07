@@ -3,7 +3,8 @@
 import datetime
 import streamlit as st
 from views.icons import svg_icon
-from views.utils import format_date_th
+from views.helpers import format_date_th
+
 
 
 def render_header(recorded_at=None, data_date=None) -> datetime.datetime:

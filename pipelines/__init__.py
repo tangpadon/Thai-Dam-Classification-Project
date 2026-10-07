@@ -1,7 +1,8 @@
 """Data preparation and feature extraction pipelines."""
 
-from pipelines.rid_dam_fetcher import RIDDataFetcher, RiskClassifier, DataProcessor, ARFFExporter
-from pipelines.historical_data import fetch_real_historical_data
+from pipelines.build_training_arff import RIDDataFetcher, RiskClassifier, DataProcessor, ARFFExporter
+from pipelines.sync_history_to_db import fetch_real_historical_data
+
 
 __all__ = [
     "RIDDataFetcher",

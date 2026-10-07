@@ -96,18 +96,18 @@ Dashboard แบ่งส่วนการแสดงผลออกเป็�
 ```mermaid
 flowchart LR
     subgraph Data Layer
-        A[RID API] --> B[core/rid_api.py<br>fetch_and_save_data]
+        A[RID API] --> B[core/dam_api.py<br>fetch_and_save_data]
         B --> C[(MySQL<br>dam_forecast_db)]
-        C --> D[core/db.py<br>Query / Backfill]
+        C --> D[core/database.py<br>Query / Backfill]
     end
 
     subgraph ML Inference Layer
-        D --> E[core/weka_model.py<br>JVM & Model Loader]
+        D --> E[core/risk_predictor.py<br>JVM & Model Loader]
         E --> F[predict_single_dam<br>7-Day & 30-Day Risk]
     end
 
     subgraph Presentation Layer
-        B --> G[views/user_view.py<br>Main Orchestrator]
+        B --> G[views/dashboard.py<br>Main Orchestrator]
         F --> G
         G --> H[views/components/<br>Sections 1 - 7]
         G --> I[views/styles/<br>CSS & JS Scripts]
@@ -116,9 +116,9 @@ flowchart LR
 
 **การไหลของข้อมูล:**
 1. `app.py` เริ่มต้นการทำงานด้วยการเรียก `init_jvm_safe()` และโหลดโมเดล Machine Learning ล่วงหน้า
-2. `fetch_and_save_data()` ตรวจสอบข้อมูลใน MySQL ก่อน หากยังไม่มีข้อมูลล่าสุดของวันและเลยเวลา 12:00 น. จะดึงข้อมูลจาก RID API มาบันทึกลงฐานข้อมูล
-3. `weka_model.py` แปลงฟีเจอร์เป็นสัดส่วนร้อยละ (`percent_storage`, `inflow_pct`, `outflow_pct`, `month`) แล้วพยากรณ์ผลลัพธ์ 7 วันและ 30 วัน
-4. `user_view.py` ส่งต่อข้อมูลและผลการพยากรณ์ไปยังคอมโพเนนต์ต่างๆ ใน `views/components/` เพื่อเรนเดอร์หน้าจอ Streamlit
+2. `fetch_and_save_data()` ตรวจสอบข้อมูลใน MySQL ก่อน หากยังไม่มีข้อมูลล่าสุดของวัน จะดึงข้อมูลจาก RID API มาบันทึกลงฐานข้อมูล
+3. `risk_predictor.py` แปลงฟีเจอร์เป็นสัดส่วนร้อยละ (`percent_storage`, `inflow_pct`, `outflow_pct`, `month`) แล้วพยากรณ์ผลลัพธ์ 7 วันและ 30 วัน
+4. `dashboard.py` ส่งต่อข้อมูลและผลการพยากรณ์ไปยังคอมโพเนนต์ต่างๆ ใน `views/components/` เพื่อเรนเดอร์หน้าจอ Streamlit
 
 ---
 
@@ -131,19 +131,20 @@ flowchart LR
 ├── .env.example                # ไฟล์ตัวอย่างสำหรับการตั้งค่า Environment
 │
 ├── core/                       # Backend Logic & Model Inference
-│   ├── db.py                   # จัดการฐานข้อมูล (Query, Save, Backfill)
-│   ├── rid_api.py              # ดึงข้อมูล RID API ตามเงื่อนไขเวลา 12:00 น.
-│   └── weka_model.py           # JVM Initialization, Model Loading & Inference
+│   ├── database.py             # จัดการฐานข้อมูล (Query, Save, Backfill)
+│   ├── dam_api.py              # ดึงข้อมูลเขื่อนรายวันจาก RID API
+│   └── risk_predictor.py       # JVM Initialization, Model Loading & Inference
 │
 ├── pipelines/                  # Data Preparation & Pipeline
-│   ├── rid_dam_fetcher.py      # ดึงข้อมูลเขื่อนและ Export สู่รูปแบบ ARFF
-│   └── historical_data.py      # เครื่องมือดึงข้อมูลประวัติย้อนหลัง
+│   ├── init_db.py              # สคริปต์สร้างตารางฐานข้อมูลครั้งแรก
+│   ├── sync_history_to_db.py   # ดึงข้อมูลประวัติย้อนหลัง 31 วันลงฐานข้อมูล
+│   └── build_training_arff.py  # ดึงข้อมูลและสร้างไฟล์ Dataset ARFF สำหรับเทรนโมเดล
 │
 ├── views/                      # Presentation Layer (Modular Architecture)
-│   ├── user_view.py            # Main dashboard orchestrator
+│   ├── dashboard.py            # Main dashboard orchestrator
+│   ├── helpers.py              # ฟังก์ชันช่วยแปลงวันที่ รูปแบบตัวเลข และสูตรคำนวณ
 │   ├── constants.py            # นิยามค่าคงที่ สี ความหมายสถานะ และเกณฑ์ความเสี่ยง
 │   ├── icons.py                # SVG icons & helpers
-│   ├── utils.py                # ฟังก์ชันแปลงวันที่ รูปแบบตัวเลข และตรรกะสถานะ
 │   ├── styles/                 # รูปแบบการแสดงผลและสคริปต์ฝั่ง Client
 │   │   ├── custom_css.py       # Custom CSS สไตล์โมเดิร์นและการจัด Padding
 │   │   └── client_js.py        # Client JavaScript (Smooth scroll & Flash highlight)
@@ -156,6 +157,7 @@ flowchart LR
 │       ├── trend_and_details.py# Section 4: กราฟแนวโน้ม + Section 5: รายละเอียดเขื่อน
 │       ├── history_and_summary.py # Section 6: ตารางย้อนหลัง + Section 7: สรุปสถานการณ์
 │       └── footer.py           # ส่วนท้ายหน้าเว็บ
+
 │
 ├── models/
 │   ├── trained/                # โมเดล Weka (.model: Log_7days, RF_30days)

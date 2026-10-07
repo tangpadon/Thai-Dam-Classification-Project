@@ -14,7 +14,8 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config import RID_API_URL
-from core.db import save_to_database
+from core.database import save_to_database
+
 
 
 BASE_API_URL = RID_API_URL

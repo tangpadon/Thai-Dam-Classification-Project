@@ -1,5 +1,5 @@
 """
-โมดูลหน้าจอผู้ใช้ (User View Module)
+โมดูลหน้าจอหลักของระบบ (Dashboard View Module)
 ทำหน้าที่เป็นศูนย์กลางเชื่อมโยงส่วนประกอบ (Components) ของ Dashboard
 ตั้งแต่ Section 1 ถึง Section 8 ให้แสดงผลอย่างเป็นระเบียบบนหน้าเว็บ Streamlit
 """
@@ -8,7 +8,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from views.styles import get_custom_css, get_client_js
-from views.utils import (
+from views.helpers import (
+
     classify_by_percent,
     get_status_theme,
     prepare_dam_data,

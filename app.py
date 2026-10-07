@@ -4,9 +4,10 @@
 """
 
 import streamlit as st
-from core.weka_model import init_jvm_safe, load_resources
-from core.rid_api import fetch_and_save_data, backfill_historical_data
-from views import user_view
+from core.risk_predictor import init_jvm_safe, load_resources
+from core.dam_api import fetch_and_save_data, backfill_historical_data
+from views import dashboard
+
 
 
 # 1. ตั้งค่าหน้าเว็บ Streamlit (Page Configuration)
@@ -39,6 +40,7 @@ if "backfill_checked" not in st.session_state:
 
 # 4. แสดงผลหน้าจอ Dashboard (Render Dashboard)
 if not raw_df.empty:
-    user_view.render(raw_df, models_dict, data_date, recorded_at)
+    dashboard.render(raw_df, models_dict, data_date, recorded_at)
+
 else:
     st.error("⚠️ ระบบไม่พร้อมใช้งาน: ไม่สามารถเชื่อมต่อฐานข้อมูลหรือดึงข้อมูลเขื่อนได้ในขณะนี้")

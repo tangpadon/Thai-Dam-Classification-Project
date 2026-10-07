@@ -1,8 +1,9 @@
 """
-โมดูลการพยากรณ์ด้วยโมเดล Machine Learning (Weka Model Module)
+โมดูลการพยากรณ์ความเสี่ยงน้ำด้วย Machine Learning (Risk Predictor Module)
 ทำหน้าที่เริ่มต้น Java Virtual Machine (JVM), โหลดโมเดล Weka (.model),
 และทำการจำแนกระดับความเสี่ยงน้ำล่วงหน้า 7 วัน (Logistic Regression) และ 30 วัน (Random Forest)
 """
+
 
 import os
 import streamlit as st
@@ -146,7 +147,8 @@ def _prepare_dam_features(row_dict):
         dam_id = data.get('id') or data.get('dam_id')
         if dam_id:
             try:
-                from core.db import get_yesterday_valid_data
+                from core.database import get_yesterday_valid_data
+
                 y_rec = get_yesterday_valid_data(dam_id)
                 if y_rec:
                     for col in ['percent_storage', 'volume', 'inflow', 'outflow']:

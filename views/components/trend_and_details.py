@@ -6,8 +6,9 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from typing import Any
-from views.utils import fmt_num
-from core.db import get_historical_data
+from views.helpers import fmt_num
+from core.database import get_historical_data
+
 
 
 def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
