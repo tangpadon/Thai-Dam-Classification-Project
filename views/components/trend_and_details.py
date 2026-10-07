@@ -11,7 +11,7 @@ from core.database import get_historical_data
 
 
 
-def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
+def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = None):
     """วาดกราฟเส้นแสดงแนวโน้มร้อยละความจุย้อนหลังด้วย Plotly"""
     if hist_df is None or hist_df.empty or len(hist_df) <= 1:
         st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
@@ -35,19 +35,21 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
         st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
         return
 
-    # แปลงวันที่เป็นข้อความ ISO (YYYY-MM-DD) เพื่อให้ Browser เรนเดอร์ได้รวดเร็วและไม่ค้าง
-    date_strs = daily['record_date'].dt.strftime('%Y-%m-%d').tolist()
+    # วันที่แบบย่อ (วัน/เดือน) สำหรับป้ายกำกับแกน X และวันที่แบบเต็มสำหรับ Hover
+    x_labels = daily['record_date'].dt.strftime('%d/%m').tolist()
+    full_dates = daily['record_date'].dt.strftime('%d/%m/%Y').tolist()
     storage_vals = daily['percent_storage'].tolist()
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=date_strs,
+        x=x_labels,
         y=storage_vals,
+        customdata=full_dates,
         mode='lines+markers',
         line=dict(color='#0284c7', width=2.5),
         marker=dict(size=6, color='#0284c7'),
         name='ร้อยละความจุ (%)',
-        hovertemplate='%{x}<br>ร้อยละความจุ: %{y:.2f}%<extra></extra>'
+        hovertemplate='วันที่ %{customdata}<br>ร้อยละความจุ: %{y:.2f}%<extra></extra>'
     ))
     fig.add_hline(
         y=80, line_dash="dash", line_color="#ef4444",
@@ -59,14 +61,19 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
         annotation_text="เกณฑ์เสี่ยงน้ำแห้ง (30%)",
         annotation_position="bottom right", annotation_font_color="#f59e0b"
     )
+
+    # ปรับมุมเอียงของป้ายแกน X ตามจำนวนวัน (7 วันใช้แนวนอนปกติ, 30 วันเอียง 45 องศาเพื่อความสวยงามและไม่ซ้อนทับ)
+    tick_angle = 0 if limit_days <= 7 else -45
+    bottom_margin = 25 if limit_days <= 7 else 45
+
     fig.update_layout(
         yaxis=dict(range=[0, 100], title="ร้อยละความจุ (%)"),
         xaxis=dict(
-            type='date',
-            tickformat="%d/%m",
-            nticks=min(len(date_strs), 7),
+            type='category',
+            tickangle=tick_angle,
+            tickfont=dict(size=10 if limit_days > 7 else 12),
         ),
-        margin=dict(l=10, r=10, t=20, b=10),
+        margin=dict(l=10, r=10, t=20, b=bottom_margin),
         height=320,
         autosize=True,
         hovermode="x unified",
@@ -75,11 +82,14 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
         dragmode=False,
         modebar=dict(remove=['zoom', 'pan', 'select', 'lasso', 'zoomIn', 'zoomOut', 'autoScale', 'resetScale'])
     )
+    chart_key = f"trend_chart_{dam_id}_{limit_days}" if dam_id else f"trend_chart_{limit_days}"
     st.plotly_chart(
         fig,
         use_container_width=True,
-        key=f"trend_chart_{limit_days}"
+        key=chart_key
     )
+    if len(daily) < limit_days:
+        st.caption(f"* หมายเหตุ: มีข้อมูลในระบบ {len(daily)} วันจากที่เลือก {limit_days} วัน")
 
 
 
@@ -143,7 +153,7 @@ def render_trend_and_details(
                 )
             limit_days = 30 if "30" in time_range else 7
             hist_df = get_historical_data(dam_data['id'], limit=30)
-            _render_trend_chart(hist_df, limit_days)
+            _render_trend_chart(hist_df, limit_days, dam_id=dam_data.get('id'))
 
         # ฝั่งขวา: Section 5 รายละเอียดเขื่อน
         with m_right:

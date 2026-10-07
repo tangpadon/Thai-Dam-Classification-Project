@@ -189,7 +189,7 @@ def get_historical_data(dam_id, limit=30):
             LIMIT %s
         """
 
-        cursor.execute(query, (str(dam_id), int(limit) * 2))
+        cursor.execute(query, (str(dam_id), max(120, int(limit) * 4)))
         rows = cursor.fetchall()
         if rows:
             df = pd.DataFrame(rows)
