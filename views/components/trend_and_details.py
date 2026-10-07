@@ -72,14 +72,15 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
         hovermode="x unified",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        dragmode=False
+        dragmode=False,
+        modebar=dict(remove=['zoom', 'pan', 'select', 'lasso', 'zoomIn', 'zoomOut', 'autoScale', 'resetScale'])
     )
     st.plotly_chart(
         fig,
         use_container_width=True,
-        key=f"trend_chart_{limit_days}",
-        config={'displayModeBar': False, 'scrollZoom': False, 'doubleClick': False}
+        key=f"trend_chart_{limit_days}"
     )
+
 
 
 
