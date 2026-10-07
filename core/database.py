@@ -185,9 +185,10 @@ def get_historical_data(dam_id, limit=30):
             SELECT record_date, volume, percent_storage, inflow, outflow
             FROM dam_daily
             WHERE dam_id = %s
-            ORDER BY record_date DESC, recorded_at DESC
+            ORDER BY record_date DESC
             LIMIT %s
         """
+
         cursor.execute(query, (str(dam_id), int(limit) * 2))
         rows = cursor.fetchall()
         if rows:

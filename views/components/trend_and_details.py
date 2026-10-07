@@ -13,14 +13,17 @@ from core.database import get_historical_data
 
 def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
     """วาดกราฟเส้นแสดงแนวโน้มร้อยละความจุย้อนหลังด้วย Plotly"""
-    if hist_df.empty or len(hist_df) <= 1:
+    if hist_df is None or hist_df.empty or len(hist_df) <= 1:
         st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
         return
 
     df_chart = hist_df.copy()
     df_chart['record_date'] = pd.to_datetime(df_chart['record_date'])
+    df_chart['percent_storage'] = pd.to_numeric(df_chart['percent_storage'], errors='coerce')
+
     daily = (
-        df_chart.sort_values('record_date')
+        df_chart.dropna(subset=['percent_storage'])
+        .sort_values('record_date')
         .groupby(df_chart['record_date'].dt.date)
         .tail(1)
         .reset_index(drop=True)
@@ -32,14 +35,19 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
         st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
         return
 
-    x_start = daily['record_date'].dt.normalize().min()
-    x_end = daily['record_date'].max() + pd.Timedelta(hours=12)
+    # แปลงวันที่เป็นข้อความ ISO (YYYY-MM-DD) เพื่อให้ Browser เรนเดอร์ได้รวดเร็วและไม่ค้าง
+    date_strs = daily['record_date'].dt.strftime('%Y-%m-%d').tolist()
+    storage_vals = daily['percent_storage'].tolist()
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=daily['record_date'], y=daily['percent_storage'],
-        mode='lines+markers', line=dict(color='#0284c7', width=2),
-        marker=dict(size=5, color='#0284c7'), name='ร้อยละความจุ (%)',
-        hovertemplate='%{x|%d/%m/%Y}<br>ร้อยละความจุ: %{y:.2f}%<extra></extra>'
+        x=date_strs,
+        y=storage_vals,
+        mode='lines+markers',
+        line=dict(color='#0284c7', width=2.5),
+        marker=dict(size=6, color='#0284c7'),
+        name='ร้อยละความจุ (%)',
+        hovertemplate='%{x}<br>ร้อยละความจุ: %{y:.2f}%<extra></extra>'
     ))
     fig.add_hline(
         y=80, line_dash="dash", line_color="#ef4444",
@@ -53,22 +61,26 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int):
     )
     fig.update_layout(
         yaxis=dict(range=[0, 100], title="ร้อยละความจุ (%)"),
-        margin=dict(l=10, r=10, t=20, b=10), height=320,
-        autosize=True,
         xaxis=dict(
-            range=[x_start, x_end],
+            type='date',
             tickformat="%d/%m",
-            dtick=f"D{max(1, limit_days // 6)}"
+            nticks=min(len(date_strs), 7),
         ),
+        margin=dict(l=10, r=10, t=20, b=10),
+        height=320,
+        autosize=True,
         hovermode="x unified",
-        hoverlabel=dict(font_size=12),
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
         dragmode=False
     )
     st.plotly_chart(
-        fig, use_container_width=True,
+        fig,
+        use_container_width=True,
+        key=f"trend_chart_{limit_days}",
         config={'displayModeBar': False, 'scrollZoom': False, 'doubleClick': False}
     )
+
 
 
 def _render_dam_details_table(dam_data: Any, selected_dam_name: str, pct: float, inflow_m: float, outflow_m: float):
