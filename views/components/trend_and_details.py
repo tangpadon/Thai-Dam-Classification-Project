@@ -1,7 +1,3 @@
-"""
-คอมโพเนนต์ Section 4 (กราฟแนวโน้มร้อยละความจุย้อนหลัง) และ Section 5 (ตารางรายละเอียดข้อมูลอ่างเก็บน้ำ)
-"""
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -10,9 +6,7 @@ from views.helpers import fmt_num
 from core.database import get_historical_data
 
 
-
 def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = None):
-    """วาดกราฟเส้นแสดงแนวโน้มร้อยละความจุย้อนหลังด้วย Plotly"""
     if hist_df is None or hist_df.empty or len(hist_df) <= 1:
         st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
         return
@@ -67,11 +61,19 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
     bottom_margin = 25 if limit_days <= 7 else 45
 
     fig.update_layout(
-        yaxis=dict(range=[0, 100], title="ร้อยละความจุ (%)"),
+        yaxis=dict(
+            range=[0, 100],
+            title="ร้อยละความจุ (%)",
+            gridcolor='#f1f5f9',
+            zeroline=False,
+        ),
         xaxis=dict(
             type='category',
             tickangle=tick_angle,
             tickfont=dict(size=10 if limit_days > 7 else 12),
+            showline=True,
+            linecolor='#e2e8f0',
+            showgrid=False,
         ),
         margin=dict(l=10, r=10, t=20, b=bottom_margin),
         height=320,
@@ -92,10 +94,7 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
         st.caption(f"* หมายเหตุ: มีข้อมูลในระบบ {len(daily)} วันจากที่เลือก {limit_days} วัน")
 
 
-
-
 def _render_dam_details_table(dam_data: Any, selected_dam_name: str, pct: float, inflow_m: float, outflow_m: float):
-    """สร้างตารางแสดงรายละเอียดข้อมูลจำเพาะของเขื่อน"""
     vol_val = dam_data.get('volume')
     vol_str = f"{fmt_num(vol_val, 2)} ล้าน ลบ.ม." if vol_val is not None else "-"
 
@@ -131,9 +130,6 @@ def render_trend_and_details(
     inflow_m: float,
     outflow_m: float
 ) -> pd.DataFrame:
-    """
-    แสดงผล Section 4 (กราฟแนวโน้มร้อยละความจุย้อนหลัง) คู่กับ Section 5 (ตารางข้อมูลจำเพาะของเขื่อน)
-    """
     with st.container(border=True, key="sec_trend"):
         m_left, m_right = st.columns([1.7, 1.3])
 
@@ -164,6 +160,6 @@ def render_trend_and_details(
             )
             _render_dam_details_table(dam_data, selected_dam_name, pct, inflow_m, outflow_m)
 
-        st.markdown('<div style="height: 14px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
 
     return hist_df

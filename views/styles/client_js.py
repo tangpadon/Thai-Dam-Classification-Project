@@ -1,8 +1,4 @@
-"""Client-side JavaScript for smooth scrolling, search icon replacement, and section padding."""
-
-
 def get_client_js() -> str:
-    """Return the client-side JavaScript script block for dashboard interactivity."""
     return """
     <script>
     (function() {
@@ -159,10 +155,10 @@ def get_client_js() -> str:
         window.parent.__sidebarNavKeyHandler = handleNavKey;
         parentDoc.addEventListener('keydown', handleNavKey, true);
 
-        // 3. Guarantee section bottom padding across all sections (responsive)
+        // 3. Guarantee section bottom padding across all sections & equalize side-by-side section heights
         function fixSectionPadding() {
             const isMobile = window.parent.innerWidth <= 768;
-            const paddingBottom = isMobile ? '22px' : '26px';
+            const paddingBottom = isMobile ? '24px' : '28px';
             const secKeys = [
                 'st-key-sec_dam_select',
                 'st-key-sec_overview',
@@ -178,7 +174,44 @@ def get_client_js() -> str:
                     els[i].style.setProperty('box-sizing', 'border-box', 'important');
                 }
             });
+            equalizeSectionPairs();
         }
+
+        function equalizeSectionPairs() {
+            const pairs = [
+                ['.st-key-sec_dam_select', '.st-key-sec_overview']
+                // เปิดใช้งานบรรทัดด้านล่างคู่กับ show_extended_summary = True ใน history_and_summary.py
+                // ['.st-key-sec_history', '.st-key-sec_summary']
+            ];
+            const secSummary = parentDoc.querySelector('.st-key-sec_summary');
+            if (secSummary) secSummary.style.removeProperty('min-height');
+            const isMobile = window.parent.innerWidth <= 768;
+
+            pairs.forEach(([selA, selB]) => {
+                const elA = parentDoc.querySelector(selA);
+                const elB = parentDoc.querySelector(selB);
+                if (!elA || !elB) return;
+
+                elA.style.removeProperty('min-height');
+                elB.style.removeProperty('min-height');
+
+                if (isMobile) return;
+
+                const hA = elA.getBoundingClientRect().height;
+                const hB = elB.getBoundingClientRect().height;
+                const maxH = Math.ceil(Math.max(hA, hB));
+                if (maxH > 0) {
+                    elA.style.setProperty('min-height', maxH + 'px', 'important');
+                    elB.style.setProperty('min-height', maxH + 'px', 'important');
+                }
+            });
+        }
+
+        if (window.parent.__secResizeHandler) {
+            window.parent.removeEventListener('resize', window.parent.__secResizeHandler);
+        }
+        window.parent.__secResizeHandler = fixSectionPadding;
+        window.parent.addEventListener('resize', fixSectionPadding);
 
         // Run search icon replacement, section padding, and observe DOM mutations
         replaceDropdownIcons();

@@ -1,13 +1,7 @@
-"""
-ไฟล์หลักสำหรับเริ่มต้นแอปพลิเคชัน (Main Entry Point)
-ระบบพยากรณ์ระดับน้ำในอ่างเก็บน้ำขนาดใหญ่ของประเทศไทย (Dam Forecast Dashboard)
-"""
-
 import streamlit as st
 from core.risk_predictor import init_jvm_safe, load_resources
 from core.dam_api import fetch_and_save_data, backfill_historical_data
 from views import dashboard
-
 
 
 # 1. ตั้งค่าหน้าเว็บ Streamlit (Page Configuration)
@@ -22,7 +16,6 @@ st.set_page_config(
 # 2. โหลดโมเดล Machine Learning (Weka Models)
 @st.cache_resource
 def init_models():
-    """เริ่มต้น Java Virtual Machine (JVM) และโหลดโมเดลพยากรณ์ 7 วัน และ 30 วัน (แคชไว้ในหน่วยความจำ)"""
     init_jvm_safe()
     return load_resources()
 
@@ -43,4 +36,5 @@ if not raw_df.empty:
     dashboard.render(raw_df, models_dict, data_date, recorded_at)
 
 else:
+    fetch_and_save_data.clear()
     st.error("⚠️ ระบบไม่พร้อมใช้งาน: ไม่สามารถเชื่อมต่อฐานข้อมูลหรือดึงข้อมูลเขื่อนได้ในขณะนี้")

@@ -1,5 +1,3 @@
-"""Section 1: Dam Selector component."""
-
 import streamlit as st
 import pandas as pd
 from typing import Tuple
@@ -8,7 +6,6 @@ from views.constants import get_dam_location
 
 
 def render_dam_selector(raw_df: pd.DataFrame) -> Tuple[str, pd.Series]:
-    """Render Section 1: Dam selection dropdown with visual illustration, returning (name, data)."""
     with st.container(border=True, key="sec_dam_select"):
         st.markdown(
             '<div id="section-select" class="section-title">'
@@ -62,6 +59,6 @@ def render_dam_selector(raw_df: pd.DataFrame) -> Tuple[str, pd.Series]:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-        st.markdown('<div style="height: 14px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
 
     return selected_dam_name, dam_data

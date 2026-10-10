@@ -1,15 +1,8 @@
-"""
-โมดูลหน้าจอหลักของระบบ (Dashboard View Module)
-ทำหน้าที่เป็นศูนย์กลางเชื่อมโยงส่วนประกอบ (Components) ของ Dashboard
-ตั้งแต่ Section 1 ถึง Section 8 ให้แสดงผลอย่างเป็นระเบียบบนหน้าเว็บ Streamlit
-"""
-
 import streamlit as st
 import streamlit.components.v1 as components
 
 from views.styles import get_custom_css, get_client_js
 from views.helpers import (
-
     classify_by_percent,
     get_status_theme,
     prepare_dam_data,
@@ -27,14 +20,6 @@ from views.components import (
 
 
 def render(raw_df, models_dict, data_date=None, recorded_at=None):
-    """
-    ฟังก์ชันหลักในการเรนเดอร์หน้า Dashboard ทั้งหมด:
-    - raw_df: ตารางข้อมูลเขื่อนประจำวัน
-    - models_dict: โมเดล Weka ML สำหรับพยากรณ์ 7 วัน และ 30 วัน
-    - data_date: วันที่ของข้อมูล (เช่น วันนี้ หรือเมื่อวาน)
-    - recorded_at: วันที่และเวลาที่มีการดึงข้อมูลล่าสุด
-    """
-
     # 1. แทรกสไตล์ CSS ปรับแต่งความสวยงามของหน้าเว็บ
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
@@ -42,7 +27,7 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     render_sidebar()
 
     # 3. ส่วนหัวของหน้าเว็บ (Header) แสดงชื่อระบบและเวลาที่อัปเดตข้อมูล
-    _dt = render_header(recorded_at=recorded_at, data_date=data_date)
+    base_date = render_header(recorded_at=recorded_at, data_date=data_date)
 
     # 4. Section 1 (เลือกเขื่อน) และ Section 2 (ภาพรวมสถานการณ์น้ำปัจจุบัน)
     top_left, top_right = st.columns([1.1, 1.4])
@@ -64,7 +49,7 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     theme_7d, theme_30d = render_forecast_cards(
         dam_data,
         models_dict,
-        _dt,
+        base_date,
         theme_curr,
         is_fallback=is_fallback,
         fallback_date=fallback_date

@@ -1,11 +1,8 @@
-"""Sidebar component rendering navigation and system branding."""
-
 import streamlit as st
 from views.icons import svg_icon
 
 
 def render_sidebar():
-    """Render the sidebar with Dam Forecast logo and smooth scroll navigation links."""
     with st.sidebar:
         # Top Logo & Title
         st.markdown("""

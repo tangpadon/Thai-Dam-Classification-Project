@@ -1,10 +1,3 @@
-"""
-Database Schema Initialization Script.
-Run this script once when setting up a fresh database instance (Local MySQL or TiDB Cloud).
-Usage:
-    python pipelines/init_db.py
-"""
-
 import sys
 import os
 
@@ -14,9 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.database import get_connection
 
 
-
 def init_db_schema():
-    """สร้างตาราง dam_info และ dam_daily พร้อม Indexes อัตโนมัติหากยังไม่มีใน Database"""
     print("🔄 กำลังตรวจสอบและตั้งค่า Schema ฐานข้อมูล...")
     conn = None
     try:

@@ -1,10 +1,3 @@
-"""
-โมดูลฟังก์ชันตัวช่วย (Helpers Module)
-รวบรวมฟังก์ชันแปลงค่าตัวเลข, วันที่ภาษาไทย, การประเมินระดับสถานการณ์น้ำ,
-และการจัดเตรียมข้อมูลเขื่อนสำหรับส่งต่อไปยังโมเดลพยากรณ์และหน้าจอ
-"""
-
-
 import math
 from typing import Any, Optional, Dict, Tuple
 import pandas as pd
@@ -14,13 +7,6 @@ from views.constants import STATUS_THEMES
 # 1. การประเมินระดับสถานะน้ำและธีมสี (Risk Classification & Themes)
 
 def classify_by_percent(pct: Optional[float]) -> str:
-    """
-    จำแนกระดับความเสี่ยงตามร้อยละความจุเก็บกักของเขื่อน:
-    - น้อยกว่า 30%: น้ำแล้งวิกฤต (drought)
-    - มากกว่า 80%: เสี่ยงน้ำล้น (flood)
-    - 30% ถึง 80%: ปกติ (normal)
-    (มีระบบป้องกัน Error กรณีค่าว่าง/None โดยจะคืนค่า 'normal' เสมอ)
-    """
     if pct is None:
         return "normal"
     try:
@@ -37,14 +23,12 @@ def classify_by_percent(pct: Optional[float]) -> str:
 
 
 def get_status_theme(status_key: str) -> Dict[str, str]:
-    """ดึงข้อมูลสี, ข้อความภาษาไทย, และไอคอนตามระดับสถานการณ์น้ำ"""
     return STATUS_THEMES.get(status_key, STATUS_THEMES["normal"])
 
 
 # 2. การแปลงค่าและจัดรูปแบบตัวเลข (Number Parsing & Formatting)
 
 def to_num(val: Any) -> Optional[float]:
-    """แปลงค่าเป็น float อย่างปลอดภัย หากเป็นค่าว่างหรือไม่ใช่ตัวเลขจะส่งกลับ None"""
     if val is None:
         return None
     try:
@@ -54,7 +38,6 @@ def to_num(val: Any) -> Optional[float]:
 
 
 def fmt_num(val: Any, decimals: int = 2) -> str:
-    """แปลงตัวเลขเป็นข้อความพร้อมเครื่องหมายจุลภาคคั่นหลักพัน เช่น 12,345.67"""
     if val is None:
         return "-"
     try:
@@ -65,7 +48,6 @@ def fmt_num(val: Any, decimals: int = 2) -> str:
 
 
 def calc_storage_percent(volume: Any, capacity: Any) -> Optional[float]:
-    """คำนวณร้อยละความจุเก็บกักจาก (ปริมาตรน้ำ / ความจุอ่าง) * 100 อย่างปลอดภัย"""
     vol = to_num(volume)
     cap = to_num(capacity)
     if vol is not None and cap is not None and cap > 0:
@@ -73,11 +55,9 @@ def calc_storage_percent(volume: Any, capacity: Any) -> Optional[float]:
     return None
 
 
-
 # 3. การจัดรูปแบบวันที่ภาษาไทย (Date Formatting)
 
 def format_date_th(dt) -> str:
-    """แปลงวันที่เป็นภาษาไทยแบบเต็ม เช่น '20 มีนาคม 2568'"""
     months_th = [
         "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
@@ -86,7 +66,6 @@ def format_date_th(dt) -> str:
 
 
 def format_date_th_short(dt) -> str:
-    """แปลงวันที่เป็นภาษาไทยแบบย่อ เช่น '20 มี.ค. 2568'"""
     months_short = [
         "", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
         "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
@@ -97,14 +76,6 @@ def format_date_th_short(dt) -> str:
 # 4. การจัดเตรียมข้อมูลเขื่อน (Dam Data Preparation)
 
 def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str, Any], bool, Any]:
-    """
-    จัดเตรียมข้อมูลเขื่อนให้สมบูรณ์สำหรับแสดงผลและส่งเข้าโมเดลพยากรณ์:
-    1. ตรวจสอบว่าวันนี้มีค่า Input หรือไม่ (percent_storage หรือ volume)
-    2. ถ้าวันนี้ไม่มีข้อมูล (หรือเป็น None/0) ให้ดึงข้อมูลเมื่อวานมาใช้เป็น Fallback
-    3. คำนวณร้อยละความจุสำรองจาก (volume / capacity) * 100 กรณี percent_storage ขาดหาย
-    
-    คืนค่า: (dam_data_dict, is_fallback, fallback_date)
-    """
     dam_dict = dict(raw_dam_data)
 
     pct_raw = to_num(dam_dict.get('percent_storage'))

@@ -1,8 +1,4 @@
-"""Custom CSS stylesheet for the Thai Dam Classification dashboard."""
-
-
 def get_custom_css() -> str:
-    """Return the complete CSS string for Dashboard layout, sidebar, badges, and components."""
     return """
         <style>
         html, body, [data-testid="stAppViewContainer"], section.main {
@@ -96,7 +92,7 @@ def get_custom_css() -> str:
             background-color: #ffffff !important;
             border: 1px solid #e2e8f0 !important;
             border-radius: 10px !important;
-            padding: 20px 22px 26px 22px !important;
+            padding: 20px 22px 28px 22px !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
             margin-bottom: 22px !important;
             transition: all 0.2s ease;
@@ -153,13 +149,15 @@ def get_custom_css() -> str:
             display: flex;
             align-items: center;
             gap: 8px;
-            background: white;
+            background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 10px 8px;
+            min-height: 76px;
             height: 100%;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             box-sizing: border-box;
+            font-variant-numeric: tabular-nums;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .overview-metric-card:hover {
@@ -173,17 +171,24 @@ def get_custom_css() -> str:
             text-align: center;
             height: 100%;
             box-sizing: border-box;
+            font-variant-numeric: tabular-nums;
             transition: transform 0.15s ease;
         }
 
         /* Responsive Specifications Table (Section 5) */
         .dam-details-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
             font-size: 0.83rem;
             background: white;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
+            font-variant-numeric: tabular-nums;
+        }
+        .dam-details-table tr:not(:last-child) td {
+            border-bottom: 1px solid #f1f5f9;
         }
 
         /* Responsive Table Container (Section 6) */
@@ -194,7 +199,8 @@ def get_custom_css() -> str:
             border-radius: 8px;
         }
         .table-responsive table {
-            min-width: 540px;
+            width: 100%;
+            font-variant-numeric: tabular-nums;
         }
 
         /* Replace Selectbox downward arrow with Search icon ONLY for Section 1 (dam_select) */
@@ -217,7 +223,64 @@ def get_custom_css() -> str:
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E") !important;
         }
 
+        /* Remove Streamlit's huge default 10rem bottom padding so the footer sits at the bottom */
+        .block-container,
+        [data-testid="stAppViewBlockContainer"],
+        [data-testid="stMainBlockContainer"] {
+            padding-bottom: 1.2rem !important;
+        }
+        footer:not(.dashboard-footer) {
+            display: none !important;
+        }
+
+        /* Page Footer (Credits & Information) */
+        footer.dashboard-footer {
+            display: block !important;
+            height: auto !important;
+            background: transparent !important;
+            scroll-margin-top: 80px;
+            margin-top: 20px !important;
+            padding: 26px 12px 8px 12px !important;
+            border-top: 1px solid #cbd5e1 !important;
+            color: #64748b;
+            font-size: 0.8rem;
+            line-height: 1.65;
+            text-align: center;
+        }
+        .dashboard-footer .footer-title {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-weight: 700;
+            color: #475569;
+            font-size: 0.85rem;
+            margin-bottom: 8px !important;
+        }
+        .dashboard-footer .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 6px 14px;
+            color: #475569;
+        }
+        .dashboard-footer .footer-sep {
+            color: #cbd5e1;
+        }
+        .dashboard-footer .footer-disclaimer {
+            margin-top: 4px;
+            font-size: 0.76rem;
+            color: #64748b;
+        }
+
         /* Streamlit components iframe hidden styling */
+        div[data-testid="stElementContainer"]:has(iframe[title="streamlit.components.v1.html"]),
+        div[data-testid="stElementContainer"]:has([data-testid="stCustomComponentV1"]) {
+            display: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
         iframe[title="streamlit.components.v1.html"],
         [data-testid="stCustomComponentV1"] {
             position: fixed !important;
@@ -303,6 +366,15 @@ def get_custom_css() -> str:
             }
             .dam-details-table td {
                 padding: 6px 8px !important;
+            }
+
+            /* Footer Mobile Layout */
+            .dashboard-footer .footer-sep {
+                display: none !important;
+            }
+            .dashboard-footer .footer-content {
+                flex-direction: column !important;
+                gap: 4px !important;
             }
         }
 

@@ -1,5 +1,3 @@
-"""Dashboard UI components package."""
-
 from views.components.sidebar import render_sidebar
 from views.components.header import render_header
 from views.components.dam_selector import render_dam_selector

@@ -5,14 +5,6 @@ load_dotenv()
 
 
 def _get_config_val(name, default=None):
-    """
-    ดึงค่า Configuration ตามลำดับความสำคัญ:
-    1. Streamlit Secrets (st.secrets)
-       - รูปแบบ [connections.mysql] ตามคู่มือทางการของ Streamlit
-       - รูปแบบ Flat keys เช่น st.secrets["DB_HOST"]
-    2. Environment variables (.env หรือ OS environment)
-    3. ค่า Default
-    """
     # 1. พยายามอ่านจาก Streamlit Secrets
     try:
         import streamlit as st

@@ -13,10 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # 1. Fetcher
-# ──────────────────────────────────────────────────────────────────────────────
-
 class RIDDataFetcher:
     BASE_URL = "https://app.rid.go.th/reservoir/api/dam/public"
 
@@ -92,10 +89,7 @@ class RIDDataFetcher:
         return pd.DataFrame(all_records)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # 2. Risk Classifier
-# ──────────────────────────────────────────────────────────────────────────────
-
 class RiskClassifier:
     @staticmethod
     def classify(pct: float) -> str:
@@ -106,10 +100,7 @@ class RiskClassifier:
         return "normal"
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # 3. DataProcessor
-# ──────────────────────────────────────────────────────────────────────────────
-
 class DataProcessor:
     _FILL_ZERO_AS_NAN = [
         "capacity", "storage", "active_storage",
@@ -202,10 +193,7 @@ class DataProcessor:
         return out["all"]
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # 4. ARFF Exporter
-# ──────────────────────────────────────────────────────────────────────────────
-
 class ARFFExporter:
 
     NUMERIC_COLS = [
@@ -271,12 +259,9 @@ class ARFFExporter:
         logger.info(f"ARFF → {filename}  ({len(df):,} instances)")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # 5. Main
-# ──────────────────────────────────────────────────────────────────────────────
-
 def main():
-    # ── ช่วงข้อมูลที่ต้องการใน output ──────────────────────────────
+    # ช่วงข้อมูลที่ต้องการใน
     START_DATE = datetime(2024, 1, 1)
     END_DATE   = datetime(2025, 12, 31)
 
@@ -293,7 +278,7 @@ def main():
                 f"(-{PRE_BUFFER_DAYS}d missing-data buffer at start, "
                 f"no end buffer — shift eats last N days by design)")
 
-    # ── Step 1: ดึงข้อมูล ────────────────────────────────────────────
+    # Step 1: ดึงข้อมูล 
     logger.info("\n[Step 1] Fetching data from RID API...")
     fetcher = RIDDataFetcher()
     df_raw = fetcher.fetch_date_range(FETCH_START, FETCH_END)
@@ -304,10 +289,10 @@ def main():
 
     logger.info(f"Raw data shape (incl. missing-data buffer): {df_raw.shape}")
 
-    # ── Train/Test split (time series → temporal, ห้ามสุ่ม) ──────────
+    # Train/Test split 
     TEST_RATIO = 0.2
 
-    # ── Step 2: สร้าง dataset ─────────────────────────────────────────
+    # Step 2: สร้าง dataset 
     logger.info("\n[Step 2.1] Building 7-day forecast dataset...")
     df_7d_train, df_7d_test = DataProcessor.build_dataset(
         df_raw, START_DATE, END_DATE, shift_days=7, test_ratio=TEST_RATIO
@@ -318,7 +303,7 @@ def main():
         df_raw, START_DATE, END_DATE, shift_days=30, test_ratio=TEST_RATIO
     )
 
-    # ── Step 3: ส่งออก ARFF (train/test แยกไฟล์) ──────────────────────
+    # Step 3: ส่งออก ARFF (train/test แยกไฟล์)
     logger.info("\n[Step 3] Exporting ARFF files...")
     dom_7d  = pd.concat([df_7d_train, df_7d_test], ignore_index=True)
     dom_30d = pd.concat([df_30d_train, df_30d_test], ignore_index=True)
@@ -340,7 +325,7 @@ def main():
         "dam_risk_forecast_30days", "risk_class_30d", domain_df=dom_30d,
     )
 
-    # ── Step 4: สรุป ──────────────────────────────────────────────────
+    # Step 4: สรุป
     days_in_range = (END_DATE - START_DATE).days + 1
     expected_7d   = 35 * (days_in_range - 7)
     expected_30d  = 35 * (days_in_range - 30)

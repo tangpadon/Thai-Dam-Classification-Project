@@ -1,12 +1,9 @@
-"""Constants and themes for the Thai Dam Classification dashboard."""
-
 STATUS_THEMES = {
     "drought": {
-        "color": "#eab308",
+        "color": "#b45309",
         "bg_light": "#fefce8",
-        "border": "#fef08a",
-        "label": "น้ำน้อย เสี่ยงแล้ง",
-        "label_short": "เสี่ยงน้ำแล้ง",
+        "border": "#fde68a",
+        "label": "เสี่ยงน้ำแล้ง",
         "en": "Drought Risk",
     },
     "normal": {
@@ -14,15 +11,13 @@ STATUS_THEMES = {
         "bg_light": "#f0fdf4",
         "border": "#bbf7d0",
         "label": "ปกติ",
-        "label_short": "ปกติ",
         "en": "Normal",
     },
     "flood": {
         "color": "#dc2626",
         "bg_light": "#fef2f2",
         "border": "#fecaca",
-        "label": "น้ำมากเสี่ยงน้ำล้น",
-        "label_short": "เสี่ยงน้ำล้น",
+        "label": "เสี่ยงน้ำล้น",
         "en": "Flood Risk",
     },
 }
@@ -78,7 +73,6 @@ DAM_LOCATIONS = {
 
 
 def get_dam_location(dam_name: str, dam_data=None) -> tuple:
-    """Return (province, region) for a given dam name."""
     clean_name = str(dam_name).strip() if dam_name else ""
     if clean_name in DAM_LOCATIONS:
         info = DAM_LOCATIONS[clean_name]

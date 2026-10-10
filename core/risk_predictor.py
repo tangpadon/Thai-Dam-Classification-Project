@@ -1,10 +1,3 @@
-"""
-โมดูลการพยากรณ์ความเสี่ยงน้ำด้วย Machine Learning (Risk Predictor Module)
-ทำหน้าที่เริ่มต้น Java Virtual Machine (JVM), โหลดโมเดล Weka (.model),
-และทำการจำแนกระดับความเสี่ยงน้ำล่วงหน้า 7 วัน (Logistic Regression) และ 30 วัน (Random Forest)
-"""
-
-
 import os
 import streamlit as st
 import pandas as pd
@@ -14,14 +7,12 @@ from weka.classifiers import Classifier
 from weka.core.dataset import Instance, Instances
 from weka.core.converters import Loader
 
-# คุณลักษณะ (Features) ที่โมเดลใช้ในการพยากรณ์
+# Features ที่โมเดลใช้ในการพยากรณ์
 FEATURES = ["percent_storage", "inflow_pct", "outflow_pct", "month"]
 
 
-# 1. การจัดการ Java Virtual Machine (JVM)
-
+# การจัดการ Java Virtual Machine (JVM)
 def _ensure_java_home():
-    """ค้นหาและตั้งค่า JAVA_HOME อัตโนมัติ (จำเป็นสำหรับการรัน Weka บน Linux/Debian/Streamlit Cloud)"""
     if not os.environ.get("JAVA_HOME"):
         candidates = [
             "/usr/lib/jvm/default-java",
@@ -37,7 +28,6 @@ def _ensure_java_home():
 
 @st.cache_resource
 def init_jvm_safe(max_heap_size: str = "128m"):
-    """เริ่มต้นการทำงานของ Java Virtual Machine (JVM) อย่างปลอดภัย พร้อมกำหนดขนาด Memory"""
     try:
         if not jvm.started:
             _ensure_java_home()
@@ -49,10 +39,9 @@ def init_jvm_safe(max_heap_size: str = "128m"):
         return False
 
 
-# 2. การโหลดโมเดลและ Header (Load Models & Resources)
+# โหลดโมเดลและ Header ARFF
 
 def _extract_header(arff_path, class_attr_name, features=None):
-    """สกัดโครงสร้าง Header จากไฟล์ ARFF เพื่อใช้สร้าง Instance ในการทำนาย"""
     if features is None:
         features = FEATURES
     from jpype import JClass
@@ -82,11 +71,6 @@ def _extract_header(arff_path, class_attr_name, features=None):
 
 @st.cache_resource
 def load_resources():
-    """
-    โหลดโมเดลที่เทรนไว้และโครงสร้าง Header (แคชไว้ในหน่วยความจำ ไม่ต้องอ่านไฟล์ซ้ำ):
-    - 7_day: โมเดล Logistic Regression (ทำนายความเสี่ยง 7 วันข้างหน้า)
-    - 30_day: โมเดล Random Forest (ทำนายความเสี่ยง 30 วันข้างหน้า)
-    """
     base = os.path.join(os.path.dirname(__file__), "..", "models")
 
     # โมเดลพยากรณ์ 7 วัน
@@ -112,7 +96,6 @@ def load_resources():
 
 
 def _build_attr_mapping(header):
-    """สร้าง Mapping รายชื่อ Features ตัวเลขและ Nominal เพื่อให้การแปลงค่าเข้า Weka รวดเร็ว"""
     class_attr_name = header.class_attribute.name
     numeric_attrs = []
     nominal_attrs = []
@@ -126,17 +109,11 @@ def _build_attr_mapping(header):
     return class_attr_name, numeric_attrs, nominal_attrs
 
 
-# 3. การประมวลผลพยากรณ์ (Inference / Prediction)
-
+# การประมวลผลพยากรณ์ (Inference / Prediction)
 def _prepare_dam_features(row_dict):
-    """
-    เตรียมค่า Features ให้พร้อมสำหรับโมเดล Weka:
-    1. หากไม่มีค่า Input ตรวจวัดเลย ให้ดึงข้อมูลเมื่อวานมาใช้เป็น Fallback
-    2. คำนวณ Features เสริม: percent_storage, inflow_pct, outflow_pct
-    """
     data = dict(row_dict)
 
-    # 1. ตรวจสอบค่า Input หากไม่มีค่าเลย ให้ดึงค่าจากเมื่อวาน
+    # 1. ตรวจสอบค่า Input หากไม่มีค่า ให้ดึงค่าจากเมื่อวาน
     pct_val = data.get('percent_storage')
     vol_val = data.get('volume')
     has_valid_input = (
@@ -157,7 +134,7 @@ def _prepare_dam_features(row_dict):
             except Exception:
                 pass
 
-    # 2. คำนวณ Feature อัตราส่วนความจุ Inflow/Outflow (%)
+    # คำนวณ Feature อัตราส่วนความจุ Inflow/Outflow (%)
     cap = float(data.get('capacity', 0) or 0)
     if (data.get('percent_storage') is None or pd.isna(data.get('percent_storage'))) and data.get('volume') and cap > 0:
         data['percent_storage'] = (float(data['volume']) / cap) * 100.0
@@ -174,12 +151,6 @@ def _prepare_dam_features(row_dict):
 
 
 def predict_single_dam(row_series, model_config):
-    """
-    พยากรณ์ระดับความเสี่ยงของเขื่อน 1 แห่ง:
-    - row_series: ข้อมูลเขื่อน (dict หรือ pandas Series)
-    - model_config: ออบเจกต์โมเดลและ Header ของ Weka
-    คืนค่า: คลาสผลพยากรณ์ เช่น 'drought', 'normal', 'flood'
-    """
     model = model_config["model"]
     header = model_config["header"]
 
