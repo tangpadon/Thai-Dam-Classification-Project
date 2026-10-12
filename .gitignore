@@ -27,9 +27,18 @@ venv/
 models/trained/*.model
 models/datasets/*.arff
 
-# Excel outputs
+# Excel outputs & local docs (ยกเว้น docs/architecture สำหรับแสดงบน README)
 scripts/*.xlsx
-docs/
+docs/*
+!docs/architecture/
+!docs/architecture/**
+
+# Archify temporary working directory & receipts
+.archify/
+*.delivery.json
+*.finalize.json
+*.finalize-summary.json
+*.browser-check.json
 
 # OS files
 Thumbs.db

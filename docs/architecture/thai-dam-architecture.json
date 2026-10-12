@@ -1,0 +1,282 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Thai Dam Water Risk Forecasting System",
+    "subtitle": "End-to-End Architecture: RID Open Data API, 4-Layer Missing Value Defense, Weka ML Inference & Streamlit Dashboard",
+    "output": "docs/architecture/thai-dam-architecture.html",
+    "animation": "trace",
+    "visual_preset": "classic",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/tangpadon/Thai-Dam-Classification-Project",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "d9c38f6b01f78c89549365b37c1798ff03616597"
+    },
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": { "label": "Streamlit UI Layer" },
+        "backend": { "label": "Core & ETL Services" },
+        "database": { "label": "MySQL / TiDB Storage" },
+        "security": { "label": "Weka ML Engine" },
+        "external": { "label": "RID Open Data API" }
+      }
+    },
+    "views": [
+      {
+        "id": "live_dashboard_flow",
+        "label": "Live Dashboard Flow",
+        "focus": ["dashboard_ctrl", "streamlit_ui", "mysql_db", "dam_api_service", "rid_api"],
+        "note": "DB-first daily data sync with 3-day API fallback, feeding 7 interactive dashboard sections."
+      },
+      {
+        "id": "ml_risk_inference",
+        "label": "Weka ML Risk Inference",
+        "focus": ["streamlit_ui", "risk_predictor", "weka_models"],
+        "note": "Real-time 7-day (Logistic Regression) and 30-day (Random Forest) water risk classification via JVM bridge."
+      },
+      {
+        "id": "missing_value_defense",
+        "label": "4-Layer Missing Value Defense",
+        "focus": ["rid_api", "dam_api_service", "mysql_db", "etl_pipeline", "risk_predictor"],
+        "note": "3-day API lookback, yesterday DB imputation, offline Forward Fill (ffill), and ML safe defaults."
+      },
+      {
+        "id": "offline_training_etl",
+        "label": "Offline Training Pipeline",
+        "focus": ["rid_api", "etl_pipeline", "weka_models"],
+        "note": "Fetches 15-year RID history, applies Forward Fill and -7d/-30d target shifting, and exports .arff for Weka."
+      }
+    ],
+    "viewBox": [1200, 520]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [65, 125],
+    "cols": 4,
+    "gapX": 80,
+    "gapY": 110,
+    "cellW": 205,
+    "cellH": 86
+  },
+  "components": [
+    {
+      "id": "streamlit_ui",
+      "type": "frontend",
+      "label": "Streamlit UI",
+      "sublabel": "Sections 1-7, Plotly & Footer",
+      "tag": "views/components/",
+      "sources": [
+        { "path": "views/components/current_overview.py", "line": 1, "end_line": 35, "label": "Section 2 Overview" },
+        { "path": "views/components/trend_and_details.py", "line": 1, "end_line": 40, "label": "Plotly Trend Chart" }
+      ],
+      "row": 0,
+      "col": 0,
+      "size": [205, 86]
+    },
+    {
+      "id": "risk_predictor",
+      "type": "security",
+      "label": "Weka ML Predictor",
+      "sublabel": "JVM Bridge & Feature Scaling",
+      "tag": "core/risk_predictor.py",
+      "sources": [
+        { "path": "core/risk_predictor.py", "line": 1, "end_line": 50, "label": "JVM & Weka Predictor" }
+      ],
+      "row": 0,
+      "col": 1,
+      "size": [205, 86]
+    },
+    {
+      "id": "weka_models",
+      "type": "security",
+      "label": "Trained Weka Models",
+      "sublabel": "Log_7days & RF_30days (.model)",
+      "tag": "models/trained/",
+      "sources": [
+        { "path": "config.py", "line": 1, "end_line": 35, "label": "Model Path Config" }
+      ],
+      "row": 0,
+      "col": 2,
+      "size": [205, 86]
+    },
+    {
+      "id": "etl_pipeline",
+      "type": "backend",
+      "label": "Offline ARFF Pipeline",
+      "sublabel": "Forward Fill & -7d/-30d Shift",
+      "tag": "pipelines/",
+      "sources": [
+        { "path": "pipelines/build_training_arff.py", "line": 1, "end_line": 55, "label": "ARFF Builder & ffill" },
+        { "path": "pipelines/sync_history_to_db.py", "line": 1, "end_line": 35, "label": "DB Historical Sync" }
+      ],
+      "row": 0,
+      "col": 3,
+      "size": [205, 86]
+    },
+    {
+      "id": "dashboard_ctrl",
+      "type": "frontend",
+      "label": "Dashboard Controller",
+      "sublabel": "Session State & Filter Logic",
+      "tag": "app.py / dashboard.py",
+      "sources": [
+        { "path": "app.py", "line": 1, "end_line": 30, "label": "Streamlit Entrypoint" },
+        { "path": "views/dashboard.py", "line": 1, "end_line": 45, "label": "Main Dashboard Flow" }
+      ],
+      "row": 1,
+      "col": 0,
+      "size": [205, 86]
+    },
+    {
+      "id": "mysql_db",
+      "type": "database",
+      "label": "MySQL / TiDB Database",
+      "sublabel": "dam_info & dam_daily (Pooled)",
+      "tag": "core/database.py",
+      "sources": [
+        { "path": "core/database.py", "line": 1, "end_line": 55, "label": "Connection Pool & SQL" }
+      ],
+      "row": 1,
+      "col": 1,
+      "size": [205, 86]
+    },
+    {
+      "id": "dam_api_service",
+      "type": "backend",
+      "label": "Dam API & Fallback",
+      "sublabel": "DB-First, 3d Lookback & Impute",
+      "tag": "core/dam_api.py",
+      "sources": [
+        { "path": "core/dam_api.py", "line": 1, "end_line": 55, "label": "API Fetch & Imputation" }
+      ],
+      "row": 1,
+      "col": 2,
+      "size": [205, 86]
+    },
+    {
+      "id": "rid_api",
+      "type": "external",
+      "label": "RID Reservoir API",
+      "sublabel": "SWOC Daily Dam JSON Feed",
+      "tag": "app.rid.go.th",
+      "sources": [
+        { "path": "config.py", "line": 1, "end_line": 30, "label": "RID API Endpoint" }
+      ],
+      "row": 1,
+      "col": 3,
+      "size": [205, 86]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "PRESENTATION LAYER (STREAMLIT)",
+      "wraps": ["streamlit_ui", "dashboard_ctrl"],
+      "pad": 20
+    },
+    {
+      "kind": "security-group",
+      "label": "ML INFERENCE & OFFLINE TRAINING",
+      "wraps": ["risk_predictor", "weka_models", "etl_pipeline"],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "DATA SERVICE & PERSISTENCE",
+      "wraps": ["mysql_db", "dam_api_service"],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "ctrl_to_ui",
+      "from": "dashboard_ctrl",
+      "to": "streamlit_ui",
+      "label": "Render UI",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ui_to_predictor",
+      "from": "streamlit_ui",
+      "to": "risk_predictor",
+      "label": "predict_risk()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "predictor_to_models",
+      "from": "risk_predictor",
+      "to": "weka_models",
+      "label": "7d Log & 30d RF",
+      "variant": "security"
+    },
+    {
+      "id": "etl_to_models",
+      "from": "etl_pipeline",
+      "to": "weka_models",
+      "label": "Export .arff",
+      "variant": "dashed"
+    },
+    {
+      "id": "etl_to_rid",
+      "from": "etl_pipeline",
+      "to": "rid_api",
+      "label": "15-Yr History",
+      "variant": "dashed"
+    },
+    {
+      "id": "ctrl_to_db",
+      "from": "dashboard_ctrl",
+      "to": "mysql_db",
+      "label": "Query History",
+      "variant": "default"
+    },
+    {
+      "id": "api_to_db",
+      "from": "dam_api_service",
+      "to": "mysql_db",
+      "label": "Cache & Impute",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api_to_rid",
+      "from": "dam_api_service",
+      "to": "rid_api",
+      "label": "3d Fallback GET",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "1. Live Dashboard & DB-First Sync",
+      "items": [
+        "Checks MySQL/TiDB first (check_date_exists_in_db) before calling RID API",
+        "Pooled connection (DB_POOL) serves 34 large reservoirs across 6 regions",
+        "Renders 7 sections with custom CSS, Plotly trend lines & semantic footer"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "2. 4-Layer Missing Value Defense",
+      "items": [
+        "Layer 1 (Live API): 3-day backward lookback when today's RID report is delayed",
+        "Layer 2 (DB Impute): Replaces NULL storage/inflow with yesterday's valid row",
+        "Layer 3 (Offline ETL): Continuous daily reindex + Forward Fill (ffill)",
+        "Layer 4 (ML Engine): Safe fallback defaults & zero-division guards"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "3. Dual-Horizon Weka ML Forecasting",
+      "items": [
+        "Normalizes storage %, inflow %, outflow %, and seasonal month (1-12)",
+        "7-Day Horizon: Logistic Regression (Log_7days.model) for short-term sensitivity",
+        "30-Day Horizon: Random Forest (RF_30days.model) for non-linear monthly trends",
+        "Classifies water risk into 3 tiers: LOW (<30%), NORMAL (30-80%), HIGH (>80%)"
+      ]
+    }
+  ]
+}
