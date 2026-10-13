@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 
-# Weka Models
+# ฟังก์ชันเริ่มต้นการทำงานของ JVM และโหลดแบบจำลอง Weka (Initialize Models)
 @st.cache_resource
 def init_models():
     init_jvm_safe()

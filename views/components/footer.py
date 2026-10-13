@@ -2,6 +2,7 @@ import streamlit as st
 from views.icons import svg_icon
 
 
+# ฟังก์ชันแสดงผลส่วนท้ายของหน้าเว็บและข้อมูลแหล่งอ้างอิง (Render Dashboard Footer)
 def render_footer():
     st.markdown(f"""
     <footer id="section-about" class="dashboard-footer">

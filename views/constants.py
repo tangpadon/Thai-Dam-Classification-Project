@@ -72,6 +72,7 @@ DAM_LOCATIONS = {
 }
 
 
+# ฟังก์ชันค้นหาจังหวัดและภูมิภาคที่ตั้งของเขื่อน (Get Dam Location)
 def get_dam_location(dam_name: str, dam_data=None) -> tuple:
     clean_name = str(dam_name).strip() if dam_name else ""
     if clean_name in DAM_LOCATIONS:

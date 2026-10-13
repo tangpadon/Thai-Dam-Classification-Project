@@ -19,6 +19,7 @@ from views.components import (
 )
 
 
+# ฟังก์ชันหลักสำหรับเรนเดอร์แดชบอร์ดแสดงผลการพยากรณ์และสถานการณ์น้ำ (Render Dashboard)
 def render(raw_df, models_dict, data_date=None, recorded_at=None):
     # แทรกสไตล์ CSS ปรับแต่งความสวยงามของหน้าเว็บ
     st.markdown(get_custom_css(), unsafe_allow_html=True)

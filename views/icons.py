@@ -16,6 +16,7 @@ SVG_PATHS = {
 }
 
 
+# ฟังก์ชันสร้างแท็ก SVG ไอคอนตามชื่อและขนาดที่ระบุ (Generate SVG Icon Tag)
 def svg_icon(name: str, size: int = 18, color: str = "currentColor") -> str:
     paths = SVG_PATHS.get(name, "")
     return (

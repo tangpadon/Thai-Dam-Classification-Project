@@ -7,6 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.database import get_connection
 
 
+# ฟังก์ชันสร้างและตั้งค่าโครงสร้างตารางในฐานข้อมูล MySQL (Initialize Database Schema)
 def init_db_schema():
     print("🔄 กำลังตรวจสอบและตั้งค่า Schema ฐานข้อมูล...")
     conn = None

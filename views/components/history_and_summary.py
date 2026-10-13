@@ -11,6 +11,7 @@ from views.helpers import (
 )
 
 
+# ฟังก์ชันสร้างแท็ก HTML แสดงป้ายสถานะความเสี่ยง (Render Risk Badge HTML)
 def _render_badge(theme_r: dict, tooltip: str = "") -> str:
     bg_c = theme_r.get('bg_light', '#f1f5f9')
     txt_c = theme_r.get('color', '#475569')
@@ -24,6 +25,7 @@ def _render_badge(theme_r: dict, tooltip: str = "") -> str:
     )
 
 
+# ฟังก์ชันแสดงผลตารางข้อมูลย้อนหลัง 30 วันคู่กับกล่องสรุปสถานการณ์น้ำ (Render History Table And Summary Card)
 def render_history_and_summary(
     dam_data: Any,
     selected_dam_name: str,

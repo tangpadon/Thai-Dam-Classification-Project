@@ -6,6 +6,7 @@ from views.helpers import fmt_num
 from core.database import get_historical_data
 
 
+# ฟังก์ชันสร้างและแสดงผลกราฟแนวโน้มร้อยละความจุย้อนหลังด้วย Plotly (Render Storage Trend Chart)
 def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = None):
     if hist_df is None or hist_df.empty or len(hist_df) <= 1:
         st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
@@ -56,7 +57,7 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
         annotation_position="bottom right", annotation_font_color="#f59e0b"
     )
 
-    # ปรับมุมเอียงของป้ายแกน X ตามจำนวนวัน (7 วันใช้แนวนอนปกติ, 30 วันเอียง 45 องศาเพื่อความสวยงามและไม่ซ้อนทับ)
+    # ปรับมุมเอียงของป้ายแกน X ตามจำนวนวัน 
     tick_angle = 0 if limit_days <= 7 else -45
     bottom_margin = 25 if limit_days <= 7 else 45
 
@@ -94,6 +95,7 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
         st.caption(f"* หมายเหตุ: มีข้อมูลในระบบ {len(daily)} วันจากที่เลือก {limit_days} วัน")
 
 
+# ฟังก์ชันแสดงผลตารางรายละเอียดและสถิติข้อมูลจำเพาะของเขื่อน (Render Dam Specifications Table)
 def _render_dam_details_table(dam_data: Any, selected_dam_name: str, pct: float, inflow_m: float, outflow_m: float):
     vol_val = dam_data.get('volume')
     vol_str = f"{fmt_num(vol_val, 2)} ล้าน ลบ.ม." if vol_val is not None else "-"
@@ -123,6 +125,7 @@ def _render_dam_details_table(dam_data: Any, selected_dam_name: str, pct: float,
     )
 
 
+# ฟังก์ชันแสดงผลคอนเทนเนอร์กราฟแนวโน้มคู่กับตารางข้อมูลจำเพาะ (Render Trend And Dam Details)
 def render_trend_and_details(
     dam_data: Any,
     selected_dam_name: str,

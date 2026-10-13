@@ -12,6 +12,8 @@ FEATURES = ["percent_storage", "inflow_pct", "outflow_pct", "month"]
 
 
 # การจัดการ Java Virtual Machine (JVM)
+
+# ฟังก์ชันตรวจสอบและตั้งค่าเส้นทาง JAVA_HOME สำหรับ Weka (Ensure Java Home Path)
 def _ensure_java_home():
     if not os.environ.get("JAVA_HOME"):
         candidates = [
@@ -26,6 +28,7 @@ def _ensure_java_home():
                 break
 
 
+# ฟังก์ชันเริ่มต้นการทำงานของ JVM อย่างปลอดภัย (Initialize JVM Safely)
 @st.cache_resource
 def init_jvm_safe(max_heap_size: str = "128m"):
     try:
@@ -41,6 +44,7 @@ def init_jvm_safe(max_heap_size: str = "128m"):
 
 # โหลดโมเดลและ Header ARFF
 
+# ฟังก์ชันสกัดและสร้าง Header Attributes จากไฟล์ ARFF (Extract ARFF Header)
 def _extract_header(arff_path, class_attr_name, features=None):
     if features is None:
         features = FEATURES
@@ -69,6 +73,7 @@ def _extract_header(arff_path, class_attr_name, features=None):
     return header
 
 
+# ฟังก์ชันโหลดโมเดลและชุดข้อมูล Header สำหรับการพยากรณ์ (Load Prediction Models and Resources)
 @st.cache_resource
 def load_resources():
     base = os.path.join(os.path.dirname(__file__), "..", "models")
@@ -91,6 +96,7 @@ def load_resources():
     }
 
 
+# ฟังก์ชันสร้างการจับคู่ Attributes เชิงตัวเลขและเชิงกลุ่ม (Build Attribute Mapping)
 def _build_attr_mapping(header):
     class_attr_name = header.class_attribute.name
     numeric_attrs = []
@@ -105,7 +111,7 @@ def _build_attr_mapping(header):
     return class_attr_name, numeric_attrs, nominal_attrs
 
 
-# การประมวลผลพยากรณ์ (Inference / Prediction)
+# ฟังก์ชันจัดเตรียมและคำนวณคุณลักษณะของเขื่อนสำหรับโมเดล (Prepare Dam Features)
 def _prepare_dam_features(row_dict):
     data = dict(row_dict)
 
@@ -125,6 +131,7 @@ def _prepare_dam_features(row_dict):
     return data
 
 
+# ฟังก์ชันพยากรณ์ระดับความเสี่ยงของเขื่อนเดี่ยวด้วยโมเดล Weka (Predict Single Dam Risk)
 def predict_single_dam(row_series, model_config):
     model = model_config["model"]
     header = model_config["header"]

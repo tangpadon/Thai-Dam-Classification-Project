@@ -2,6 +2,7 @@ import streamlit as st
 from views.icons import svg_icon
 
 
+# ฟังก์ชันแสดงผลแถบเมนูด้านข้างและนำทางไปยังส่วนต่างๆ (Render Navigation Sidebar)
 def render_sidebar():
     with st.sidebar:
         # Top Logo & Title

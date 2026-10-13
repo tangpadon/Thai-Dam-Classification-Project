@@ -10,6 +10,7 @@ from core.database import get_connection, save_to_database, get_recorded_time
 DATA_API_URL = RID_API_URL
 
 
+# ฟังก์ชันโหลดข้อมูลเขื่อนจากฐานข้อมูลตามวันที่กำหนด (Load Dam Data From Database)
 def _load_from_db(target_date):
     try:
         conn = get_connection()
@@ -27,13 +28,13 @@ def _load_from_db(target_date):
         cursor.close()
         conn.close()
 
-        if rows and len(rows) >= 30:
+        if rows and len(rows) >= 30: # มีข้อมูลอย่างน้อย 30 เขื่อนในวันนั้น
             valid_count = sum(
                 1 for r in rows
                 if r.get('percent_storage') is not None or r.get('volume') is not None
             )
             # ถ้า NULL ถือว่าวันนี้ยังไม่มีข้อมูลตรวจวัด
-            if valid_count < 15:
+            if valid_count < 15: # มีข้อมูลตรวจวัดน้อยกว่า 15 เขื่อน ถือว่าวันนี้ยังไม่มีข้อมูลตรวจวัด
                 return None, None
 
             df = pd.DataFrame(rows)
@@ -48,6 +49,7 @@ def _load_from_db(target_date):
 
 # การเชื่อมต่อและแปลงข้อมูลจาก API
 
+# ฟังก์ชันตรวจสอบความพร้อมของข้อมูลตรวจวัดจาก API (Check Measurement Availability)
 def _has_measurements(records):
     for rec in (records or []):
         if not isinstance(rec, dict):
@@ -58,12 +60,14 @@ def _has_measurements(records):
     return False
 
 
+# ฟังก์ชันแปลงโครงสร้างข้อมูล JSON จาก API เป็น DataFrame (Normalize API Records)
 def _normalize_records(records):
     df = pd.json_normalize(records, record_path=['dam'], meta=['region'])
     mapping = {"dam_id": "id", "dam_name": "name"}
     return df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
 
 
+# ฟังก์ชันส่งคำขอดึงข้อมูลเขื่อนรายวันจาก RID API (Fetch Daily Data From RID API)
 def _fetch_from_api(date_str=None):
     url = f"{DATA_API_URL}{date_str}" if date_str else DATA_API_URL.rstrip('/')
     response = requests.get(url, timeout=10)
@@ -71,6 +75,7 @@ def _fetch_from_api(date_str=None):
     return res_data.get("data", res_data)
 
 
+# ฟังก์ชันเติมเต็มข้อมูลที่ขาดหายด้วยข้อมูลวันก่อนหน้า (Fill Missing Data From Yesterday)
 def _fill_missing_from_yesterday(target_df, source_df_y):
     if target_df is None or target_df.empty or source_df_y is None or source_df_y.empty:
         return target_df
@@ -150,6 +155,7 @@ def fetch_and_save_data():
 
 # การดึงข้อมูลย้อนหลัง 30 วัน
 
+# ฟังก์ชันตรวจสอบวันที่ขาดหายไปในประวัติข้อมูลย้อนหลัง (Find Missing Historical Dates)
 def _get_missing_historical_dates(lookback_days=30):
     today = datetime.date.today()
     start_date = today - datetime.timedelta(days=lookback_days)
@@ -180,6 +186,7 @@ def _get_missing_historical_dates(lookback_days=30):
     ]
 
 
+# ฟังก์ชันดึงและเติมเต็มข้อมูลย้อนหลัง 30 วันลงฐานข้อมูล (Backfill Historical Data)
 def backfill_historical_data(lookback_days=30):
     # หาวันที่ยังขาดหายไปในฐานข้อมูล
     days_to_fetch = _get_missing_historical_dates(lookback_days)

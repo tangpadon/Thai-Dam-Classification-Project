@@ -1,3 +1,4 @@
+# ฟังก์ชันสร้างชุดสไตล์ CSS ปรับแต่งรูปลักษณ์ของแดชบอร์ด (Generate Custom CSS)
 def get_custom_css() -> str:
     return """
         <style>
