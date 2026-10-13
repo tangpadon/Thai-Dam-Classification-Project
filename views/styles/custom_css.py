@@ -279,12 +279,14 @@ def get_custom_css() -> str:
 
         /* Streamlit components iframe hidden styling */
         div[data-testid="stElementContainer"]:has(iframe[title="streamlit.components.v1.html"]),
+        div[data-testid="stElementContainer"]:has(iframe[data-testid="stIFrame"]),
         div[data-testid="stElementContainer"]:has([data-testid="stCustomComponentV1"]) {
             display: none !important;
             margin: 0 !important;
             padding: 0 !important;
         }
         iframe[title="streamlit.components.v1.html"],
+        iframe[data-testid="stIFrame"],
         [data-testid="stCustomComponentV1"] {
             position: fixed !important;
             width: 0 !important;

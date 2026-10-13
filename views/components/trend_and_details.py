@@ -86,11 +86,10 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
         modebar=dict(remove=['zoom', 'pan', 'select', 'lasso', 'zoomIn', 'zoomOut', 'autoScale', 'resetScale'])
     )
     chart_key = f"trend_chart_{dam_id}_{limit_days}" if dam_id else f"trend_chart_{limit_days}"
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        key=chart_key
-    )
+    try:
+        st.plotly_chart(fig, width='stretch', key=chart_key)
+    except TypeError:
+        st.plotly_chart(fig, use_container_width=True, key=chart_key)
     if len(daily) < limit_days:
         st.caption(f"* หมายเหตุ: มีข้อมูลในระบบ {len(daily)} วันจากที่เลือก {limit_days} วัน")
 

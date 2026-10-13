@@ -77,4 +77,10 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     render_footer()
 
     # สคริปต์ JavaScript เสริมบนเบราว์เซอร์ (Smooth Scroll และการปรับระยะห่าง)
-    components.html(get_client_js(), height=0, width=0)
+    if hasattr(st, "iframe"):
+        try:
+            st.iframe(get_client_js(), height=0, width=0)
+        except Exception:
+            components.html(get_client_js(), height=0, width=0)
+    else:
+        components.html(get_client_js(), height=0, width=0)
