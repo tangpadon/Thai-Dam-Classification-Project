@@ -1,3 +1,4 @@
+import math
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -35,6 +36,11 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
     full_dates = daily['record_date'].dt.strftime('%d/%m/%Y').tolist()
     storage_vals = daily['percent_storage'].tolist()
 
+    # คำนวณช่วงแกน Y อัตโนมัติ (หากมีวันที่ระดับน้ำเกิน 100% เช่น เขื่อนประแสร์ ให้ขยายเพดานแกน Y เพื่อไม่ให้เส้นกราฟทะลุขอบ)
+    valid_storage = [float(v) for v in storage_vals if v is not None and not pd.isna(v)]
+    max_storage = max(valid_storage) if valid_storage else 100.0
+    y_max = max(100.0, float(math.ceil(max_storage * 1.05 / 5.0) * 5))
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=x_labels,
@@ -57,13 +63,20 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
         annotation_position="bottom right", annotation_font_color="#f59e0b"
     )
 
+    if max_storage > 100.0:
+        fig.add_hline(
+            y=100, line_dash="dot", line_color="#64748b",
+            annotation_text="ระดับเก็บกักปกติ (100%)",
+            annotation_position="top left", annotation_font_color="#64748b"
+        )
+
     # ปรับมุมเอียงของป้ายแกน X ตามจำนวนวัน 
     tick_angle = 0 if limit_days <= 7 else -45
     bottom_margin = 25 if limit_days <= 7 else 45
 
     fig.update_layout(
         yaxis=dict(
-            range=[0, 100],
+            range=[0, y_max],
             title="ร้อยละความจุ (%)",
             gridcolor='#f1f5f9',
             zeroline=False,
