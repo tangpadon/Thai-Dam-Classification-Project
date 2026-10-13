@@ -14,7 +14,7 @@ def init_db_schema():
         conn = get_connection()
         cursor = conn.cursor()
 
-        # 1. ตารางข้อมูลเขื่อนหลัก
+        # ตารางข้อมูลเขื่อนหลัก
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `dam_info` (
               `dam_id` varchar(50) NOT NULL,
@@ -30,7 +30,7 @@ def init_db_schema():
         """)
         print("  ✅ ตาราง dam_info พร้อมใช้งาน")
 
-        # 2. ตารางข้อมูลรายวัน
+        # ตารางข้อมูลรายวัน
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `dam_daily` (
               `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -49,12 +49,6 @@ def init_db_schema():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
         print("  ✅ ตาราง dam_daily พร้อมใช้งาน")
-
-        # 3. ตรวจสอบ Composite Index
-        cursor.execute("SHOW INDEX FROM dam_daily WHERE Key_name = %s", ('idx_dam_record_date',))
-        if not cursor.fetchall():
-            cursor.execute("ALTER TABLE dam_daily ADD INDEX idx_dam_record_date (dam_id, record_date DESC);")
-            print("  ✅ เพิ่ม Index idx_dam_record_date เรียบร้อย")
 
         conn.commit()
         print("🎉 ตั้งค่า Schema ฐานข้อมูลเสร็จสมบูรณ์!")

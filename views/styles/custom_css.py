@@ -8,7 +8,7 @@ def get_custom_css() -> str:
             background-color: #f8fafc;
         }
 
-        /* 1. Sidebar Navigation: light blue vertical column throughout */
+        /* Sidebar Navigation: light blue vertical column throughout */
         [data-testid="stSidebar"],
         [data-testid="stSidebar"] > div:first-child,
         [data-testid="stSidebarContent"] {
@@ -106,7 +106,9 @@ def get_custom_css() -> str:
         }
         .sidebar-nav .nav-link {
             color: #475569 !important;
-            padding: 9px 12px;
+            padding: 10px 12px;
+            min-height: 42px;
+            box-sizing: border-box;
             border-radius: 8px;
             font-size: 0.9rem;
             display: flex;

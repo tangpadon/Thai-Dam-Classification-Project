@@ -75,16 +75,12 @@ def load_resources():
 
     # โมเดลพยากรณ์ 7 วัน
     path_7d = os.path.join(base, "trained", "Log_7days.model")
-    if not os.path.exists(path_7d):
-        path_7d = os.path.join(base, "trained", "Logistic_7days.model")
     raw_7d = serialization.read(path_7d)
     model_7d = Classifier(jobject=raw_7d)
     header_7d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_7days_header.arff"), "risk_class_7d")
 
     # โมเดลพยากรณ์ 30 วัน
     path_30d = os.path.join(base, "trained", "RF_30days.model")
-    if not os.path.exists(path_30d):
-        path_30d = os.path.join(base, "trained", "RandomForest_30days.model")
     raw_30d = serialization.read(path_30d)
     model_30d = Classifier(jobject=raw_30d)
     header_30d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_30days_header.arff"), "risk_class_30d")
@@ -112,27 +108,6 @@ def _build_attr_mapping(header):
 # การประมวลผลพยากรณ์ (Inference / Prediction)
 def _prepare_dam_features(row_dict):
     data = dict(row_dict)
-
-    # 1. ตรวจสอบค่า Input หากไม่มีค่า ให้ดึงค่าจากเมื่อวาน
-    pct_val = data.get('percent_storage')
-    vol_val = data.get('volume')
-    has_valid_input = (
-        (pct_val is not None and not pd.isna(pct_val) and float(pct_val or 0) > 0) or
-        (vol_val is not None and not pd.isna(vol_val) and float(vol_val or 0) > 0)
-    )
-    if not has_valid_input:
-        dam_id = data.get('id') or data.get('dam_id')
-        if dam_id:
-            try:
-                from core.database import get_yesterday_valid_data
-
-                y_rec = get_yesterday_valid_data(dam_id)
-                if y_rec:
-                    for col in ['percent_storage', 'volume', 'inflow', 'outflow']:
-                        if y_rec.get(col) is not None:
-                            data[col] = float(y_rec[col])
-            except Exception:
-                pass
 
     # คำนวณ Feature อัตราส่วนความจุ Inflow/Outflow (%)
     cap = float(data.get('capacity', 0) or 0)

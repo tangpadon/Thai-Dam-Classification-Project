@@ -13,7 +13,7 @@ def render_header(recorded_at=None, data_date=None) -> datetime.datetime:
     col_title, col_date = st.columns([2.6, 1.4])
     with col_title:
         st.markdown('<div id="section-top" style="scroll-margin-top: 80px;"></div>', unsafe_allow_html=True)
-        st.markdown("<h2 class='header-title' style='margin:0 0 4px 0; font-size:1.45rem; font-weight:700; color:#0f172a;'>ระบบพยากรณ์ระดับสถานการณ์น้ำ</h2>", unsafe_allow_html=True)
+        st.markdown("<h1 class='header-title' style='margin:0 0 4px 0; font-size:1.45rem; font-weight:700; color:#0f172a;'>ระบบพยากรณ์ระดับสถานการณ์น้ำ</h1>", unsafe_allow_html=True)
         st.caption("ติดตามและพยากรณ์ระดับน้ำในอ่างเก็บน้ำขนาดใหญ่ทั่วประเทศล่วงหน้า 7 และ 30 วัน")
     with col_date:
         st.markdown(

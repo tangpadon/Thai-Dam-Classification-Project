@@ -4,7 +4,7 @@ import pandas as pd
 from views.constants import STATUS_THEMES
 
 
-# 1. การประเมินระดับสถานะน้ำและธีมสี (Risk Classification & Themes)
+# การประเมินระดับสถานะน้ำและธีมสี (Risk Classification & Themes)
 
 def classify_by_percent(pct: Optional[float]) -> str:
     if pct is None:
@@ -26,7 +26,7 @@ def get_status_theme(status_key: str) -> Dict[str, str]:
     return STATUS_THEMES.get(status_key, STATUS_THEMES["normal"])
 
 
-# 2. การแปลงค่าและจัดรูปแบบตัวเลข (Number Parsing & Formatting)
+# การแปลงค่าและจัดรูปแบบตัวเลข (Number Parsing & Formatting)
 
 def to_num(val: Any) -> Optional[float]:
     if val is None:
@@ -55,7 +55,7 @@ def calc_storage_percent(volume: Any, capacity: Any) -> Optional[float]:
     return None
 
 
-# 3. การจัดรูปแบบวันที่ภาษาไทย (Date Formatting)
+# การจัดรูปแบบวันที่ภาษาไทย (Date Formatting)
 
 def format_date_th(dt) -> str:
     months_th = [
@@ -73,7 +73,7 @@ def format_date_th_short(dt) -> str:
     return f"{dt.day} {months_short[dt.month]} {dt.year + 543}"
 
 
-# 4. การจัดเตรียมข้อมูลเขื่อน (Dam Data Preparation)
+# การจัดเตรียมข้อมูลเขื่อน (Dam Data Preparation)
 
 def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str, Any], bool, Any]:
     dam_dict = dict(raw_dam_data)
@@ -112,12 +112,3 @@ def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str
 
     return dam_dict, is_fallback, fallback_date
 
-
-
-# Aliases สำหรับรองรับโค้ดเก่า
-_classify_by_percent = classify_by_percent
-_get_status_theme = get_status_theme
-_fmt_num = fmt_num
-_to_num = to_num
-_format_date_th = format_date_th
-_format_date_th_short = format_date_th_short

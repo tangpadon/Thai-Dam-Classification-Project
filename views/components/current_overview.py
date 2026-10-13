@@ -35,7 +35,7 @@ def render_current_overview(
                 <div style="min-width:0; overflow:hidden;">
                     <div class="metric-title-text" style="font-size:0.7rem; color:#64748b; line-height:1.2;">ร้อยละความจุ</div>
                     <div style="font-size:1.15rem; font-weight:700; color:#0284c7; line-height:1.2;">{pct:,.2f}%</div>
-                    <div style="font-size:0.75rem; color:#94a3b8;">% Capacity</div>
+                    <div style="font-size:0.75rem; color:#64748b;">% Capacity</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -46,7 +46,7 @@ def render_current_overview(
                 <div style="min-width:0; overflow:hidden;">
                     <div class="metric-title-text" style="font-size:0.7rem; color:#64748b; line-height:1.2;">น้ำไหลเข้า (Inflow)</div>
                     <div style="font-size:1.15rem; font-weight:700; color:#0f172a; line-height:1.2;">{inflow_m:,.1f}</div>
-                    <div style="font-size:0.75rem; color:#94a3b8;">ล้าน ลบ.ม./วัน</div>
+                    <div style="font-size:0.75rem; color:#64748b;">ล้าน ลบ.ม./วัน</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -57,7 +57,7 @@ def render_current_overview(
                 <div style="min-width:0; overflow:hidden;">
                     <div class="metric-title-text" style="font-size:0.7rem; color:#64748b; line-height:1.2;">น้ำระบาย (Outflow)</div>
                     <div style="font-size:1.15rem; font-weight:700; color:#0f172a; line-height:1.2;">{outflow_m:,.1f}</div>
-                    <div style="font-size:0.75rem; color:#94a3b8;">ล้าน ลบ.ม./วัน</div>
+                    <div style="font-size:0.75rem; color:#64748b;">ล้าน ลบ.ม./วัน</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)

@@ -30,7 +30,7 @@ def render_dam_selector(raw_df: pd.DataFrame) -> Tuple[str, pd.Series]:
             st.markdown(f"""
             <div style="display:flex; align-items:center; gap:12px; height:100%; padding-top:10px;">
                 <div style="flex-shrink:0;">
-                    <svg width="46" height="46" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="46" height="46" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <!-- Green banks -->
                         <path d="M4 50L18 20L26 20L20 50H4Z" fill="#34d399" opacity="0.85"/>
                         <path d="M60 50L46 20L38 20L44 50H60Z" fill="#34d399" opacity="0.85"/>

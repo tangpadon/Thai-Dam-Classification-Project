@@ -59,7 +59,7 @@ def render_history_and_summary(
 
                 table_rows = []
                 for _, r in daily_table.iterrows():
-                    # 1. ร้อยละความจุ
+                    # ร้อยละความจุ
                     r_pct = to_num(r.get('percent_storage'))
                     r_storage = to_num(r.get('volume')) or to_num(r.get('storage')) or to_num(dam_data.get('storage'))
                     
@@ -71,13 +71,13 @@ def render_history_and_summary(
                     r_pct_str = f"{r_pct:.2f}" if r_pct is not None else "-"
                     r_storage_str = f"{r_storage:,.2f}" if r_storage is not None else "-"
 
-                    # 2. ปริมาณน้ำเข้า/ออก
+                    # ปริมาณน้ำเข้า/ออก
                     r_in = to_num(r.get('inflow'))
                     r_in_str = f"{r_in:.2f}" if r_in is not None else "-"
                     r_out = to_num(r.get('outflow'))
                     r_out_str = f"{r_out:.2f}" if r_out is not None else "-"
 
-                    # 3. สถานะและวันที่
+                    # สถานะและวันที่
                     theme_r = get_status_theme(classify_by_percent(r_pct))
                     date_val = r['record_date']
                     date_cell = format_date_th_short(date_val) if hasattr(date_val, 'strftime') else str(date_val)
@@ -98,16 +98,16 @@ def render_history_and_summary(
                 rows_html = "".join(table_rows)
                 unit_style = 'font-weight:500; font-size:0.7rem; color:#64748b;'
                 table_html = (
-                    '<div class="table-responsive" style="max-height:480px; overflow-y:auto; overflow-x:hidden; border:1px solid #e2e8f0; border-radius:8px;">'
+                    '<div class="table-responsive" style="max-height:480px; overflow-y:auto; overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px;">'
                     '<table style="width:100%; border-collapse:collapse; font-size:0.8rem; background:white; table-layout:auto;">'
                     '<thead>'
                     '<tr style="background-color:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569; font-weight:600; text-align:center; position:sticky; top:0; z-index:2; box-shadow:0 1px 2px rgba(0,0,0,0.05); line-height:1.25;">'
-                    '<th style="padding:8px 6px; text-align:left; background-color:#f8fafc; white-space:nowrap;">วันที่</th>'
-                    f'<th style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">ร้อยละความจุ<br><span style="{unit_style}">(%)</span></th>'
-                    f'<th style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">ปริมาณน้ำกักเก็บ<br><span style="{unit_style}">(ล้าน ลบ.ม.)</span></th>'
-                    f'<th style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">Inflow<br><span style="{unit_style}">(ล้าน ลบ.ม./วัน)</span></th>'
-                    f'<th style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">Outflow<br><span style="{unit_style}">(ล้าน ลบ.ม./วัน)</span></th>'
-                    '<th style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">ระดับสถานการณ์น้ำ</th>'
+                    '<th scope="col" style="padding:8px 6px; text-align:left; background-color:#f8fafc; white-space:nowrap;">วันที่</th>'
+                    f'<th scope="col" style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">ร้อยละความจุ<br><span style="{unit_style}">(%)</span></th>'
+                    f'<th scope="col" style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">ปริมาณน้ำกักเก็บ<br><span style="{unit_style}">(ล้าน ลบ.ม.)</span></th>'
+                    f'<th scope="col" style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">Inflow<br><span style="{unit_style}">(ล้าน ลบ.ม./วัน)</span></th>'
+                    f'<th scope="col" style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">Outflow<br><span style="{unit_style}">(ล้าน ลบ.ม./วัน)</span></th>'
+                    '<th scope="col" style="padding:8px 6px; background-color:#f8fafc; white-space:nowrap;">ระดับสถานการณ์น้ำ</th>'
                     '</tr>'
                     '</thead>'
                     f'<tbody>{rows_html}</tbody>'
@@ -149,56 +149,6 @@ def render_history_and_summary(
                 f'</div>'
             )
 
-            # ตั้งค่าเป็น True เมื่อต้องการเปิดแสดงผลกรอบคำแนะนำการเฝ้าระวังและเกณฑ์ระดับน้ำเพิ่มเติม
-            show_extended_summary = False
-            if show_extended_summary:
-                if box_theme.get("en") == "Flood Risk":
-                    advice_text = "ควรเฝ้าระวังระดับน้ำอย่างใกล้ชิด เตรียมแผนพร่องน้ำและแจ้งเตือนพื้นที่ท้ายเขื่อนตามเกณฑ์ปฏิบัติการ"
-                elif box_theme.get("en") == "Drought Risk":
-                    advice_text = "ควรวางแผนจัดสรรน้ำอย่างรัดกุม โดยให้ความสำคัญกับการอุปโภคบริโภคและการรักษาระบบนิเวศเป็นอันดับแรก"
-                else:
-                    advice_text = "ปริมาณน้ำอยู่ในเกณฑ์ปลอดภัย สามารถบริหารจัดการและส่งน้ำได้ตามแผนปกติ"
-
-                net_flow = inflow_m - outflow_m
-                if net_flow > 0.05:
-                    balance_text = f"น้ำไหลเข้ามากกว่าน้ำระบาย <b>+{net_flow:,.1f} ล้าน ลบ.ม./วัน</b>"
-                elif net_flow < -0.05:
-                    balance_text = f"น้ำระบายมากกว่าน้ำไหลเข้า <b>{abs(net_flow):,.1f} ล้าน ลบ.ม./วัน</b>"
-                else:
-                    balance_text = "ปริมาณน้ำไหลเข้าและน้ำระบายอยู่ในระดับสมดุลใกล้เคียงกัน"
-
-                flood_theme = get_status_theme("flood")
-                normal_theme = get_status_theme("normal")
-                drought_theme = get_status_theme("drought")
-
-                summary_html += (
-                    f'<div style="margin-top:12px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px;">'
-                    f'<div style="font-size:0.82rem; font-weight:700; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; gap:6px;">'
-                    f'{svg_icon("shield-check", 18, box_theme["color"])} คำแนะนำการเฝ้าระวังและสมดุลน้ำรายวัน'
-                    f'</div>'
-                    f'<div style="font-size:0.8rem; color:#334155; line-height:1.55;">'
-                    f'• <b>สมดุลน้ำวันนี้:</b> {balance_text}<br>'
-                    f'• <b>แนวทางปฏิบัติ:</b> {advice_text}'
-                    f'</div>'
-                    f'</div>'
-                    f'<div style="margin-top:12px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px;">'
-                    f'<div style="font-size:0.82rem; font-weight:700; color:#0f172a; margin-bottom:10px;">เกณฑ์การจำแนกระดับสถานการณ์น้ำ</div>'
-                    f'<div style="display:flex; flex-direction:column; gap:8px; font-size:0.78rem; color:#475569;">'
-                    f'<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:7px; border-bottom:1px solid #e2e8f0;">'
-                    f'<div>{_render_badge(flood_theme)} <span style="margin-left:6px; color:#334155;">เฝ้าระวังน้ำล้นตลิ่งและเร่งพร่องน้ำ</span></div>'
-                    f'<span style="font-weight:700; color:{flood_theme["color"]}; white-space:nowrap; font-variant-numeric:tabular-nums;">&gt; 80%</span>'
-                    f'</div>'
-                    f'<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:7px; border-bottom:1px solid #e2e8f0;">'
-                    f'<div>{_render_badge(normal_theme)} <span style="margin-left:6px; color:#334155;">ปริมาณน้ำเหมาะสม บริหารจัดการตามแผน</span></div>'
-                    f'<span style="font-weight:700; color:{normal_theme["color"]}; white-space:nowrap; font-variant-numeric:tabular-nums;">30% – 80%</span>'
-                    f'</div>'
-                    f'<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">'
-                    f'<div>{_render_badge(drought_theme)} <span style="margin-left:6px; color:#334155;">สำรองน้ำเพื่ออุปโภคบริโภคและระบบนิเวศ</span></div>'
-                    f'<span style="font-weight:700; color:{drought_theme["color"]}; white-space:nowrap; font-variant-numeric:tabular-nums;">&lt; 30%</span>'
-                    f'</div>'
-                    f'</div>'
-                    f'</div>'
-                )
-
             st.markdown(summary_html, unsafe_allow_html=True)
             st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
+

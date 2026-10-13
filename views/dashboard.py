@@ -20,16 +20,16 @@ from views.components import (
 
 
 def render(raw_df, models_dict, data_date=None, recorded_at=None):
-    # 1. แทรกสไตล์ CSS ปรับแต่งความสวยงามของหน้าเว็บ
+    # แทรกสไตล์ CSS ปรับแต่งความสวยงามของหน้าเว็บ
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
-    # 2. แถบเมนูด้านข้าง (Sidebar) แนะนำการใช้งานและคำอธิบายเกณฑ์ความเสี่ยง
+    # แถบเมนูด้านข้าง (Sidebar) แนะนำการใช้งานและคำอธิบายเกณฑ์ความเสี่ยง
     render_sidebar()
 
-    # 3. ส่วนหัวของหน้าเว็บ (Header) แสดงชื่อระบบและเวลาที่อัปเดตข้อมูล
+    # ส่วนหัวของหน้าเว็บ (Header) แสดงชื่อระบบและเวลาที่อัปเดตข้อมูล
     base_date = render_header(recorded_at=recorded_at, data_date=data_date)
 
-    # 4. Section 1 (เลือกเขื่อน) และ Section 2 (ภาพรวมสถานการณ์น้ำปัจจุบัน)
+    # Section 1 (เลือกเขื่อน) และ Section 2 (ภาพรวมสถานการณ์น้ำปัจจุบัน)
     top_left, top_right = st.columns([1.1, 1.4])
     with top_left:
         selected_dam_name, raw_dam = render_dam_selector(raw_df)
@@ -45,7 +45,7 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     with top_right:
         render_current_overview(dam_data, theme_curr, pct, inflow_m, outflow_m)
 
-    # 5. Section 3: การ์ดผลพยากรณ์ระดับน้ำ (สถานการณ์ปัจจุบัน, พยากรณ์ 7 วัน, พยากรณ์ 30 วัน)
+    # Section 3: การ์ดผลพยากรณ์ระดับน้ำ (สถานการณ์ปัจจุบัน, พยากรณ์ 7 วัน, พยากรณ์ 30 วัน)
     theme_7d, theme_30d = render_forecast_cards(
         dam_data,
         models_dict,
@@ -55,10 +55,10 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
         fallback_date=fallback_date
     )
 
-    # 6. Section 4 (กราฟแนวโน้มร้อยละความจุย้อนหลัง) และ Section 5 (ตารางข้อมูลจำเพาะของเขื่อน)
+    # Section 4 (กราฟแนวโน้มร้อยละความจุย้อนหลัง) และ Section 5 (ตารางข้อมูลจำเพาะของเขื่อน)
     hist_df = render_trend_and_details(dam_data, selected_dam_name, pct, inflow_m, outflow_m)
 
-    # 7. Section 6 (ตารางข้อมูลย้อนหลัง 30 วัน) และ Section 7 (กล่องสรุปสถานการณ์น้ำภาพรวม)
+    # Section 6 (ตารางข้อมูลย้อนหลัง 30 วัน) และ Section 7 (กล่องสรุปสถานการณ์น้ำภาพรวม)
     render_history_and_summary(
         dam_data,
         selected_dam_name,
@@ -72,8 +72,8 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     )
 
 
-    # 8. ส่วนท้ายของหน้าเว็บ (Footer) แสดงแหล่งที่มาและลิขสิทธิ์
+    # ส่วนท้ายของหน้าเว็บ (Footer) แสดงแหล่งที่มาและลิขสิทธิ์
     render_footer()
 
-    # 9. สคริปต์ JavaScript เสริมบนเบราว์เซอร์ (Smooth Scroll และการปรับระยะห่าง)
+    # สคริปต์ JavaScript เสริมบนเบราว์เซอร์ (Smooth Scroll และการปรับระยะห่าง)
     components.html(get_client_js(), height=0, width=0)

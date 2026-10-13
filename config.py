@@ -5,11 +5,11 @@ load_dotenv()
 
 
 def _get_config_val(name, default=None):
-    # 1. พยายามอ่านจาก Streamlit Secrets
+    # พยายามอ่านจาก Streamlit Secrets
     try:
         import streamlit as st
         if hasattr(st, "secrets"):
-            # 1.1 ตรวจสอบรูปแบบ [connections.mysql]
+            # ตรวจสอบรูปแบบ [connections.mysql]
             if "connections" in st.secrets and "mysql" in st.secrets["connections"]:
                 mysql_sec = st.secrets["connections"]["mysql"]
                 mapping = {
@@ -24,13 +24,13 @@ def _get_config_val(name, default=None):
                 if name == "DB_USER" and "user" in mysql_sec:
                     return mysql_sec["user"]
 
-            # 1.2 ตรวจสอบรูปแบบ Flat keys
+            # ตรวจสอบรูปแบบ Flat keys
             if name in st.secrets:
                 return st.secrets[name]
     except Exception:
         pass
 
-    # 2. พยายามอ่านจาก Environment Variables (.env หรือ OS)
+    # พยายามอ่านจาก Environment Variables (.env หรือ OS)
     val = os.getenv(name)
     if val is not None and val != "":
         return val

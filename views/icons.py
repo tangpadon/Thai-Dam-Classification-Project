@@ -25,6 +25,3 @@ def svg_icon(name: str, size: int = 18, color: str = "currentColor") -> str:
     )
 
 
-# Alias for backward compatibility
-_svg_icon = svg_icon
-
