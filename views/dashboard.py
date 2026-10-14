@@ -22,7 +22,7 @@ from views.components import (
 
 # ฟังก์ชันหลักสำหรับเรนเดอร์แดชบอร์ด
 def render(raw_df, models_dict, data_date=None, recorded_at=None):
-    # CSS 
+    # CSS
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
     # แถบเมนู Sidebar
@@ -79,10 +79,7 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     render_footer()
 
     # สคริปต์ JavaScript เสริมบนเบราว์เซอร์
-    if hasattr(st, "iframe"):
-        try:
-            st.iframe(get_client_js(), height=0, width=0)
-        except Exception:
-            components.html(get_client_js(), height=0, width=0)
+    if hasattr(st, "html"):
+        st.html(get_client_js())
     else:
         components.html(get_client_js(), height=0, width=0)

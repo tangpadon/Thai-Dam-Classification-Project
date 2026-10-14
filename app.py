@@ -1,7 +1,15 @@
-import streamlit as st
-from core.risk_predictor import init_jvm_safe, load_resources
-from core.dam_api import fetch_and_save_data, backfill_historical_data
-from views import dashboard
+import os
+import sys
+
+# เพิ่มตำแหน่ง Root Directory เข้า sys.path เพื่อความเสถียรในการ Import บน Cloud
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+import streamlit as st  
+from core.risk_predictor import init_jvm_safe, load_resources  
+from core.dam_api import fetch_and_save_data, backfill_historical_data  
+from views import dashboard  
 
 
 # Streamlit Page Configuration
