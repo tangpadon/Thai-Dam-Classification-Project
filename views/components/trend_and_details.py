@@ -112,9 +112,13 @@ def _render_dam_details_table(dam_data: Any, selected_dam_name: str, pct: float,
     vol_val = dam_data.get('volume')
     vol_str = f"{fmt_num(vol_val, 2)} ล้าน ลบ.ม." if vol_val is not None else "-"
 
-    owner_str = dam_data.get('owner') or dam_data.get('agency')
-    if not owner_str or pd.isna(owner_str):
-        owner_str = "การไฟฟ้าฝ่ายผลิตแห่งประเทศไทย" if "ภูมิพล" in str(selected_dam_name) else "กรมชลประทาน"
+    owner_raw = dam_data.get('owner') or dam_data.get('agency')
+    if not owner_raw or pd.isna(owner_raw):
+        owner_str = "-"
+    elif "การไฟฟ้า" in str(owner_raw):
+        owner_str = "การไฟฟ้าฝ่ายผลิตแห่งประเทศไทย"
+    else:
+        owner_str = str(owner_raw)
 
     rows = [
         ("ชื่ออ่างเก็บน้ำ", selected_dam_name),

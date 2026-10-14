@@ -41,8 +41,10 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
 
     pct = float(to_num(dam_data.get('percent_storage')) or 0.0)
     theme_curr = get_status_theme(classify_by_percent(pct))
-    inflow_m = float(to_num(dam_data.get('inflow')) or 0.0)
-    outflow_m = float(to_num(dam_data.get('outflow')) or 0.0)
+    raw_in = dam_data.get('inflow')
+    inflow_m = float(raw_in) if (raw_in is not None and str(raw_in).lower() != 'none') else float('nan')
+    raw_out = dam_data.get('outflow')
+    outflow_m = float(raw_out) if (raw_out is not None and str(raw_out).lower() != 'none') else float('nan')
 
     with top_right:
         render_current_overview(dam_data, theme_curr, pct, inflow_m, outflow_m)

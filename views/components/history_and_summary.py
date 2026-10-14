@@ -44,7 +44,7 @@ def render_history_and_summary(
         with st.container(border=True, key="sec_history"):
             st.markdown(
                 '<div id="section-history" class="section-title">'
-                '<span class="badge-num">6</span> ข้อมูลย้อนหลัง 30 วัน (ตาราง)</div>',
+                '<span class="badge-num">6</span> ข้อมูลย้อนหลัง 30 วัน</div>',
                 unsafe_allow_html=True
             )
 
