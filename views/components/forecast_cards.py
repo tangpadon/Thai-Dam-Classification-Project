@@ -71,4 +71,3 @@ def render_forecast_cards(
         st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
 
     return theme_7d, theme_30d
-

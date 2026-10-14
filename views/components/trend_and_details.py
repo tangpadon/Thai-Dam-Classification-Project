@@ -70,7 +70,7 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
             annotation_position="top left", annotation_font_color="#64748b"
         )
 
-    # ปรับมุมเอียงของป้ายแกน X ตามจำนวนวัน 
+    # ปรับมุมเอียงของป้ายแกน X ตามจำนวนวัน
     tick_angle = 0 if limit_days <= 7 else -45
     bottom_margin = 25 if limit_days <= 7 else 45
 

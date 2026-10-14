@@ -25,7 +25,7 @@ def render_sidebar():
         # Menu List
         st.markdown(f"""
         <div class="sidebar-nav">
-            <div role="button" tabindex="0" data-target="section-top" class="nav-link active">{svg_icon("home", 17, "#0284c7")} <span>หน้าแรก (ภาพรวม)</span></div>
+            <div role="button" tabindex="0" data-target="section-top" class="nav-link active">{svg_icon("home", 17, "#0284c7")} <span>ภาพรวม</span></div>
             <div role="button" tabindex="0" data-target="section-select" class="nav-link">{svg_icon("search", 17, "#475569")} <span>ค้นหา / เลือกอ่างเก็บน้ำ</span></div>
             <div role="button" tabindex="0" data-target="section-forecast" class="nav-link">{svg_icon("shield-check", 17, "#475569")} <span>ผลการพยากรณ์</span></div>
             <div role="button" tabindex="0" data-target="section-trend" class="nav-link">{svg_icon("chart", 17, "#475569")} <span>แนวโน้มและกราฟ</span></div>
@@ -34,4 +34,3 @@ def render_sidebar():
             <div role="button" tabindex="0" data-target="section-about" class="nav-link">{svg_icon("info", 17, "#475569")} <span>เกี่ยวกับระบบ</span></div>
         </div>
         """, unsafe_allow_html=True)
-

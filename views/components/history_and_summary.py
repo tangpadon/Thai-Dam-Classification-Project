@@ -64,11 +64,10 @@ def render_history_and_summary(
                     # ร้อยละความจุ
                     r_pct = to_num(r.get('percent_storage'))
                     r_storage = to_num(r.get('volume')) or to_num(r.get('storage')) or to_num(dam_data.get('storage'))
-                    
+
                     # ถ้า percent_storage ว่าง ให้คำนวณสำรองจากปริมาตรน้ำและความจุอ่าง
                     if r_pct is None:
                         r_pct = calc_storage_percent(r_storage, dam_data.get('capacity'))
-
 
                     r_pct_str = f"{r_pct:.2f}" if r_pct is not None else "-"
                     r_storage_str = f"{r_storage:,.2f}" if r_storage is not None else "-"
@@ -153,4 +152,3 @@ def render_history_and_summary(
 
             st.markdown(summary_html, unsafe_allow_html=True)
             st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
-

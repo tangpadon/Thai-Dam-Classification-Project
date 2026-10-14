@@ -24,5 +24,3 @@ def svg_icon(name: str, size: int = 18, color: str = "currentColor") -> str:
         f'stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
         f'style="display:inline-block; vertical-align:middle; flex-shrink:0;">{paths}</svg>'
     )
-
-

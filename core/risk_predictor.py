@@ -120,15 +120,50 @@ def _prepare_dam_features(row_dict):
     if (data.get('percent_storage') is None or pd.isna(data.get('percent_storage'))) and data.get('volume') and cap > 0:
         data['percent_storage'] = (float(data['volume']) / cap) * 100.0
 
+    raw_in = data.get('inflow')
+    inflow = float(raw_in) if (raw_in is not None and not pd.isna(raw_in)) else 0.0
+    data["inflow"] = inflow
     if "inflow_pct" not in data or pd.isna(data["inflow_pct"]):
-        inflow = float(data.get('inflow', 0) or 0)
         data["inflow_pct"] = (inflow / cap * 100.0) if cap > 0 else 0.0
 
+    raw_out = data.get('outflow')
+    outflow = float(raw_out) if (raw_out is not None and not pd.isna(raw_out)) else 0.0
+    data["outflow"] = outflow
     if "outflow_pct" not in data or pd.isna(data["outflow_pct"]):
-        outflow = float(data.get('outflow', 0) or 0)
         data["outflow_pct"] = (outflow / cap * 100.0) if cap > 0 else 0.0
 
     return data
+
+
+# ฟังก์ชันสร้างและกำหนดค่า Weka Instance จากข้อมูลเขื่อน (Build Weka Instance)
+def _build_weka_instance(header, mapping, row_dict):
+    _, numeric_attrs, nominal_attrs = mapping
+    inst = Instance.create_instance([0.0] * header.num_attributes)
+    inst.dataset = header
+
+    # กำหนดค่าตัวเลขลงใน Weka Instance
+    for attr in numeric_attrs:
+        val = row_dict.get(attr.name, None)
+        if val is None or pd.isna(val) or val == "None":
+            inst.set_missing(attr.index)
+            continue
+        try:
+            inst.set_value(attr.index, float(val))
+        except (ValueError, TypeError):
+            inst.set_value(attr.index, 0.0)
+
+    # กำหนดค่าข้อความ/Nominal ลงใน Weka Instance
+    for attr in nominal_attrs:
+        val = row_dict.get(attr.name, None)
+        if val is None or pd.isna(val) or val == "None":
+            inst.set_missing(attr.index)
+            continue
+        try:
+            inst.set_value(attr.index, str(val))
+        except Exception:
+            inst.set_missing(attr.index)
+
+    return inst
 
 
 # ฟังก์ชันพยากรณ์ระดับความเสี่ยงของเขื่อนเดี่ยวด้วยโมเดล Weka (Predict Single Dam Risk)
@@ -141,37 +176,11 @@ def predict_single_dam(row_series, model_config):
         mapping = _build_attr_mapping(header)
         model_config["_attr_mapping"] = mapping
 
-    class_attr_name, numeric_attrs, nominal_attrs = mapping
     row_dict = _prepare_dam_features(dict(row_series))
-
-    inst = Instance.create_instance([0.0] * header.num_attributes)
-    inst.dataset = header
-
-    # กำหนดค่าตัวเลขลงใน Weka Instance
-    for attr in numeric_attrs:
-        val = row_dict.get(attr.name, None)
-        if val is None or pd.isna(val) or val == "None":
-            inst.set_missing(attr.index)
-            continue
-        try:
-            inst.set_value(attr.index, float(val))
-        except:
-            inst.set_value(attr.index, 0.0)
-
-    # กำหนดค่าข้อความ/Nominal ลงใน Weka Instance
-    for attr in nominal_attrs:
-        val = row_dict.get(attr.name, None)
-        if val is None or pd.isna(val) or val == "None":
-            inst.set_missing(attr.index)
-            continue
-        try:
-            inst.set_value(attr.index, str(val))
-        except:
-            inst.set_missing(attr.index)
+    inst = _build_weka_instance(header, mapping, row_dict)
 
     # สั่งให้โมเดลทำนายและส่งกลับผลลัพธ์
     pred_index = model.classify_instance(inst)
     if header.class_attribute.is_nominal:
         return header.class_attribute.value(int(pred_index))
     return pred_index
-

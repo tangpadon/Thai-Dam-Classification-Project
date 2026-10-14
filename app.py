@@ -19,6 +19,7 @@ def init_models():
     init_jvm_safe()
     return load_resources()
 
+
 models_dict = init_models()
 
 

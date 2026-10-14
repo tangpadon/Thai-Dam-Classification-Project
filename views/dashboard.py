@@ -6,6 +6,7 @@ from views.helpers import (
     classify_by_percent,
     get_status_theme,
     prepare_dam_data,
+    to_num,
 )
 from views.components import (
     render_sidebar,
@@ -38,10 +39,10 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     # จัดเตรียมข้อมูลเขื่อน (ตรวจสอบความสมบูรณ์ หากวันนี้ไม่มีค่าจะดึงค่าเมื่อวานมาใช้แทนอัตโนมัติ)
     dam_data, is_fallback, fallback_date = prepare_dam_data(raw_dam, data_date=data_date)
 
-    pct = float(dam_data.get('percent_storage', 0) or 0)
+    pct = float(to_num(dam_data.get('percent_storage')) or 0.0)
     theme_curr = get_status_theme(classify_by_percent(pct))
-    inflow_m = float(dam_data.get('inflow', 0) or 0)
-    outflow_m = float(dam_data.get('outflow', 0) or 0)
+    inflow_m = float(to_num(dam_data.get('inflow')) or 0.0)
+    outflow_m = float(to_num(dam_data.get('outflow')) or 0.0)
 
     with top_right:
         render_current_overview(dam_data, theme_curr, pct, inflow_m, outflow_m)
@@ -71,7 +72,6 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
         theme_7d=theme_7d,
         theme_30d=theme_30d,
     )
-
 
     # ส่วนท้ายของหน้าเว็บ (Footer) แสดงแหล่งที่มาและลิขสิทธิ์
     render_footer()

@@ -8,6 +8,7 @@ from config import DB_CONFIG
 
 _pool = None
 
+
 # ฟังก์ชันเชื่อมต่อฐานข้อมูลผ่าน Connection Pool (Get Database Connection)
 def get_connection():
     global _pool
@@ -30,11 +31,12 @@ def _safe_float(val):
     if val is None:
         return None
     try:
-        if math.isnan(val):
+        val_f = float(str(val).replace(',', '').strip())
+        if math.isnan(val_f):
             return None
+        return val_f
     except (TypeError, ValueError):
-        pass
-    return float(val)
+        return None
 
 
 # ฟังก์ชันบันทึกข้อมูลคุณลักษณะพื้นฐานของเขื่อน (Save Dam Characteristics)

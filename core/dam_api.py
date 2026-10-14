@@ -28,13 +28,13 @@ def _load_from_db(target_date):
         cursor.close()
         conn.close()
 
-        if rows and len(rows) >= 30: # มีข้อมูลอย่างน้อย 30 เขื่อนในวันนั้น
+        if rows and len(rows) >= 30:  # มีข้อมูลอย่างน้อย 30 เขื่อนในวันนั้น
             valid_count = sum(
                 1 for r in rows
                 if r.get('percent_storage') is not None or r.get('volume') is not None
             )
             # ถ้า NULL ถือว่าวันนี้ยังไม่มีข้อมูลตรวจวัด
-            if valid_count < 15: # มีข้อมูลตรวจวัดน้อยกว่า 15 เขื่อน ถือว่าวันนี้ยังไม่มีข้อมูลตรวจวัด
+            if valid_count < 15:  # มีข้อมูลตรวจวัดน้อยกว่า 15 เขื่อน ถือว่าวันนี้ยังไม่มีข้อมูลตรวจวัด
                 return None, None
 
             df = pd.DataFrame(rows)
@@ -93,8 +93,37 @@ def _fill_missing_from_yesterday(target_df, source_df_y):
     return target_df
 
 
-# ฟังก์ชันหลักสำหรับดึงและจัดเก็บข้อมูล (Main Fetch & Save)
+# ฟังก์ชันประมวลผลและบันทึกข้อมูลจาก API ลงฐานข้อมูล (Process And Save API Data)
+def _process_and_save_api_data(records, record_date, df_y=None):
+    df_new = _normalize_records(records)
+    if 'month' not in df_new.columns:
+        df_new['month'] = record_date.month
+    if df_y is not None:
+        df_new = _fill_missing_from_yesterday(df_new, df_y)
+    saved = save_to_database(df_new, record_date=record_date)
+    rec_time = get_recorded_time(record_date) if saved else None
+    return df_new, record_date, rec_time
 
+
+# ฟังก์ชันค้นหาข้อมูลสำรองย้อนหลังจาก RID API (Fetch Recent Fallback From API)
+def _fetch_recent_fallback(today, max_days=3):
+    for days_back in range(1, max_days + 1):
+        fallback_date = today - datetime.timedelta(days=days_back)
+        try:
+            records_fb = _fetch_from_api(fallback_date.strftime("%Y-%m-%d"))
+            if _has_measurements(records_fb):
+                df_fb = _normalize_records(records_fb)
+                if 'month' not in df_fb.columns:
+                    df_fb['month'] = fallback_date.month
+                saved = save_to_database(df_fb, record_date=fallback_date)
+                rec_time = get_recorded_time(fallback_date) if saved else None
+                return df_fb, fallback_date, rec_time
+        except Exception:
+            continue
+    return None, None, None
+
+
+# ฟังก์ชันหลักสำหรับดึงและจัดเก็บข้อมูล (Main Fetch & Save)
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_and_save_data():
     now = datetime.datetime.now()
@@ -120,35 +149,18 @@ def fetch_and_save_data():
             return df_y, yesterday, recorded_at_y
         return pd.DataFrame(), None, None
 
-    # หากมีข้อมูลตรวจวัดวันนี้ ให้บันทึกลงฐานข้อมูล
+    # หากมีข้อมูลตรวจวัดวันนี้ ให้ประมวลผลและบันทึก
     if data_available:
-        df_new = _normalize_records(records)
-        if 'month' not in df_new.columns:
-            df_new['month'] = today.month
-        df_new = _fill_missing_from_yesterday(df_new, df_y)
-        saved = save_to_database(df_new, record_date=today)
-        if saved:
-            return df_new, today, get_recorded_time(today)
-        return df_new, today, None
+        return _process_and_save_api_data(records, today, df_y)
 
     # หากวันนี้ยังไม่มีข้อมูลการตรวจวัด ให้ใช้ข้อมูลของเมื่อวาน
     if df_y is not None:
         return df_y, yesterday, recorded_at_y
 
-    # หากในฐานข้อมูลยังไม่มีข้อมูลเมื่อวาน ให้ดึงข้อมูลย้อนหลังจาก RID API อัตโนมัติ (ย้อนหลังสูงสุด 3 วัน)
-    for days_back in range(1, 4):
-        fallback_date = today - datetime.timedelta(days=days_back)
-        try:
-            records_fb = _fetch_from_api(fallback_date.strftime("%Y-%m-%d"))
-            if _has_measurements(records_fb):
-                df_fb = _normalize_records(records_fb)
-                if 'month' not in df_fb.columns:
-                    df_fb['month'] = fallback_date.month
-                saved = save_to_database(df_fb, record_date=fallback_date)
-                rec_time = get_recorded_time(fallback_date) if saved else None
-                return df_fb, fallback_date, rec_time
-        except Exception:
-            continue
+    # หากในฐานข้อมูลยังไม่มีข้อมูลเมื่อวาน ให้ค้นหาข้อมูลย้อนหลังจาก RID API (ย้อนหลังสูงสุด 3 วัน)
+    df_fb, fb_date, rec_time = _fetch_recent_fallback(today, max_days=3)
+    if df_fb is not None:
+        return df_fb, fb_date, rec_time
 
     return pd.DataFrame(), today, None
 
@@ -215,4 +227,3 @@ def backfill_historical_data(lookback_days=30):
 
     progress_bar.empty()
     status_text.empty()
-

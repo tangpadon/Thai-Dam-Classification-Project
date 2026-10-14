@@ -2,4 +2,3 @@
 from views import dashboard
 
 __all__ = ["dashboard"]
-

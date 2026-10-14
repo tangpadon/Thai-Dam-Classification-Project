@@ -18,7 +18,7 @@ def render_dam_selector(raw_df: pd.DataFrame) -> Tuple[str, pd.Series]:
             dam_names = raw_df['name'].tolist()
             default_idx = 0
             for idx, name in enumerate(dam_names):
-                if "ภูมิพล" in str(name):
+                if "แม่กวงอุดมธารา" in str(name):
                     default_idx = idx
                     break
             selected_dam_name = st.selectbox("อ่างเก็บน้ำ", dam_names, index=default_idx, key="dam_select")

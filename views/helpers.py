@@ -1,6 +1,5 @@
 import math
 from typing import Any, Optional, Dict, Tuple
-import pandas as pd
 from views.constants import STATUS_THEMES
 
 
@@ -35,7 +34,10 @@ def to_num(val: Any) -> Optional[float]:
     if val is None:
         return None
     try:
-        return float(str(val).replace(',', '').strip())
+        val_f = float(str(val).replace(',', '').strip())
+        if math.isnan(val_f):
+            return None
+        return val_f
     except (TypeError, ValueError):
         return None
 
@@ -46,6 +48,8 @@ def fmt_num(val: Any, decimals: int = 2) -> str:
         return "-"
     try:
         val_f = float(str(val).replace(',', '').strip())
+        if math.isnan(val_f):
+            return "-"
         return f"{val_f:,.{decimals}f}"
     except (TypeError, ValueError):
         return str(val)
@@ -100,14 +104,14 @@ def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str
         dam_id = dam_dict.get('id') or dam_dict.get('dam_id')
         y_data = get_yesterday_valid_data(dam_id, current_date=data_date)
         if y_data:
-            if y_data.get('percent_storage') is not None:
-                dam_dict['percent_storage'] = float(y_data['percent_storage'])
-            if y_data.get('volume') is not None:
-                dam_dict['volume'] = float(y_data['volume'])
-            if y_data.get('inflow') is not None:
-                dam_dict['inflow'] = float(y_data['inflow'])
-            if y_data.get('outflow') is not None:
-                dam_dict['outflow'] = float(y_data['outflow'])
+            if to_num(y_data.get('percent_storage')) is not None:
+                dam_dict['percent_storage'] = to_num(y_data['percent_storage'])
+            if to_num(y_data.get('volume')) is not None:
+                dam_dict['volume'] = to_num(y_data['volume'])
+            if to_num(y_data.get('inflow')) is not None:
+                dam_dict['inflow'] = to_num(y_data['inflow'])
+            if to_num(y_data.get('outflow')) is not None:
+                dam_dict['outflow'] = to_num(y_data['outflow'])
             is_fallback = True
             fallback_date = y_data.get('record_date')
 
@@ -119,4 +123,3 @@ def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str
             dam_dict['percent_storage'] = calculated_pct
 
     return dam_dict, is_fallback, fallback_date
-

@@ -94,5 +94,3 @@ def get_dam_location(dam_name: str, dam_data=None) -> tuple:
         except Exception:
             pass
     return prov, reg
-
-

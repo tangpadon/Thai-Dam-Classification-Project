@@ -24,4 +24,3 @@ def render_header(recorded_at=None, data_date=None) -> datetime.datetime:
         )
 
     return base_date
-

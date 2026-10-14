@@ -211,4 +211,3 @@ def get_client_js() -> str:
     })();
     </script>
     """
-
