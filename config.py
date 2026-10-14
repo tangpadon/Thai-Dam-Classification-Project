@@ -1,3 +1,4 @@
+import datetime
 import os
 from dotenv import load_dotenv
 
@@ -89,3 +90,16 @@ else:
 
 # RID API URL
 RID_API_URL = _get_config_val('RID_API_URL', 'https://app.rid.go.th/reservoir/api/dam/public/')
+
+# ไทม์โซนประเทศไทย (Thailand Timezone UTC+7)
+THAILAND_TZ = datetime.timezone(datetime.timedelta(hours=7))
+
+
+# ฟังก์ชันดึงวันและเวลาปัจจุบันตามเวลาประเทศไทย (Get Bangkok Now)
+def get_bangkok_now():
+    return datetime.datetime.now(THAILAND_TZ).replace(tzinfo=None)
+
+
+# ฟังก์ชันดึงวันที่ปัจจุบันตามเวลาประเทศไทย (Get Bangkok Today)
+def get_bangkok_today():
+    return datetime.datetime.now(THAILAND_TZ).date()

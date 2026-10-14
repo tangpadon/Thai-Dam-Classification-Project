@@ -3,7 +3,7 @@ import time
 import streamlit as st
 import requests
 import pandas as pd
-from config import RID_API_URL
+from config import RID_API_URL, get_bangkok_now, get_bangkok_today
 from core.database import get_connection, save_to_database, get_recorded_time
 
 
@@ -126,7 +126,7 @@ def _fetch_recent_fallback(today, max_days=3):
 # ฟังก์ชันหลักสำหรับดึงและจัดเก็บข้อมูล (Main Fetch & Save)
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_and_save_data():
-    now = datetime.datetime.now()
+    now = get_bangkok_now()
     today = now.date()
     yesterday = today - datetime.timedelta(days=1)
 
@@ -169,7 +169,7 @@ def fetch_and_save_data():
 
 # ฟังก์ชันตรวจสอบวันที่ขาดหายไปในประวัติข้อมูลย้อนหลัง (Find Missing Historical Dates)
 def _get_missing_historical_dates(lookback_days=30):
-    today = datetime.date.today()
+    today = get_bangkok_today()
     start_date = today - datetime.timedelta(days=lookback_days)
     try:
         conn = get_connection()

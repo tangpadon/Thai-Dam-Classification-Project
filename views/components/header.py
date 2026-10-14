@@ -1,12 +1,13 @@
 import datetime
 import streamlit as st
+from config import get_bangkok_now
 from views.icons import svg_icon
 from views.helpers import format_date_th
 
 
 # ฟังก์ชันแสดงผลส่วนหัวของระบบและวันที่อัปเดตข้อมูล
 def render_header(recorded_at=None, data_date=None) -> datetime.datetime:
-    base_date = recorded_at or data_date or datetime.date.today()
+    base_date = recorded_at or data_date or get_bangkok_now()
     if isinstance(base_date, datetime.date) and not isinstance(base_date, datetime.datetime):
         base_date = datetime.datetime.combine(base_date, datetime.time(8, 0))
     date_str = f"ข้อมูล ณ วันที่ {format_date_th(base_date)} เวลา {base_date.strftime('%H:%M')} น."
