@@ -4,7 +4,7 @@ from views.icons import svg_icon
 from views.helpers import format_date_th
 
 
-# ฟังก์ชันแสดงผลส่วนหัวของระบบและวันที่อัปเดตข้อมูล (Render Dashboard Header)
+# ฟังก์ชันแสดงผลส่วนหัวของระบบและวันที่อัปเดตข้อมูล
 def render_header(recorded_at=None, data_date=None) -> datetime.datetime:
     base_date = recorded_at or data_date or datetime.date.today()
     if isinstance(base_date, datetime.date) and not isinstance(base_date, datetime.datetime):

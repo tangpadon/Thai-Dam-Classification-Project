@@ -6,7 +6,7 @@ from views.helpers import format_date_th_short, get_status_theme
 from core.risk_predictor import predict_single_dam
 
 
-# ฟังก์ชันแสดงผลการ์ดเปรียบเทียบระดับน้ำปัจจุบันและผลพยากรณ์ล่วงหน้า (Render Forecast Cards)
+# ฟังก์ชันแสดงผลการ์ดเปรียบเทียบระดับน้ำปัจจุบันและผลพยากรณ์ล่วงหน้า
 def render_forecast_cards(
     dam_data: Any,
     models_dict: Dict,

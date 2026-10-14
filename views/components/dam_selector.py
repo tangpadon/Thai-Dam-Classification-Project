@@ -5,7 +5,7 @@ from views.icons import svg_icon
 from views.constants import get_dam_location
 
 
-# ฟังก์ชันแสดงผลส่วนเลือกอ่างเก็บน้ำและข้อมูลที่ตั้ง (Render Dam Selector Component)
+# ฟังก์ชันแสดงผลส่วนเลือกอ่างเก็บน้ำและข้อมูลที่ตั้ง
 def render_dam_selector(raw_df: pd.DataFrame) -> Tuple[str, pd.Series]:
     with st.container(border=True, key="sec_dam_select"):
         st.markdown(

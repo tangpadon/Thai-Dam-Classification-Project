@@ -39,7 +39,7 @@ def render_history_and_summary(
 ):
     col_history, col_summary = st.columns([1.7, 1.0])
 
-    # ฝั่งซ้าย: Section 6 ข้อมูลย้อนหลัง 30 วัน (ตาราง)
+    # Section 6 ข้อมูลย้อนหลัง 30 วัน (ตาราง)
     with col_history:
         with st.container(border=True, key="sec_history"):
             st.markdown(
@@ -120,7 +120,7 @@ def render_history_and_summary(
                 st.info("ไม่พบข้อมูลย้อนหลัง")
             st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
 
-    # ฝั่งขวา: Section 7 สรุปสถานการณ์น้ำ (Summary Card)
+    # Section 7 สรุปสถานการณ์น้ำ
     with col_summary:
         with st.container(border=True, key="sec_summary"):
             st.markdown(
@@ -128,7 +128,7 @@ def render_history_and_summary(
                 '<span class="badge-num">7</span> สรุปสถานการณ์น้ำ</div>',
                 unsafe_allow_html=True
             )
-            # กำหนดธีมสีของการ์ด (หากมีระดับเสี่ยงน้ำล้นหรือน้ำแล้ง จะเน้นสีตามความเสี่ยงสูงสุด)
+            # กำหนดธีมสีของการ์ด
             curr_theme = theme_curr or get_status_theme(classify_by_percent(pct))
             t_7d = theme_7d or get_status_theme("normal")
             t_30d = theme_30d or get_status_theme("normal")

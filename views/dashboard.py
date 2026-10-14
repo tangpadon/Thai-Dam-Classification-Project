@@ -20,15 +20,15 @@ from views.components import (
 )
 
 
-# ฟังก์ชันหลักสำหรับเรนเดอร์แดชบอร์ดแสดงผลการพยากรณ์และสถานการณ์น้ำ (Render Dashboard)
+# ฟังก์ชันหลักสำหรับเรนเดอร์แดชบอร์ด
 def render(raw_df, models_dict, data_date=None, recorded_at=None):
-    # แทรกสไตล์ CSS ปรับแต่งความสวยงามของหน้าเว็บ
+    # CSS 
     st.markdown(get_custom_css(), unsafe_allow_html=True)
 
-    # แถบเมนูด้านข้าง (Sidebar) แนะนำการใช้งานและคำอธิบายเกณฑ์ความเสี่ยง
+    # แถบเมนู Sidebar
     render_sidebar()
 
-    # ส่วนหัวของหน้าเว็บ (Header) แสดงชื่อระบบและเวลาที่อัปเดตข้อมูล
+    # Header
     base_date = render_header(recorded_at=recorded_at, data_date=data_date)
 
     # Section 1 (เลือกเขื่อน) และ Section 2 (ภาพรวมสถานการณ์น้ำปัจจุบัน)
@@ -36,7 +36,7 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     with top_left:
         selected_dam_name, raw_dam = render_dam_selector(raw_df)
 
-    # จัดเตรียมข้อมูลเขื่อน (ตรวจสอบความสมบูรณ์ หากวันนี้ไม่มีค่าจะดึงค่าเมื่อวานมาใช้แทนอัตโนมัติ)
+    # จัดเตรียมข้อมูลเขื่อน
     dam_data, is_fallback, fallback_date = prepare_dam_data(raw_dam, data_date=data_date)
 
     pct = float(to_num(dam_data.get('percent_storage')) or 0.0)
@@ -49,7 +49,7 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     with top_right:
         render_current_overview(dam_data, theme_curr, pct, inflow_m, outflow_m)
 
-    # Section 3: การ์ดผลพยากรณ์ระดับน้ำ (สถานการณ์ปัจจุบัน, พยากรณ์ 7 วัน, พยากรณ์ 30 วัน)
+    # Section 3: การ์ดผลพยากรณ์ระดับน้ำ
     theme_7d, theme_30d = render_forecast_cards(
         dam_data,
         models_dict,
@@ -75,10 +75,10 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
         theme_30d=theme_30d,
     )
 
-    # ส่วนท้ายของหน้าเว็บ (Footer) แสดงแหล่งที่มาและลิขสิทธิ์
+    # ส่วนท้ายของหน้าเว็บ (Footer) แสดงแหล่งที่มา
     render_footer()
 
-    # สคริปต์ JavaScript เสริมบนเบราว์เซอร์ (Smooth Scroll และการปรับระยะห่าง)
+    # สคริปต์ JavaScript เสริมบนเบราว์เซอร์
     if hasattr(st, "iframe"):
         try:
             st.iframe(get_client_js(), height=0, width=0)

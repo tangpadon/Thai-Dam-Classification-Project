@@ -31,12 +31,12 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
         st.info("ไม่พบข้อมูลประวัติย้อนหลังสำหรับการแสดงผลกราฟ")
         return
 
-    # วันที่แบบย่อ (วัน/เดือน) สำหรับป้ายกำกับแกน X และวันที่แบบเต็มสำหรับ Hover
+    # วันที่แบบย่อ (วัน/เดือน) สำหรับแกน X และวันที่แบบเต็มสำหรับ Hover
     x_labels = daily['record_date'].dt.strftime('%d/%m').tolist()
     full_dates = daily['record_date'].dt.strftime('%d/%m/%Y').tolist()
     storage_vals = daily['percent_storage'].tolist()
 
-    # คำนวณช่วงแกน Y อัตโนมัติ (หากมีวันที่ระดับน้ำเกิน 100% เช่น เขื่อนประแสร์ ให้ขยายเพดานแกน Y เพื่อไม่ให้เส้นกราฟทะลุขอบ)
+    # คำนวณช่วงแกน Y
     valid_storage = [float(v) for v in storage_vals if v is not None and not pd.isna(v)]
     max_storage = max(valid_storage) if valid_storage else 100.0
     y_max = max(100.0, float(math.ceil(max_storage * 1.05 / 5.0) * 5))
@@ -107,7 +107,7 @@ def _render_trend_chart(hist_df: pd.DataFrame, limit_days: int, dam_id: Any = No
         st.caption(f"* หมายเหตุ: มีข้อมูลในระบบ {len(daily)} วันจากที่เลือก {limit_days} วัน")
 
 
-# ฟังก์ชันแสดงผลตารางรายละเอียดและสถิติข้อมูลจำเพาะของเขื่อน (Render Dam Specifications Table)
+# ฟังก์ชันแสดงผลตารางรายละเอียด
 def _render_dam_details_table(dam_data: Any, selected_dam_name: str, pct: float, inflow_m: float, outflow_m: float):
     vol_val = dam_data.get('volume')
     vol_str = f"{fmt_num(vol_val, 2)} ล้าน ลบ.ม." if vol_val is not None else "-"
@@ -152,7 +152,7 @@ def render_trend_and_details(
     with st.container(border=True, key="sec_trend"):
         m_left, m_right = st.columns([1.7, 1.3])
 
-        # ฝั่งซ้าย: Section 4 กราฟแนวโน้ม
+        # Section 4 กราฟแนวโน้ม
         with m_left:
             g_head1, g_head2 = st.columns([2, 1])
             with g_head1:
@@ -170,7 +170,7 @@ def render_trend_and_details(
             hist_df = get_historical_data(dam_data['id'], limit=30)
             _render_trend_chart(hist_df, limit_days, dam_id=dam_data.get('id'))
 
-        # ฝั่งขวา: Section 5 รายละเอียดเขื่อน
+        # Section 5 รายละเอียดเขื่อน
         with m_right:
             st.markdown(
                 '<div id="section-details" class="section-title">'

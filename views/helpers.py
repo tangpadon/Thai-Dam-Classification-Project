@@ -3,9 +3,7 @@ from typing import Any, Optional, Dict, Tuple
 from views.constants import STATUS_THEMES
 
 
-# การประเมินระดับสถานะน้ำและธีมสี (Risk Classification & Themes)
-
-# ฟังก์ชันประเมินระดับความเสี่ยงตามร้อยละความจุเก็บกัก (Classify Risk Level By Storage Percent)
+# ฟังก์ชันประเมินระดับความเสี่ยงตามร้อยละความจุเก็บกัก
 def classify_by_percent(pct: Optional[float]) -> str:
     if pct is None:
         return "normal"
@@ -22,14 +20,12 @@ def classify_by_percent(pct: Optional[float]) -> str:
         return "normal"
 
 
-# ฟังก์ชันดึงชุดรูปแบบสีและป้ายกำกับของสถานะความเสี่ยง (Get Status Theme)
+# ฟังก์ชันดึงรูปแบบสีและป้ายกำกับของสถานะความเสี่ยง
 def get_status_theme(status_key: str) -> Dict[str, str]:
     return STATUS_THEMES.get(status_key, STATUS_THEMES["normal"])
 
 
-# การแปลงค่าและจัดรูปแบบตัวเลข (Number Parsing & Formatting)
-
-# ฟังก์ชันแปลงค่าข้อมูลทั่วไปเป็นตัวเลขทศนิยม (Parse Value To Float)
+# ฟังก์ชันแปลงค่าข้อมูลทั่วไปเป็นตัวเลขทศนิยม
 def to_num(val: Any) -> Optional[float]:
     if val is None:
         return None
@@ -42,7 +38,7 @@ def to_num(val: Any) -> Optional[float]:
         return None
 
 
-# ฟังก์ชันจัดรูปแบบตัวเลขพร้อมเครื่องหมายจุลภาคและทศนิยม (Format Number With Commas)
+# ฟังก์ชันจัดรูปแบบตัวเลข
 def fmt_num(val: Any, decimals: int = 2) -> str:
     if val is None:
         return "-"
@@ -55,7 +51,7 @@ def fmt_num(val: Any, decimals: int = 2) -> str:
         return str(val)
 
 
-# ฟังก์ชันคำนวณร้อยละความจุจากปริมาตรน้ำและความจุรวม (Calculate Storage Percent)
+# ฟังก์ชันคำนวณร้อยละความจุจากปริมาตรน้ำและความจุรวม
 def calc_storage_percent(volume: Any, capacity: Any) -> Optional[float]:
     vol = to_num(volume)
     cap = to_num(capacity)
@@ -64,9 +60,7 @@ def calc_storage_percent(volume: Any, capacity: Any) -> Optional[float]:
     return None
 
 
-# การจัดรูปแบบวันที่ภาษาไทย (Date Formatting)
-
-# ฟังก์ชันแปลงวันที่เป็นรูปแบบภาษาไทยแบบเต็ม (Format Thai Date Full)
+# ฟังก์ชันแปลงวันที่เป็นรูปแบบภาษาไทย
 def format_date_th(dt) -> str:
     months_th = [
         "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -75,7 +69,7 @@ def format_date_th(dt) -> str:
     return f"{dt.day} {months_th[dt.month]} {dt.year + 543}"
 
 
-# ฟังก์ชันแปลงวันที่เป็นรูปแบบภาษาไทยแบบย่อ (Format Thai Date Short)
+# ฟังก์ชันแปลงวันที่เป็นรูปแบบภาษาไทยแบบย่อ
 def format_date_th_short(dt) -> str:
     months_short = [
         "", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
@@ -84,9 +78,7 @@ def format_date_th_short(dt) -> str:
     return f"{dt.day} {months_short[dt.month]} {dt.year + 543}"
 
 
-# การจัดเตรียมข้อมูลเขื่อน (Dam Data Preparation)
-
-# ฟังก์ชันจัดเตรียมและตรวจสอบความสมบูรณ์ของข้อมูลเขื่อน (Prepare Dam Data)
+# ฟังก์ชันจัดเตรียมและตรวจสอบความสมบูรณ์ของข้อมูลเขื่อน
 def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str, Any], bool, Any]:
     dam_dict = dict(raw_dam_data)
 
@@ -97,7 +89,7 @@ def prepare_dam_data(raw_dam_data: Any, data_date: Any = None) -> Tuple[Dict[str
     is_fallback = False
     fallback_date = None
 
-    # หากวันนี้ไม่มีค่า Input ให้ดึงข้อมูลจากวันก่อนหน้า (เมื่อวาน)
+    # หากวันนี้ไม่มีค่า Input ให้ดึงข้อมูลจากเมื่อวาน
     if not has_input:
         from core.database import get_yesterday_valid_data
 

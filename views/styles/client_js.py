@@ -1,4 +1,4 @@
-# ฟังก์ชันสร้างสคริปต์ JavaScript สำหรับการควบคุมการเลื่อนหน้าจอและแอนิเมชัน (Generate Client JavaScript)
+# ฟังก์ชัน JavaScript สำหรับการควบคุมการเลื่อนหน้าจอและแอนิเมชัน
 def get_client_js() -> str:
     return """
     <script>

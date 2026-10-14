@@ -3,7 +3,7 @@ from typing import Dict, Any
 from views.icons import svg_icon
 
 
-# ฟังก์ชันแสดงผลการ์ดภาพรวมสถานการณ์น้ำและตัวชี้วัดปัจจุบัน (Render Current Overview Metrics)
+# แสดงผลการ์ดภาพรวมสถานการณ์น้ำและตัวชี้วัดปัจจุบัน
 def render_current_overview(
     dam_data: Any,
     theme_curr: Dict[str, str],
