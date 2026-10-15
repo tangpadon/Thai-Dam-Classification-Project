@@ -79,7 +79,10 @@ def render(raw_df, models_dict, data_date=None, recorded_at=None):
     render_footer()
 
     # สคริปต์ JavaScript เสริมบนเบราว์เซอร์
-    if hasattr(st, "html"):
-        st.html(get_client_js())
-    else:
+    try:
+        if hasattr(st, "iframe"):
+            st.iframe(get_client_js(), height=1, width=1)
+        else:
+            components.html(get_client_js(), height=0, width=0)
+    except Exception:
         components.html(get_client_js(), height=0, width=0)

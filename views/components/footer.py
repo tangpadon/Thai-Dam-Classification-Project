@@ -13,10 +13,10 @@ def render_footer():
         <div class="footer-content">
             <span>• <b>แหล่งที่มาของข้อมูล:</b> เชื่อมโยงข้อมูลสถานการณ์น้ำรายวันจาก <a href="https://app.rid.go.th/reservoir/api/document/dam/" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline; font-weight:600;">API</a> สาธารณะของ <b>ศูนย์ปฏิบัติการน้ำอัจฉริยะ กรมชลประทาน</b></span>
             <span class="footer-sep">|</span>
-            <span>• <b>แบบจำลองการพยากรณ์:</b> พัฒนาขึ้นโดยใช้เทคนิคการเรียนรู้ของเครื่อง (Machine Learning: Weka Framework)</span>
+            <span>• <b>แบบจำลองการพยากรณ์:</b> พัฒนาขึ้นโดยใช้เทคนิคการเรียนรู้ของเครื่อง (Machine Learning: Weka Model)</span>
         </div>
         <div class="footer-disclaimer">
-            หมายเหตุ: ระบบนี้จัดทำขึ้นเพื่อการศึกษา
+            หมายเหตุ:
         </div>
     </footer>
     """, unsafe_allow_html=True)

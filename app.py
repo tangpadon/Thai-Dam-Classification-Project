@@ -1,15 +1,15 @@
 import os
 import sys
 
-# เพิ่มตำแหน่ง Root Directory เข้า sys.path เพื่อความเสถียรในการ Import บน Cloud
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
-import streamlit as st  
-from core.risk_predictor import init_jvm_safe, load_resources  
-from core.dam_api import fetch_and_save_data, backfill_historical_data  
-from views import dashboard  
+import streamlit as st  # noqa: E402
+from core.risk_predictor import init_jvm_safe, load_resources  # noqa: E402
+from core.dam_api import fetch_and_save_data, backfill_historical_data  # noqa: E402
+from views import dashboard  # noqa: E402
 
 
 # Streamlit Page Configuration
@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 
-# ฟังก์ชันเริ่มต้นการทำงานของ JVM และโหลดแบบจำลอง Weka (Initialize Models)
+# ฟังก์ชันเริ่มต้นการทำงานของ JVM และโหลดแบบจำลอง Weka
 @st.cache_resource
 def init_models():
     init_jvm_safe()
