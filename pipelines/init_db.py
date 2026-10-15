@@ -49,12 +49,12 @@ def init_db_schema():
               CONSTRAINT `fk_dam_char` FOREIGN KEY (`dam_id`) REFERENCES `dam_info` (`dam_id`) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
-        print("ตาราง dam_daily พร้อมใช้งาน")
+        print("  ✅ ตาราง dam_daily พร้อมใช้งาน")
 
         conn.commit()
-        print("ตั้งค่า Schema ฐานข้อมูลเสร็จสมบูรณ์!")
+        print("🎉 ตั้งค่า Schema ฐานข้อมูลเสร็จสมบูรณ์!")
     except Exception as e:
-        print(f"เกิดข้อผิดพลาดในการตั้งค่า Schema: {e}")
+        print(f"❌ เกิดข้อผิดพลาดในการตั้งค่า Schema: {e}")
     finally:
         if conn:
             cursor.close()

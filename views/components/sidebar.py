@@ -25,12 +25,12 @@ def render_sidebar():
         # Menu List
         st.markdown(f"""
         <div class="sidebar-nav">
-            <a href="#section-top" target="_self" data-target="section-top" class="nav-link active">{svg_icon("home", 17, "#0284c7")} <span>ภาพรวม</span></a>
-            <a href="#section-select" target="_self" data-target="section-select" class="nav-link">{svg_icon("search", 17, "#475569")} <span>ค้นหา / เลือกอ่างเก็บน้ำ</span></a>
-            <a href="#section-forecast" target="_self" data-target="section-forecast" class="nav-link">{svg_icon("shield-check", 17, "#475569")} <span>ผลการพยากรณ์</span></a>
-            <a href="#section-trend" target="_self" data-target="section-trend" class="nav-link">{svg_icon("chart", 17, "#475569")} <span>แนวโน้มและกราฟ</span></a>
-            <a href="#section-history" target="_self" data-target="section-history" class="nav-link">{svg_icon("clock", 17, "#475569")} <span>ข้อมูลย้อนหลัง</span></a>
-            <a href="#section-summary" target="_self" data-target="section-summary" class="nav-link">{svg_icon("document-check", 17, "#475569")} <span>สรุปสถานการณ์</span></a>
-            <a href="#section-about" target="_self" data-target="section-about" class="nav-link">{svg_icon("info", 17, "#475569")} <span>เกี่ยวกับระบบ</span></a>
+            <div role="button" tabindex="0" data-target="section-top" class="nav-link active">{svg_icon("home", 17, "#0284c7")} <span>ภาพรวม</span></div>
+            <div role="button" tabindex="0" data-target="section-select" class="nav-link">{svg_icon("search", 17, "#475569")} <span>ค้นหา / เลือกอ่างเก็บน้ำ</span></div>
+            <div role="button" tabindex="0" data-target="section-forecast" class="nav-link">{svg_icon("shield-check", 17, "#475569")} <span>ผลการพยากรณ์</span></div>
+            <div role="button" tabindex="0" data-target="section-trend" class="nav-link">{svg_icon("chart", 17, "#475569")} <span>แนวโน้มและกราฟ</span></div>
+            <div role="button" tabindex="0" data-target="section-history" class="nav-link">{svg_icon("clock", 17, "#475569")} <span>ข้อมูลย้อนหลัง</span></div>
+            <div role="button" tabindex="0" data-target="section-summary" class="nav-link">{svg_icon("document-check", 17, "#475569")} <span>สรุปสถานการณ์</span></div>
+            <div role="button" tabindex="0" data-target="section-about" class="nav-link">{svg_icon("info", 17, "#475569")} <span>เกี่ยวกับระบบ</span></div>
         </div>
         """, unsafe_allow_html=True)

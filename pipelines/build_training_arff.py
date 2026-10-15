@@ -20,7 +20,7 @@ class RIDDataFetcher:
     def __init__(self):
         self.session = requests.Session()
 
-    # ฟังก์ชันดึงข้อมูลเขื่อนรายวันตามวันที่ระบุ
+    # ฟังก์ชันดึงข้อมูลเขื่อนรายวันตามวันที่ระบุ (Fetch Daily Dam Data)
     def fetch_daily_data(
         self,
         date: datetime,
@@ -46,7 +46,7 @@ class RIDDataFetcher:
         logger.error(f"[{date_str}] All {max_retries} attempts failed, skipping")
         return None
 
-    # ฟังก์ชันดึงข้อมูลเขื่อนต่อเนื่องตามช่วงวันที่กำหนด
+    # ฟังก์ชันดึงข้อมูลเขื่อนต่อเนื่องตามช่วงวันที่กำหนด (Fetch Dam Data For Date Range)
     def fetch_date_range(
         self,
         start_date: datetime,
@@ -93,7 +93,7 @@ class RIDDataFetcher:
 
 # Risk Classifier
 class RiskClassifier:
-    # ฟังก์ชันจำแนกระดับความเสี่ยงตามร้อยละความจุของเขื่อน
+    # ฟังก์ชันจำแนกระดับความเสี่ยงตามร้อยละความจุของเขื่อน (Classify Risk Level By Storage Percent)
     @staticmethod
     def classify(pct: float) -> str:
         if pct < 30:
@@ -111,9 +111,9 @@ class DataProcessor:
     ]
     _ALL_NUMERIC = _FILL_ZERO_AS_NAN + ["dead_storage"]
 
-    # forward fill
+    # ── forward fill ──────────────────────────────────────────────────
 
-    # ฟังก์ชันเติมเต็มค่าว่างย้อนหลังด้วยค่าล่าสุดของแต่ละเขื่อน
+    # ฟังก์ชันเติมเต็มค่าว่างย้อนหลังด้วยค่าล่าสุดของแต่ละเขื่อน (Forward Fill Missing Values)
     @classmethod
     def _forward_fill(cls, df: pd.DataFrame) -> pd.DataFrame:
         out = df.sort_values(["id", "date"]).copy()
@@ -124,8 +124,9 @@ class DataProcessor:
         out[cls._ALL_NUMERIC] = out[cls._ALL_NUMERIC].fillna(0)
         return out
 
+    # ── public API ────────────────────────────────────────────────────
 
-    # ฟังก์ชันสร้างชุดข้อมูลสำหรับพยากรณ์ล่วงหน้าและแบ่งข้อมูล Train/Test
+    # ฟังก์ชันสร้างชุดข้อมูลสำหรับพยากรณ์ล่วงหน้าและแบ่งข้อมูล Train/Test (Build Forecast Dataset)
     @classmethod
     def build_dataset(
         cls,
@@ -208,13 +209,13 @@ class ARFFExporter:
     ]
     CATEGORICAL_COLS = ["id", "name", "region", "owner"]
 
-    # ฟังก์ชันครอบเครื่องหมายคำพูดเดี่ยวและ Escape ข้อความสำหรับ ARFF
+    # ฟังก์ชันครอบเครื่องหมายคำพูดเดี่ยวและ Escape ข้อความสำหรับ ARFF (Quote And Escape ARFF String)
     @staticmethod
     def _quote(value) -> str:
         escaped = str(value).replace("'", "''")
         return f"'{escaped}'"
 
-    # ฟังก์ชันแปลงและส่งออก DataFrame เป็นไฟล์รูปแบบ Weka ARFF
+    # ฟังก์ชันแปลงและส่งออก DataFrame เป็นไฟล์รูปแบบ Weka ARFF (Export DataFrame To ARFF)
     @classmethod
     def export(
         cls,
@@ -265,7 +266,7 @@ class ARFFExporter:
         logger.info(f"ARFF → {filename}  ({len(df):,} instances)")
 
 
-# ฟังก์ชันหลักสำหรับประมวลผลและสร้างไฟล์ ARFF
+# ฟังก์ชันหลักสำหรับประมวลผลและสร้างไฟล์ ARFF (Main Training ARFF Pipeline)
 def main():
     # ช่วงข้อมูลที่ต้องการใน
     START_DATE = datetime(2024, 1, 1)

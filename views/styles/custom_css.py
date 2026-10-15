@@ -106,7 +106,6 @@ def get_custom_css() -> str:
             gap: 4px;
         }
         .sidebar-nav .nav-link {
-            text-decoration: none !important;
             color: #475569 !important;
             padding: 10px 12px;
             min-height: 42px;

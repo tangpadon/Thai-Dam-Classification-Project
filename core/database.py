@@ -1,9 +1,10 @@
+import datetime
 import math
 import mysql.connector
 from mysql.connector import pooling
 import pandas as pd
 import streamlit as st
-from config import DB_CONFIG, get_bangkok_now, get_bangkok_today
+from config import DB_CONFIG
 
 _pool = None
 
@@ -75,8 +76,8 @@ def save_to_characteristics(df):
 # ฟังก์ชันบันทึกข้อมูลสถานการณ์น้ำรายวันลงฐานข้อมูล (Save Daily Dam Records)
 def save_to_database(df, record_date=None):
     if record_date is None:
-        record_date = get_bangkok_today()
-    now = get_bangkok_now()
+        record_date = datetime.date.today()
+    now = datetime.datetime.now()
     try:
         ok = save_to_characteristics(df)
         if not ok:
@@ -188,7 +189,7 @@ def get_yesterday_valid_data(dam_id, current_date=None):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         if current_date is None:
-            current_date = get_bangkok_today()
+            current_date = datetime.date.today()
         elif hasattr(current_date, 'date'):
             current_date = current_date.date()
 
