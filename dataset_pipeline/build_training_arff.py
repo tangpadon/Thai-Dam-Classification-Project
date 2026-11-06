@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import requests
 import pandas as pd
@@ -20,7 +21,7 @@ class RIDDataFetcher:
     def __init__(self):
         self.session = requests.Session()
 
-    # ฟังก์ชันดึงข้อมูลเขื่อนรายวันตามวันที่ระบุ (Fetch Daily Dam Data)
+    # ฟังก์ชันดึงข้อมูลเขื่อนรายวันตามวันที่ระบุ
     def fetch_daily_data(
         self,
         date: datetime,
@@ -46,7 +47,7 @@ class RIDDataFetcher:
         logger.error(f"[{date_str}] All {max_retries} attempts failed, skipping")
         return None
 
-    # ฟังก์ชันดึงข้อมูลเขื่อนต่อเนื่องตามช่วงวันที่กำหนด (Fetch Dam Data For Date Range)
+    # ฟังก์ชันดึงข้อมูลเขื่อนต่อเนื่องตามช่วงวันที่กำหนด
     def fetch_date_range(
         self,
         start_date: datetime,
@@ -91,9 +92,8 @@ class RIDDataFetcher:
         return pd.DataFrame(all_records)
 
 
-# Risk Classifier
+# ฟังก์ชันจำแนกระดับความเสี่ยงตามร้อยละความจุของเขื่อน
 class RiskClassifier:
-    # ฟังก์ชันจำแนกระดับความเสี่ยงตามร้อยละความจุของเขื่อน (Classify Risk Level By Storage Percent)
     @staticmethod
     def classify(pct: float) -> str:
         if pct < 30:
@@ -111,9 +111,7 @@ class DataProcessor:
     ]
     _ALL_NUMERIC = _FILL_ZERO_AS_NAN + ["dead_storage"]
 
-    # ── forward fill ──────────────────────────────────────────────────
-
-    # ฟังก์ชันเติมเต็มค่าว่างย้อนหลังด้วยค่าล่าสุดของแต่ละเขื่อน (Forward Fill Missing Values)
+    # ฟังก์ชันเติมเต็มค่าว่างย้อนหลังด้วยค่าล่าสุดของแต่ละเขื่อน
     @classmethod
     def _forward_fill(cls, df: pd.DataFrame) -> pd.DataFrame:
         out = df.sort_values(["id", "date"]).copy()
@@ -124,9 +122,7 @@ class DataProcessor:
         out[cls._ALL_NUMERIC] = out[cls._ALL_NUMERIC].fillna(0)
         return out
 
-    # ── public API ────────────────────────────────────────────────────
-
-    # ฟังก์ชันสร้างชุดข้อมูลสำหรับพยากรณ์ล่วงหน้าและแบ่งข้อมูล Train/Test (Build Forecast Dataset)
+    # ฟังก์ชันสร้างชุดข้อมูลสำหรับพยากรณ์ล่วงหน้าและแบ่งข้อมูล Train/Test
     @classmethod
     def build_dataset(
         cls,
@@ -141,7 +137,7 @@ class DataProcessor:
 
         df = cls._forward_fill(df)
 
-        # Domain-specific capacity-relative features (inflow/outflow as % of dam capacity)
+        # Normalize inflow/outflow by capacity to get percentage
         df["inflow_pct"] = np.where(df["capacity"] > 0, (df["inflow"] / df["capacity"]) * 100, 0.0)
         df["outflow_pct"] = np.where(df["capacity"] > 0, (df["outflow"] / df["capacity"]) * 100, 0.0)
 
@@ -209,13 +205,13 @@ class ARFFExporter:
     ]
     CATEGORICAL_COLS = ["id", "name", "region", "owner"]
 
-    # ฟังก์ชันครอบเครื่องหมายคำพูดเดี่ยวและ Escape ข้อความสำหรับ ARFF (Quote And Escape ARFF String)
+    # ฟังก์ชันครอบเครื่องหมายคำพูดเดี่ยวและ Escape ข้อความสำหรับ ARFF
     @staticmethod
     def _quote(value) -> str:
         escaped = str(value).replace("'", "''")
         return f"'{escaped}'"
 
-    # ฟังก์ชันแปลงและส่งออก DataFrame เป็นไฟล์รูปแบบ Weka ARFF (Export DataFrame To ARFF)
+    # ฟังก์ชันแปลงและส่งออก DataFrame เป็นไฟล์รูปแบบ Weka ARFF
     @classmethod
     def export(
         cls,
@@ -266,7 +262,7 @@ class ARFFExporter:
         logger.info(f"ARFF → {filename}  ({len(df):,} instances)")
 
 
-# ฟังก์ชันหลักสำหรับประมวลผลและสร้างไฟล์ ARFF (Main Training ARFF Pipeline)
+# ฟังก์ชันหลักสำหรับประมวลผลและสร้างไฟล์ ARFF
 def main():
     # ช่วงข้อมูลที่ต้องการใน
     START_DATE = datetime(2024, 1, 1)
@@ -312,23 +308,26 @@ def main():
 
     # ส่งออก ARFF (train/test แยกไฟล์)
     logger.info("\n[Step 3] Exporting ARFF files...")
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "datasets")
+    os.makedirs(output_dir, exist_ok=True)
+
     dom_7d  = pd.concat([df_7d_train, df_7d_test], ignore_index=True)
     dom_30d = pd.concat([df_30d_train, df_30d_test], ignore_index=True)
 
     ARFFExporter.export(
-        df_7d_train, "dam_risk_forecast_7days_train.arff",
+        df_7d_train, os.path.join(output_dir, "dam_risk_forecast_7days_train.arff"),
         "dam_risk_forecast_7days", "risk_class_7d", domain_df=dom_7d,
     )
     ARFFExporter.export(
-        df_7d_test, "dam_risk_forecast_7days_test.arff",
+        df_7d_test, os.path.join(output_dir, "dam_risk_forecast_7days_test.arff"),
         "dam_risk_forecast_7days", "risk_class_7d", domain_df=dom_7d,
     )
     ARFFExporter.export(
-        df_30d_train, "dam_risk_forecast_30days_train.arff",
+        df_30d_train, os.path.join(output_dir, "dam_risk_forecast_30days_train.arff"),
         "dam_risk_forecast_30days", "risk_class_30d", domain_df=dom_30d,
     )
     ARFFExporter.export(
-        df_30d_test, "dam_risk_forecast_30days_test.arff",
+        df_30d_test, os.path.join(output_dir, "dam_risk_forecast_30days_test.arff"),
         "dam_risk_forecast_30days", "risk_class_30d", domain_df=dom_30d,
     )
 
@@ -360,7 +359,7 @@ def main():
                    else f"  ✗ vs expected {expected_30d:,} "
                         f"(diff={total_30d-expected_30d:+}, "
                         f"extra loss = API gaps)"))
-    logger.info("\nFiles created:")
+    logger.info("\nFiles created in datasets/:")
     logger.info("  dam_risk_forecast_7days_train.arff")
     logger.info("  dam_risk_forecast_7days_test.arff")
     logger.info("  dam_risk_forecast_30days_train.arff")

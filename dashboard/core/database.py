@@ -9,7 +9,7 @@ from config import DB_CONFIG
 _pool = None
 
 
-# ฟังก์ชันเชื่อมต่อฐานข้อมูลผ่าน Connection Pool (Get Database Connection)
+# ฟังก์ชันเชื่อมต่อฐานข้อมูลผ่าน Connection Pool
 def get_connection():
     global _pool
     try:
@@ -26,7 +26,7 @@ def get_connection():
         return mysql.connector.connect(**DB_CONFIG)
 
 
-# ฟังก์ชันแปลงค่าเป็น Float อย่างปลอดภัย (Safe Float Conversion)
+# ฟังก์ชันแปลงค่าเป็น Float อย่างปลอดภัย
 def _safe_float(val):
     if val is None:
         return None
@@ -39,7 +39,7 @@ def _safe_float(val):
         return None
 
 
-# ฟังก์ชันบันทึกข้อมูลคุณลักษณะพื้นฐานของเขื่อน (Save Dam Characteristics)
+# ฟังก์ชันบันทึกข้อมูลคุณลักษณะพื้นฐานของเขื่อน
 def save_to_characteristics(df):
     try:
         conn = get_connection()
@@ -73,7 +73,7 @@ def save_to_characteristics(df):
             conn.close()
 
 
-# ฟังก์ชันบันทึกข้อมูลสถานการณ์น้ำรายวันลงฐานข้อมูล (Save Daily Dam Records)
+# ฟังก์ชันบันทึกข้อมูลสถานการณ์น้ำรายวันลงฐานข้อมูล
 def save_to_database(df, record_date=None):
     if record_date is None:
         record_date = datetime.date.today()
@@ -133,7 +133,7 @@ def save_to_database(df, record_date=None):
             conn.close()
 
 
-# ฟังก์ชันดึงเวลาบันทึกล่าสุดของวันที่ระบุ (Get Latest Recorded Time)
+# ฟังก์ชันดึงเวลาบันทึกล่าสุดของวันที่ระบุ
 @st.cache_data(ttl=300, show_spinner=False)
 def get_recorded_time(target_date):
     try:
@@ -150,7 +150,7 @@ def get_recorded_time(target_date):
             conn.close()
 
 
-# ฟังก์ชันดึงข้อมูลประวัติย้อนหลังของเขื่อนตามจำนวนวันที่กำหนด (Get Historical Dam Data)
+# ฟังก์ชันดึงข้อมูลประวัติย้อนหลังของเขื่อนตามจำนวนวันที่กำหนด
 @st.cache_data(ttl=600, show_spinner=False)
 def get_historical_data(dam_id, limit=30):
     try:
@@ -182,7 +182,7 @@ def get_historical_data(dam_id, limit=30):
             conn.close()
 
 
-# ฟังก์ชันดึงข้อมูลตรวจวัดที่สมบูรณ์ล่าสุดของวันก่อนหน้า (Get Yesterday Valid Data)
+# ฟังก์ชันดึงข้อมูลตรวจวัดที่สมบูรณ์ล่าสุดของวันก่อนหน้า
 @st.cache_data(ttl=600, show_spinner=False)
 def get_yesterday_valid_data(dam_id, current_date=None):
     try:

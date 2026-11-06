@@ -1,4 +1,5 @@
 import os
+import datetime
 import streamlit as st
 import pandas as pd
 import weka.core.jvm as jvm
@@ -13,7 +14,7 @@ FEATURES = ["percent_storage", "inflow_pct", "outflow_pct", "month"]
 
 # การจัดการ Java Virtual Machine (JVM)
 
-# ฟังก์ชันตรวจสอบและตั้งค่าเส้นทาง JAVA_HOME สำหรับ Weka (Ensure Java Home Path)
+# ฟังก์ชันตรวจสอบและตั้งค่าเส้นทาง JAVA_HOME สำหรับ Weka
 def _ensure_java_home():
     if not os.environ.get("JAVA_HOME"):
         candidates = [
@@ -28,7 +29,7 @@ def _ensure_java_home():
                 break
 
 
-# ฟังก์ชันเริ่มต้นการทำงานของ JVM อย่างปลอดภัย (Initialize JVM Safely)
+# ฟังก์ชันเริ่มต้นการทำงานของ JVM อย่างปลอดภัย
 @st.cache_resource
 def init_jvm_safe(max_heap_size: str = "128m"):
     try:
@@ -44,7 +45,7 @@ def init_jvm_safe(max_heap_size: str = "128m"):
 
 # โหลดโมเดลและ Header ARFF
 
-# ฟังก์ชันสกัดและสร้าง Header Attributes จากไฟล์ ARFF (Extract ARFF Header)
+# ฟังก์ชันสกัดและสร้าง Header Attributes จากไฟล์ ARFF
 def _extract_header(arff_path, class_attr_name, features=None):
     if features is None:
         features = FEATURES
@@ -73,7 +74,7 @@ def _extract_header(arff_path, class_attr_name, features=None):
     return header
 
 
-# ฟังก์ชันโหลดโมเดลและชุดข้อมูล Header สำหรับการพยากรณ์ (Load Prediction Models and Resources)
+# ฟังก์ชันโหลดโมเดลและชุดข้อมูล Header สำหรับการพยากรณ์
 @st.cache_resource
 def load_resources():
     base = os.path.join(os.path.dirname(__file__), "..", "models")
@@ -91,12 +92,12 @@ def load_resources():
     header_30d = _extract_header(os.path.join(base, "datasets", "dam_risk_forecast_30days_header.arff"), "risk_class_30d")
 
     return {
-        "7_day": {"model": model_7d, "header": header_7d},
-        "30_day": {"model": model_30d, "header": header_30d}
+        "7_day": {"model": model_7d, "header": header_7d, "name": "พยากรณ์ล่วงหน้า 7 วัน (Logistic Regression)"},
+        "30_day": {"model": model_30d, "header": header_30d, "name": "พยากรณ์ล่วงหน้า 30 วัน (Random Forest)"}
     }
 
 
-# ฟังก์ชันสร้างการจับคู่ Attributes เชิงตัวเลขและเชิงกลุ่ม (Build Attribute Mapping)
+# ฟังก์ชันสร้างการจับคู่ Attributes เชิงตัวเลขและเชิงกลุ่ม
 def _build_attr_mapping(header):
     class_attr_name = header.class_attribute.name
     numeric_attrs = []
@@ -111,7 +112,7 @@ def _build_attr_mapping(header):
     return class_attr_name, numeric_attrs, nominal_attrs
 
 
-# ฟังก์ชันจัดเตรียมและคำนวณคุณลักษณะของเขื่อนสำหรับโมเดล (Prepare Dam Features)
+# ฟังก์ชันจัดเตรียมและคำนวณคุณลักษณะของเขื่อนสำหรับโมเดล
 def _prepare_dam_features(row_dict):
     data = dict(row_dict)
 
@@ -132,10 +133,14 @@ def _prepare_dam_features(row_dict):
     if "outflow_pct" not in data or pd.isna(data["outflow_pct"]):
         data["outflow_pct"] = (outflow / cap * 100.0) if cap > 0 else 0.0
 
+    # ตั้งค่าเดือนปัจจุบันหากไม่มีการระบุ
+    if "month" not in data or pd.isna(data["month"]) or data["month"] is None:
+        data["month"] = datetime.datetime.now().month
+
     return data
 
 
-# ฟังก์ชันสร้างและกำหนดค่า Weka Instance จากข้อมูลเขื่อน (Build Weka Instance)
+# ฟังก์ชันสร้างและกำหนดค่า Weka Instance จากข้อมูลเขื่อน
 def _build_weka_instance(header, mapping, row_dict):
     _, numeric_attrs, nominal_attrs = mapping
     inst = Instance.create_instance([0.0] * header.num_attributes)
@@ -166,8 +171,8 @@ def _build_weka_instance(header, mapping, row_dict):
     return inst
 
 
-# ฟังก์ชันพยากรณ์ระดับความเสี่ยงของเขื่อนเดี่ยวด้วยโมเดล Weka (Predict Single Dam Risk)
-def predict_single_dam(row_series, model_config):
+# ฟังก์ชันพยากรณ์ระดับความเสี่ยงของเขื่อนเดี่ยวด้วยโมเดล Weka
+def predict_single_dam(row_series, model_config, model_name: str = None):
     model = model_config["model"]
     header = model_config["header"]
 
@@ -182,5 +187,62 @@ def predict_single_dam(row_series, model_config):
     # สั่งให้โมเดลทำนายและส่งกลับผลลัพธ์
     pred_index = model.classify_instance(inst)
     if header.class_attribute.is_nominal:
-        return header.class_attribute.value(int(pred_index))
-    return pred_index
+        pred_class = header.class_attribute.value(int(pred_index))
+    else:
+        pred_class = str(pred_index)
+
+    # ดึงค่าความน่าจะเป็นของแต่ละคลาส
+    dist_map = {}
+    try:
+        dist = model.distribution_for_instance(inst)
+        if header.class_attribute.is_nominal:
+            for i in range(header.class_attribute.num_values):
+                c_val = header.class_attribute.value(i)
+                dist_map[c_val] = float(dist[i])
+    except Exception:
+        pass
+
+    # ระบุชื่อโมเดล / ระยะเวลาพยากรณ์
+    if not model_name:
+        model_name = model_config.get("name")
+        if not model_name:
+            rel = getattr(header, "relation_name", "")
+            if "7day" in rel:
+                model_name = "พยากรณ์ล่วงหน้า 7 วัน (Logistic Regression)"
+            elif "30day" in rel:
+                model_name = "พยากรณ์ล่วงหน้า 30 วัน (Random Forest)"
+            else:
+                model_name = rel or "Weka Model"
+
+    dam_name = row_dict.get("name") or row_dict.get("dam_name") or "ไม่ระบุชื่อ"
+    dam_id = row_dict.get("id") or row_dict.get("dam_id") or "-"
+
+    # Print Debug: ค่าที่ส่งให้โมเดลและผลลัพธ์ที่ได้ออกมา
+    print("=" * 65)
+    print(f"🔍 [DEBUG PREDICTION] {model_name}")
+    print(f"📍 เขื่อน: {dam_name} (ID: {dam_id})")
+    print("-" * 65)
+    print("📥 Features sent to Model:")
+    pct_val = row_dict.get('percent_storage', 0.0)
+    inflow_pct = row_dict.get('inflow_pct', 0.0)
+    outflow_pct = row_dict.get('outflow_pct', 0.0)
+    inflow_raw = row_dict.get('inflow', 0.0)
+    outflow_raw = row_dict.get('outflow', 0.0)
+    month_val = row_dict.get('month', '-')
+    cap_val = row_dict.get('capacity', 0.0)
+
+    print(f"   • percent_storage : {float(pct_val):.2f}%")
+    print(f"   • inflow_pct      : {float(inflow_pct):.4f}% (inflow: {float(inflow_raw):,.2f} ล้าน ลบ.ม.)")
+    print(f"   • outflow_pct     : {float(outflow_pct):.4f}% (outflow: {float(outflow_raw):,.2f} ล้าน ลบ.ม.)")
+    print(f"   • month           : {month_val}")
+    if cap_val:
+        print(f"   • capacity        : {float(cap_val):,.2f} ล้าน ลบ.ม.")
+    print("-" * 65)
+    print("📤 Prediction Result:")
+    print(f"   • Class  : {pred_class.upper()} ({pred_class})")
+    if dist_map:
+        prob_strs = [f"{c}={prob * 100:.2f}%" for c, prob in dist_map.items()]
+        print(f"   • Probability : {', '.join(prob_strs)}")
+    print("=" * 65 + "\n")
+
+    return pred_class

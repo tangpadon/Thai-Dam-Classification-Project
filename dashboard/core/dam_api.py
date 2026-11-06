@@ -10,7 +10,7 @@ from core.database import get_connection, save_to_database, get_recorded_time
 DATA_API_URL = RID_API_URL
 
 
-# ฟังก์ชันโหลดข้อมูลเขื่อนจากฐานข้อมูลตามวันที่กำหนด (Load Dam Data From Database)
+# ฟังก์ชันโหลดข้อมูลเขื่อนจากฐานข้อมูลตามวันที่กำหนด
 def _load_from_db(target_date):
     try:
         conn = get_connection()
@@ -49,7 +49,7 @@ def _load_from_db(target_date):
 
 # การเชื่อมต่อและแปลงข้อมูลจาก API
 
-# ฟังก์ชันตรวจสอบความพร้อมของข้อมูลตรวจวัดจาก API (Check Measurement Availability)
+# ฟังก์ชันตรวจสอบความพร้อมของข้อมูลตรวจวัดจาก API
 def _has_measurements(records):
     for rec in (records or []):
         if not isinstance(rec, dict):
@@ -60,14 +60,14 @@ def _has_measurements(records):
     return False
 
 
-# ฟังก์ชันแปลงโครงสร้างข้อมูล JSON จาก API เป็น DataFrame (Normalize API Records)
+# ฟังก์ชันแปลงโครงสร้างข้อมูล JSON จาก API เป็น DataFrame
 def _normalize_records(records):
     df = pd.json_normalize(records, record_path=['dam'], meta=['region'])
     mapping = {"dam_id": "id", "dam_name": "name"}
     return df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
 
 
-# ฟังก์ชันส่งคำขอดึงข้อมูลเขื่อนรายวันจาก RID API (Fetch Daily Data From RID API)
+# ฟังก์ชันส่งคำขอดึงข้อมูลเขื่อนรายวันจาก RID API
 def _fetch_from_api(date_str=None):
     url = f"{DATA_API_URL}{date_str}" if date_str else DATA_API_URL.rstrip('/')
     response = requests.get(url, timeout=10)
@@ -75,7 +75,7 @@ def _fetch_from_api(date_str=None):
     return res_data.get("data", res_data)
 
 
-# ฟังก์ชันเติมเต็มข้อมูลที่ขาดหายด้วยข้อมูลวันก่อนหน้า (Fill Missing Data From Yesterday)
+# ฟังก์ชันเติมเต็มข้อมูลที่ขาดหายด้วยข้อมูลวันก่อนหน้า
 def _fill_missing_from_yesterday(target_df, source_df_y):
     if target_df is None or target_df.empty or source_df_y is None or source_df_y.empty:
         return target_df
@@ -93,7 +93,7 @@ def _fill_missing_from_yesterday(target_df, source_df_y):
     return target_df
 
 
-# ฟังก์ชันประมวลผลและบันทึกข้อมูลจาก API ลงฐานข้อมูล (Process And Save API Data)
+# ฟังก์ชันประมวลผลและบันทึกข้อมูลจาก API ลงฐานข้อมูล
 def _process_and_save_api_data(records, record_date, df_y=None):
     df_new = _normalize_records(records)
     if 'month' not in df_new.columns:
@@ -105,7 +105,7 @@ def _process_and_save_api_data(records, record_date, df_y=None):
     return df_new, record_date, rec_time
 
 
-# ฟังก์ชันค้นหาข้อมูลสำรองย้อนหลังจาก RID API (Fetch Recent Fallback From API)
+# ฟังก์ชันค้นหาข้อมูลสำรองย้อนหลังจาก RID API
 def _fetch_recent_fallback(today, max_days=3):
     for days_back in range(1, max_days + 1):
         fallback_date = today - datetime.timedelta(days=days_back)
@@ -123,7 +123,7 @@ def _fetch_recent_fallback(today, max_days=3):
     return None, None, None
 
 
-# ฟังก์ชันหลักสำหรับดึงและจัดเก็บข้อมูล (Main Fetch & Save)
+# ฟังก์ชันหลักสำหรับดึงและจัดเก็บข้อมูล
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_and_save_data():
     now = datetime.datetime.now()
@@ -157,7 +157,7 @@ def fetch_and_save_data():
     if df_y is not None:
         return df_y, yesterday, recorded_at_y
 
-    # หากในฐานข้อมูลยังไม่มีข้อมูลเมื่อวาน ให้ค้นหาข้อมูลย้อนหลังจาก RID API (ย้อนหลังสูงสุด 3 วัน)
+    # หากในฐานข้อมูลยังไม่มีข้อมูลเมื่อวาน ให้ค้นหาข้อมูลย้อนหลังจาก RID API
     df_fb, fb_date, rec_time = _fetch_recent_fallback(today, max_days=3)
     if df_fb is not None:
         return df_fb, fb_date, rec_time
@@ -167,7 +167,7 @@ def fetch_and_save_data():
 
 # การดึงข้อมูลย้อนหลัง 30 วัน
 
-# ฟังก์ชันตรวจสอบวันที่ขาดหายไปในประวัติข้อมูลย้อนหลัง (Find Missing Historical Dates)
+# ฟังก์ชันตรวจสอบวันที่ขาดหายไปในประวัติข้อมูลย้อนหลัง
 def _get_missing_historical_dates(lookback_days=30):
     today = datetime.date.today()
     start_date = today - datetime.timedelta(days=lookback_days)
@@ -198,14 +198,14 @@ def _get_missing_historical_dates(lookback_days=30):
     ]
 
 
-# ฟังก์ชันดึงและเติมเต็มข้อมูลย้อนหลัง 30 วันลงฐานข้อมูล (Backfill Historical Data)
+# ฟังก์ชันดึงและเติมเต็มข้อมูลย้อนหลัง 30 วันลงฐานข้อมูล
 def backfill_historical_data(lookback_days=30):
     # หาวันที่ยังขาดหายไปในฐานข้อมูล
     days_to_fetch = _get_missing_historical_dates(lookback_days)
     if not days_to_fetch:
         return
 
-    # แสดง Progress Bar บนแถบด้านข้าง (Sidebar) ระหว่างดึงข้อมูล
+    # แสดง Progress Bar บนแถบด้านข้างระหว่างดึงข้อมูล
     progress_bar = st.sidebar.progress(0, text="กำลังตรวจสอบข้อมูลย้อนหลัง...")
     status_text = st.sidebar.empty()
 

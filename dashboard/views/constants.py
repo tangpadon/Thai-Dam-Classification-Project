@@ -72,19 +72,17 @@ DAM_LOCATIONS = {
 }
 
 
-# ฟังก์ชันค้นหาจังหวัดและภูมิภาคที่ตั้งของเขื่อน (Get Dam Location)
+# ฟังก์ชันค้นหาจังหวัดและภูมิภาคที่ตั้งของเขื่อน
 def get_dam_location(dam_name: str, dam_data=None) -> tuple:
     clean_name = str(dam_name).strip() if dam_name else ""
     if clean_name in DAM_LOCATIONS:
         info = DAM_LOCATIONS[clean_name]
         return info["province"], info["region"]
 
-    # Fuzzy match if prefix is missing or different
     for k, v in DAM_LOCATIONS.items():
         if k in clean_name or clean_name in k:
             return v["province"], v["region"]
 
-    # Fallback to dam_data if available
     prov = "ไม่ระบุ"
     reg = "ไม่ระบุ"
     if dam_data is not None:

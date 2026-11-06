@@ -1,5 +1,5 @@
 # Python
-__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.egg-info/
@@ -22,10 +22,16 @@ venv/
 .env
 .env.*
 !.env.example
+**/.env
+**/.env.*
+!**/.env.example
 
 # Weka models & datasets (large/binary files)
-models/trained/*.model
-models/datasets/*.arff
+**/models/trained/*.model
+**/models/datasets/*.arff
+!**/models/datasets/*header.arff
+dataset_pipeline/datasets/*.arff
+!dataset_pipeline/datasets/*header.arff
 
 # Excel outputs & local docs (ยกเว้น docs/architecture สำหรับแสดงบน README)
 scripts/*.xlsx
@@ -46,7 +52,7 @@ Desktop.ini
 .DS_Store
 
 # Streamlit
-.streamlit/secrets.toml
+**/.streamlit/secrets.toml
 
 # Logs
 *.log

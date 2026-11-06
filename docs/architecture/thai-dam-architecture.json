@@ -19,7 +19,7 @@
       "entries": {
         "frontend": { "label": "Streamlit UI Layer" },
         "backend": { "label": "Core & ETL Services" },
-        "database": { "label": "MySQL / TiDB Storage" },
+        "database": { "label": "MySQL Storage" },
         "security": { "label": "Weka ML Engine" },
         "external": { "label": "RID Open Data API" }
       }
@@ -133,7 +133,7 @@
     {
       "id": "mysql_db",
       "type": "database",
-      "label": "MySQL / TiDB Database",
+      "label": "MySQL Database",
       "sublabel": "dam_info & dam_daily (Pooled)",
       "tag": "core/database.py",
       "sources": [
@@ -253,7 +253,7 @@
       "dot": "cyan",
       "title": "1. Live Dashboard & DB-First Sync",
       "items": [
-        "Checks MySQL/TiDB first (check_date_exists_in_db) before calling RID API",
+        "Checks MySQL first (check_date_exists_in_db) before calling RID API",
         "Pooled connection (DB_POOL) serves 34 large reservoirs across 6 regions",
         "Renders 7 sections with custom CSS, Plotly trend lines & semantic footer"
       ]

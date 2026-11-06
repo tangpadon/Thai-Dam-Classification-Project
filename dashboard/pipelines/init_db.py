@@ -1,15 +1,14 @@
 import sys
 import os
 
-# เพิ่ม root directory ใน sys.path เพื่อให้อ่าน config ได้
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.database import get_connection
 
 
-# ฟังก์ชันสร้างและตั้งค่าโครงสร้างตารางในฐานข้อมูล MySQL (Initialize Database Schema)
+# ฟังก์ชันสร้างและตั้งค่าโครงสร้างตารางในฐานข้อมูล MySQL
 def init_db_schema():
-    print("🔄 กำลังตรวจสอบและตั้งค่า Schema ฐานข้อมูล...")
+    print("กำลังตรวจสอบและตั้งค่า Schema ฐานข้อมูล...")
     conn = None
     try:
         conn = get_connection()
@@ -29,7 +28,7 @@ def init_db_schema():
               PRIMARY KEY (`dam_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
-        print("  ✅ ตาราง dam_info พร้อมใช้งาน")
+        print("ตาราง dam_info พร้อมใช้งาน")
 
         # ตารางข้อมูลรายวัน
         cursor.execute("""
@@ -49,12 +48,12 @@ def init_db_schema():
               CONSTRAINT `fk_dam_char` FOREIGN KEY (`dam_id`) REFERENCES `dam_info` (`dam_id`) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
-        print("  ✅ ตาราง dam_daily พร้อมใช้งาน")
+        print(" ตาราง dam_daily พร้อมใช้งาน")
 
         conn.commit()
-        print("🎉 ตั้งค่า Schema ฐานข้อมูลเสร็จสมบูรณ์!")
+        print("ตั้งค่า Schema ฐานข้อมูลเสร็จสมบูรณ์!")
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดในการตั้งค่า Schema: {e}")
+        print(f"เกิดข้อผิดพลาดในการตั้งค่า Schema: {e}")
     finally:
         if conn:
             cursor.close()

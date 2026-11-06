@@ -1,7 +1,11 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(env_file):
+    load_dotenv(dotenv_path=env_file)
+else:
+    load_dotenv()
 
 
 def _get_config_val(name, default=None):
@@ -30,7 +34,7 @@ def _get_config_val(name, default=None):
     except Exception:
         pass
 
-    # พยายามอ่านจาก Environment Variables (.env หรือ OS)
+    # พยายามอ่านจาก Environment Variables
     val = os.getenv(name)
     if val is not None and val != "":
         return val
@@ -48,10 +52,10 @@ def _require(name):
     return val
 
 
-# พอร์ตฐานข้อมูล (TiDB Cloud ใช้พอร์ต 4000, MySQL ทั่วไปใช้ 3306)
+# พอร์ตฐานข้อมูล MySQL (ค่าเริ่มต้น 3306)
 DB_PORT = int(_get_config_val("DB_PORT", 3306))
 
-# คอนฟิกการเชื่อมต่อ MySQL / TiDB
+# คอนฟิกการเชื่อมต่อ MySQL
 DB_CONFIG = {
     'host': _require('DB_HOST'),
     'user': _require('DB_USER'),
@@ -59,33 +63,6 @@ DB_CONFIG = {
     'database': _require('DB_NAME'),
     'port': DB_PORT,
 }
-
-# จัดการ SSL / TLS สำหรับ Cloud Database (โดยเฉพาะ TiDB Cloud Serverless)
-ssl_disabled = _get_config_val("DB_SSL_DISABLED")
-if ssl_disabled is not None:
-    if isinstance(ssl_disabled, str):
-        DB_CONFIG["ssl_disabled"] = ssl_disabled.lower() in ("true", "1", "yes")
-    else:
-        DB_CONFIG["ssl_disabled"] = bool(ssl_disabled)
-else:
-    # หากไม่ได้ปิด SSL และเชื่อมต่อ Remote Host (เช่น TiDB Cloud)
-    db_host = DB_CONFIG["host"].lower()
-    if db_host not in ("localhost", "127.0.0.1") and ("tidb" in db_host or DB_PORT == 4000):
-        ssl_ca = _get_config_val("DB_SSL_CA")
-        if not ssl_ca:
-            # ใช้ CA Bundle จาก certifi หรือระบบ Linux
-            if os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
-                ssl_ca = "/etc/ssl/certs/ca-certificates.crt"
-            else:
-                try:
-                    import certifi
-                    ssl_ca = certifi.where()
-                except ImportError:
-                    pass
-
-        if ssl_ca:
-            DB_CONFIG["ssl_ca"] = ssl_ca
-            DB_CONFIG["ssl_verify_cert"] = True
 
 # RID API URL
 RID_API_URL = _get_config_val('RID_API_URL', 'https://app.rid.go.th/reservoir/api/dam/public/')

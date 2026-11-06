@@ -15,8 +15,8 @@ def render_forecast_cards(
     is_fallback: bool = False,
     fallback_date: Any = None,
 ) -> Tuple[Dict[str, str], Dict[str, str]]:
-    theme_7d = get_status_theme(predict_single_dam(dam_data, models_dict["7_day"]))
-    theme_30d = get_status_theme(predict_single_dam(dam_data, models_dict["30_day"]))
+    theme_7d = get_status_theme(predict_single_dam(dam_data, models_dict["7_day"], model_name="พยากรณ์ล่วงหน้า 7 วัน (Logistic Regression)"))
+    theme_30d = get_status_theme(predict_single_dam(dam_data, models_dict["30_day"], model_name="พยากรณ์ล่วงหน้า 30 วัน (Random Forest)"))
 
     d_start_7 = base_date + datetime.timedelta(days=1)
     d_end_7 = base_date + datetime.timedelta(days=7)
